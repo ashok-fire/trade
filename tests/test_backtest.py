@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
-from app.backtest import _intrabar_underlying_outcome, metrics
+from app.backtest import _intrabar_underlying_outcome, _utc_datetime, metrics
 from app.models import Candle
 
 
@@ -14,6 +14,14 @@ def test_metrics_are_chronological_and_after_costs():
     assert result["net_pnl"] == 500.0
     assert result["trades"] == 2
     assert result["equity_curve"] == [101000.0, 100500.0]
+
+
+def test_backtest_timestamp_normalization_handles_sqlite_naive_values():
+    naive = datetime(2025, 1, 2, 9, 15)
+    aware = datetime(2025, 1, 2, 9, 20, tzinfo=UTC)
+
+    assert _utc_datetime(naive).tzinfo is UTC
+    assert _utc_datetime(naive) < _utc_datetime(aware)
 
 
 def test_one_minute_data_resolves_stop_before_later_target(session):

@@ -3,7 +3,8 @@ from __future__ import annotations
 import asyncio
 import json
 from datetime import UTC, date, datetime, time, timedelta
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import pandas as pd
@@ -14,12 +15,14 @@ from .database import settings_dict
 from .domain import Contract
 from .execution import ExecutionService
 from .mode_control import reconcile
-from .models import Candle, Instrument, RuntimeSetting, Signal, SystemEvent, Trade
-from .option_selector import select_option
+from .models import Candle, Instrument, ModelArtifact, RuntimeSetting, Signal, SystemEvent, Trade
+from .option_selector import option_candidates, select_option
+from .selection_audit import record_option_selection
 from .providers import BrokerClient, provider_name
-from .strategy import RegimeModel, decide, with_futures_features
+from .strategy import SETUP_FEATURES, RegimeModel, decide, with_futures_features
 from .telegram import enqueue
 from .training import front_future_frame
+from .v4_training import option_quality_context
 
 
 class RuntimeService:
@@ -29,6 +32,8 @@ class RuntimeService:
         self.session_factory = session_factory
         self.execution = ExecutionService(trading_brokers)
         self.model = RegimeModel(config.model_path)
+        self.shadow_model = RegimeModel(config.model_path.parent / ".shadow-unavailable.json")
+        self.shadow_artifact_id: int | None = None
         self.stop_event = asyncio.Event()
         self.last_tick: datetime | None = None
         self.last_candle: datetime | None = None
@@ -44,15 +49,53 @@ class RuntimeService:
         """Load a newly-trained model without restarting the application."""
         self.model = RegimeModel(config.model_path)
 
+    def reload_shadow_model(self) -> None:
+        """Load the selected research candidate without making it active."""
+        self.shadow_model = RegimeModel(config.model_path.parent / ".shadow-unavailable.json")
+        self.shadow_artifact_id = None
+        with self.session_factory() as session:
+            artifact = session.scalar(
+                select(ModelArtifact)
+                .where(ModelArtifact.status == "SHADOW")
+                .order_by(ModelArtifact.created_at.desc())
+                .limit(1)
+            )
+            if artifact is not None:
+                candidate = RegimeModel(Path(artifact.model_path))
+                if candidate.available:
+                    self.shadow_model = candidate
+                    self.shadow_artifact_id = artifact.id
+
     @staticmethod
     def _parse(raw: list) -> tuple[datetime, Decimal, Decimal, Decimal, Decimal, int, int]:
         stamp = datetime.fromisoformat(str(raw[0]).replace("Z", "+00:00"))
         if stamp.tzinfo is None: stamp = stamp.replace(tzinfo=ZoneInfo("Asia/Kolkata"))
         return stamp.astimezone(UTC), *(Decimal(str(raw[index])) for index in range(1, 5)), int(raw[5] or 0), int(raw[6] or 0) if len(raw) > 6 else 0
 
+    @classmethod
+    def _parse_rows(cls, rows: list[list]) -> list[tuple[datetime, Decimal, Decimal, Decimal, Decimal, int, int]]:
+        """Discard malformed broker candles instead of stopping the trading loop."""
+        parsed = []
+        for raw in rows:
+            try:
+                candle = cls._parse(raw)
+            except (IndexError, InvalidOperation, OverflowError, TypeError, ValueError):
+                continue
+            if any(value <= 0 for value in candle[1:5]):
+                continue
+            parsed.append(candle)
+        return parsed
+
     @staticmethod
     def _db_stamp(value: datetime) -> datetime:
         return (value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)).replace(tzinfo=None)
+
+    @staticmethod
+    def _entry_window_open(boundary: datetime) -> bool:
+        """Do not open fresh positions close to the mandatory 15:20 square-off."""
+        stamp = boundary.replace(tzinfo=UTC) if boundary.tzinfo is None else boundary.astimezone(UTC)
+        local = stamp.astimezone(ZoneInfo("Asia/Kolkata"))
+        return local.weekday() < 5 and time(9, 35) <= local.time() < time(15, 10)
 
     def _store_runtime_rows(
         self,
@@ -162,7 +205,9 @@ class RuntimeService:
             key = broker.index_key(code)
             rows = await broker.historical_candles(key, date.today() - timedelta(days=3), date.today())
             if not rows: continue
-            parsed = [self._parse(row) for row in rows]
+            parsed = self._parse_rows(rows)
+            if not parsed:
+                continue
             parsed.sort(key=lambda row: row[0])
             latest = parsed[-1]
             context = await broker.market_context(key, latest[4])
@@ -184,7 +229,7 @@ class RuntimeService:
                 future_rows = await broker.historical_candles(
                     future.instrument_key, date.today() - timedelta(days=3), date.today()
                 )
-                future_parsed = sorted((self._parse(row) for row in future_rows), key=lambda row: row[0])
+                future_parsed = sorted(self._parse_rows(future_rows), key=lambda row: row[0])
                 if future_parsed:
                     with self.session_factory() as session:
                         existing_future = session.scalar(
@@ -227,18 +272,31 @@ class RuntimeService:
             self.last_candle = max(self.last_candle or latest[0], latest[0])
 
     async def process_signals(self, boundary: datetime) -> None:
+        if not self._entry_window_open(boundary):
+            return
         with self.session_factory() as session:
             runtime = session.get(RuntimeSetting, 1)
-            if not runtime or runtime.execution_mode not in {"PAPER", "LIVE"} or runtime.entries_paused: return
+            if not runtime or runtime.execution_mode not in {"SHADOW", "PAPER", "LIVE"} or runtime.entries_paused: return
+            model = self.shadow_model if runtime.execution_mode == "SHADOW" else self.model
+            if not model.available: return
             if session.scalar(select(Trade.id).where(Trade.status == "OPEN").limit(1)): return
             settings = settings_dict(session)
             provider = provider_name(settings.get("active_broker"))
             broker = self.market_brokers[provider]
             candidates = []
             for code in settings["enabled_indices"].split(","):
-                rows = session.scalars(select(Candle).where(Candle.provider == provider, Candle.underlying_code == code, Candle.data_role == "SPOT", Candle.timeframe == "5minute", Candle.timestamp < boundary).order_by(Candle.timestamp.desc()).limit(80)).all()[::-1]
+                # Keep complete previous sessions and a long EMA warm-up. Eighty
+                # bars can contain only today's session plus pre-open rows,
+                # causing prior-day levels to disappear late in the session.
+                rows = session.scalars(select(Candle).where(Candle.provider == provider, Candle.underlying_code == code, Candle.data_role == "SPOT", Candle.timeframe == "5minute", Candle.timestamp < boundary).order_by(Candle.timestamp.desc()).limit(1500)).all()[::-1]
                 if len(rows) < 50: continue
-                future_rows = session.scalars(select(Candle).where(Candle.provider == provider, Candle.underlying_code == code, Candle.data_role == "FUTURE", Candle.timeframe == "5minute", Candle.timestamp < boundary).order_by(Candle.timestamp.desc()).limit(240)).all()
+                # A delayed or previous-session candle must never trigger a
+                # current quote entry after a restart or feed interruption.
+                candle_stamp = rows[-1].timestamp
+                candle_stamp = candle_stamp.replace(tzinfo=UTC) if candle_stamp.tzinfo is None else candle_stamp.astimezone(UTC)
+                if boundary.astimezone(UTC) - candle_stamp != timedelta(minutes=5):
+                    continue
+                future_rows = session.scalars(select(Candle).where(Candle.provider == provider, Candle.underlying_code == code, Candle.data_role == "FUTURE", Candle.timeframe == "5minute", Candle.timestamp >= rows[0].timestamp, Candle.timestamp < boundary).order_by(Candle.timestamp)).all()
                 future_instruments = session.scalars(select(Instrument).where(Instrument.provider == provider, Instrument.underlying_code == code, Instrument.instrument_kind == "FUTURE")).all()
                 futures_frame = front_future_frame(future_rows, future_instruments)
                 if len(futures_frame) < 50: continue
@@ -247,24 +305,88 @@ class RuntimeService:
                     futures_frame,
                 )
                 candle = rows[-1]
-                decision = decide(frame.iloc[-1], {"india_vix": candle.india_vix, "futures_basis_pct": candle.futures_basis_pct, "pcr": candle.pcr}, self.model)
+                decision = decide(frame.iloc[-1], {"india_vix": candle.india_vix, "futures_basis_pct": candle.futures_basis_pct, "pcr": candle.pcr}, model)
                 if decision.direction == "NO_TRADE":
-                    signal_id = f"reject-{provider.lower()}-{code}-{int(candle.timestamp.timestamp())}"
-                    if not session.get(Signal, signal_id): session.add(Signal(provider=provider, id=signal_id, mode=runtime.execution_mode, underlying_code=code, candle_timestamp=candle.timestamp, direction="NO_TRADE", regime=decision.regime, confidence=decision.confidence, status="REJECTED", rejection_reason=decision.reason, decision_json=json.dumps({"features": decision.features, "checks": {"confidence": decision.confidence >= .70, "above_futures_vwap": float(frame.iloc[-1].futures_close) > float(frame.iloc[-1].futures_vwap), "ema9_above_ema20": float(frame.iloc[-1].ema9) > float(frame.iloc[-1].ema20), "breakout": float(frame.iloc[-1].close) > float(frame.iloc[-1].opening_range_high)}}, default=str)))
+                    signal_id = f"reject-{runtime.execution_mode.lower()}-{provider.lower()}-{code}-{int(candle.timestamp.timestamp())}"
+                    if not session.get(Signal, signal_id): session.add(Signal(provider=provider, id=signal_id, mode=runtime.execution_mode, underlying_code=code, candle_timestamp=candle.timestamp, direction="NO_TRADE", regime=decision.regime, confidence=decision.confidence, status="REJECTED", rejection_reason=decision.reason, decision_json=json.dumps({"features": decision.features, "checks": {"confidence": decision.confidence >= .70, "above_futures_vwap": float(frame.iloc[-1].futures_close) > float(frame.iloc[-1].futures_vwap), "ema9_above_ema20": float(frame.iloc[-1].ema9) > float(frame.iloc[-1].ema20), "breakout": float(frame.iloc[-1].close) > float(frame.iloc[-1].opening_range_high)}}, default=str), model_version=str(model.metadata.get("version", "unknown"))))
                     continue
-                db_contracts = session.scalars(select(Instrument).where(Instrument.provider == provider, Instrument.underlying_code == code, Instrument.option_type == decision.direction, Instrument.active.is_(True))).all()
-                contracts = [Contract(item.instrument_key, item.trading_symbol, item.exchange, code, item.expiry, item.strike, item.option_type, item.lot_size, item.tick_size, provider=provider) for item in db_contracts]
-                expiries = sorted({item.expiry for item in contracts if item.expiry > date.today()})
-                chain = [item for item in contracts if expiries and item.expiry == expiries[0]]
-                strikes = sorted({item.strike for item in chain})
-                if not strikes: continue
+                trading_day = boundary.astimezone(ZoneInfo("Asia/Kolkata")).date()
+                db_contracts = session.scalars(select(Instrument).where(Instrument.provider == provider, Instrument.underlying_code == code, Instrument.option_type == decision.direction, Instrument.active.is_(True), Instrument.metadata_verified.is_(True), Instrument.lot_size > 0, Instrument.valid_from <= trading_day, (Instrument.valid_to.is_(None) | (Instrument.valid_to >= trading_day)))).all()
                 spot = Decimal(candle.close)
-                atm = min(strikes, key=lambda value: abs(value - spot)); idx = strikes.index(atm)
-                itm = strikes[max(0, idx - 1)] if decision.direction == "CE" else strikes[min(len(strikes) - 1, idx + 1)]
-                short_list = [item for item in chain if item.strike in {atm, itm}]
-                quotes = await broker.quotes([item.instrument_key for item in short_list])
-                selection = select_option(short_list, quotes, spot=spot, direction=decision.direction, trading_day=date.today(), max_spread_pct=Decimal(settings["max_spread_pct"]), max_quote_age_seconds=int(settings["max_quote_age_seconds"]), delta_min=float(settings["delta_min"]), delta_max=float(settings["delta_max"]))
+                chosen_versions = option_candidates(db_contracts, spot=spot, direction=decision.direction, trading_day=trading_day)
+                short_list = [Contract(item.instrument_key, item.trading_symbol, item.exchange, code, item.expiry, item.strike, item.option_type, item.lot_size, item.tick_size, provider=provider) for item, _ in chosen_versions]
+                quotes = await broker.quotes([item.instrument_key for item in short_list]) if short_list else {}
+                observed_at = datetime.now(UTC)
+                quote_filters = {
+                    "max_spread_pct": Decimal(settings["max_spread_pct"]),
+                    "max_quote_age_seconds": int(settings["max_quote_age_seconds"]),
+                    "delta_min": float(settings["delta_min"]), "delta_max": float(settings["delta_max"]),
+                }
+                selection = select_option(short_list, quotes, spot=spot, direction=decision.direction, trading_day=trading_day, now=observed_at, **quote_filters)
+                record_option_selection(
+                    session, provider=provider, mode=runtime.execution_mode, underlying_code=code,
+                    candle_timestamp=candle.timestamp, model_version=str(model.metadata.get("version", "unknown")),
+                    direction=decision.direction, spot=spot, contracts=short_list, quotes=quotes,
+                    selection=selection, observed_at=observed_at, filters=quote_filters,
+                )
+                if selection.contract is None:
+                    signal_id = f"option-{runtime.execution_mode.lower()}-{provider.lower()}-{code}-{int(candle.timestamp.timestamp())}"
+                    if not session.get(Signal, signal_id):
+                        session.add(Signal(
+                            id=signal_id, provider=provider, mode=runtime.execution_mode,
+                            underlying_code=code, candle_timestamp=candle.timestamp,
+                            direction="NO_TRADE", regime=decision.regime, confidence=decision.confidence,
+                            status="REJECTED", rejection_reason=f"Option selection: {selection.reason}",
+                            decision_json=json.dumps({"features": decision.features, "selection_reason": selection.reason}, default=str),
+                            model_version=str(model.metadata.get("version", "unknown")),
+                        ))
                 if selection.contract:
+                    if model.requires_option_context:
+                        quality_context = option_quality_context(
+                            premium=float(selection.quote.last),
+                            volume=selection.quote.volume,
+                            open_interest=selection.quote.open_interest,
+                            expiry=selection.contract.expiry,
+                            strike=selection.contract.strike,
+                            spot=float(spot),
+                            trading_day=date.today(),
+                        )
+                        decision = decide(
+                            frame.iloc[-1],
+                            {
+                                "india_vix": candle.india_vix,
+                                "futures_basis_pct": candle.futures_basis_pct,
+                                "pcr": candle.pcr,
+                                **quality_context,
+                            },
+                            model,
+                        )
+                        if decision.direction == "NO_TRADE":
+                            signal_id = f"quality-{runtime.execution_mode.lower()}-{provider.lower()}-{code}-{int(candle.timestamp.timestamp())}"
+                            if not session.get(Signal, signal_id):
+                                setup = float(decision.features.get("setup_direction", 0.0))
+                                candidate_direction = "CE" if setup > 0 else ("PE" if setup < 0 else "NONE")
+                                setup_family = next(
+                                    (
+                                        name.removeprefix("setup_").upper()
+                                        for name in SETUP_FEATURES
+                                        if decision.features.get(name) == 1.0
+                                    ),
+                                    "ORB",
+                                )
+                                required_threshold = float(
+                                    model.metadata.get("setup_thresholds", {})
+                                    .get(setup_family, {})
+                                    .get(
+                                        candidate_direction,
+                                        model.metadata.get("direction_thresholds", {}).get(
+                                            candidate_direction,
+                                            model.metadata.get("decision_threshold", 0.70),
+                                        ),
+                                    )
+                                )
+                                session.add(Signal(provider=provider, id=signal_id, mode=runtime.execution_mode, underlying_code=code, candle_timestamp=candle.timestamp, direction="NO_TRADE", regime=decision.regime, confidence=decision.confidence, status="REJECTED", rejection_reason=decision.reason, decision_json=json.dumps({"features": decision.features, "quality_gate": True, "checks": {"setup_family": setup_family, "candidate_direction": candidate_direction, "quality_score_pct": round(decision.confidence * 100, 1), "required_score_pct": round(required_threshold * 100, 1), "threshold_passed": decision.confidence >= required_threshold}}, default=str), model_version=str(model.metadata.get("version", "unknown"))))
+                            continue
                     spread = float((selection.quote.ask - selection.quote.bid) / ((selection.quote.ask + selection.quote.bid) / 2) * 100)
                     score = decision.confidence - spread * 0.02 + min(selection.quote.volume / 100000, 1) * 0.08
                     candidates.append((score, code, candle, decision, selection, frame.iloc[-1]))
@@ -272,13 +394,13 @@ class RuntimeService:
             if not candidates: return
             candidates.sort(key=lambda item: item[0], reverse=True)
             for _, code, candle, decision, selection, _row in candidates[1:]:
-                signal_id = f"rank-{provider.lower()}-{code}-{int(candle.timestamp.timestamp())}"
-                if not session.get(Signal, signal_id): session.add(Signal(provider=provider, id=signal_id, mode=runtime.execution_mode, underlying_code=code, candle_timestamp=candle.timestamp, direction=decision.direction, regime=decision.regime, confidence=decision.confidence, status="REJECTED", rejection_reason="Lower-ranked simultaneous signal", decision_json=json.dumps({"features": decision.features, "ranking": "lower-ranked simultaneous signal"}, default=str)))
+                signal_id = f"rank-{runtime.execution_mode.lower()}-{provider.lower()}-{code}-{int(candle.timestamp.timestamp())}"
+                if not session.get(Signal, signal_id): session.add(Signal(provider=provider, id=signal_id, mode=runtime.execution_mode, underlying_code=code, candle_timestamp=candle.timestamp, direction=decision.direction, regime=decision.regime, confidence=decision.confidence, status="REJECTED", rejection_reason="Lower-ranked simultaneous signal", decision_json=json.dumps({"features": decision.features, "ranking": "lower-ranked simultaneous signal"}, default=str), model_version=str(model.metadata.get("version", "unknown"))))
             session.commit()
             _, code, candle, decision, selection, row = candidates[0]
             atr = Decimal(str(row.atr))
             underlying_stop = Decimal(candle.close) - atr if decision.direction == "CE" else Decimal(candle.close) + atr
-            await self.execution.enter(session, underlying_code=code, candle_time=candle.timestamp, regime=decision.regime, confidence=decision.confidence, direction=decision.direction, underlying_price=Decimal(candle.close), underlying_stop=underlying_stop, contract=selection.contract, quote=selection.quote, moneyness=selection.moneyness, decision_context={"features": decision.features, "reason": decision.reason, "checks": {"confidence": decision.confidence >= .70, "futures_vwap": f"{row.futures_close} vs {row.futures_vwap}", "ema9_20": f"{row.ema9} vs {row.ema20}", "opening_range": f"{row.close} / {row.opening_range_high} / {row.opening_range_low}"}, "selection": {"instrument": selection.contract.instrument_key, "symbol": selection.contract.trading_symbol, "strike": str(selection.contract.strike), "moneyness": selection.moneyness, "bid": str(selection.quote.bid), "ask": str(selection.quote.ask), "delta": selection.quote.delta, "iv": selection.quote.iv}})
+            await self.execution.enter(session, underlying_code=code, candle_time=candle.timestamp, regime=decision.regime, confidence=decision.confidence, direction=decision.direction, underlying_price=Decimal(candle.close), underlying_stop=underlying_stop, contract=selection.contract, quote=selection.quote, moneyness=selection.moneyness, model_version=str(model.metadata.get("version", "unknown")), decision_context={"features": decision.features, "reason": decision.reason, "checks": {"confidence": decision.confidence >= .70, "futures_vwap": f"{row.futures_close} vs {row.futures_vwap}", "ema9_20": f"{row.ema9} vs {row.ema20}", "opening_range": f"{row.close} / {row.opening_range_high} / {row.opening_range_low}"}, "selection": {"instrument": selection.contract.instrument_key, "symbol": selection.contract.trading_symbol, "strike": str(selection.contract.strike), "moneyness": selection.moneyness, "bid": str(selection.quote.bid), "ask": str(selection.quote.ask), "delta": selection.quote.delta, "iv": selection.quote.iv}})
 
     async def monitor(self) -> None:
         with self.session_factory() as session:

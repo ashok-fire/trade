@@ -11,8 +11,8 @@ from sqlalchemy.orm import Session
 from .database import database_health, settings_dict
 from .config import config
 from .data_quality import research_readiness
-from .models import BacktestRun, Candle, Instrument, ModelArtifact, NotificationOutbox, Order, ResearchSyncRun, RuntimeSetting, Signal, SystemEvent, Trade
-from .strategy import FEATURE_SCHEMA
+from .models import BacktestRun, Candle, Instrument, ModelArtifact, NotificationOutbox, OptionSelectionAudit, Order, ResearchSyncRun, RuntimeSetting, Signal, SystemEvent, Trade
+from .strategy import SUPPORTED_FEATURE_SCHEMAS
 from .training import load_model_metadata
 
 
@@ -28,12 +28,16 @@ def _utc(value: datetime) -> datetime:
 def dashboard_context(session: Session, runtime_service=None) -> dict:
     runtime = session.get(RuntimeSetting, 1)
     settings = settings_dict(session)
-    trades = session.scalars(select(Trade).order_by(Trade.entry_time.desc())).all()
+    all_trades = session.scalars(select(Trade).order_by(Trade.entry_time.desc())).all()
+    if runtime and runtime.execution_mode == "SHADOW":
+        trades = [row for row in all_trades if row.mode == "SHADOW"]
+    else:
+        trades = [row for row in all_trades if row.mode != "SHADOW"]
     now_ist = datetime.now(ZoneInfo("Asia/Kolkata"))
     closed_today = [row for row in trades if row.status == "CLOSED" and row.exit_time and _utc(row.exit_time) >= _today_start()]
     closed_month = [row for row in trades if row.status == "CLOSED" and row.exit_time and _utc(row.exit_time).astimezone(ZoneInfo("Asia/Kolkata")).year == now_ist.year and _utc(row.exit_time).astimezone(ZoneInfo("Asia/Kolkata")).month == now_ist.month]
     closed_month_sorted = sorted(closed_month, key=lambda item: _utc(item.exit_time))
-    open_trade = next((row for row in trades if row.status == "OPEN"), None)
+    open_trade = next((row for row in all_trades if row.status == "OPEN"), None)
     today_pnl = sum((row.net_pnl for row in closed_today), Decimal("0"))
     month_pnl = sum((row.net_pnl for row in closed_month), Decimal("0"))
     month_gross_pnl = sum(((row.gross_pnl or Decimal("0")) for row in closed_month), Decimal("0"))
@@ -160,6 +164,8 @@ def dashboard_context(session: Session, runtime_service=None) -> dict:
         "last_tick": getattr(runtime_service, "last_tick", None),
         "last_candle": getattr(runtime_service, "last_candle", None),
         "runtime_error": getattr(runtime_service, "last_error", None),
+        "shadow_model_ready": bool(getattr(getattr(runtime_service, "shadow_model", None), "available", False)),
+        "shadow_model_version": getattr(getattr(runtime_service, "shadow_model", None), "metadata", {}).get("version"),
         "active_broker": settings.get("active_broker", "UPSTOX"),
         "paper_sessions": int(paper_sessions),
         "required_paper_sessions": required_paper_sessions,
@@ -224,13 +230,25 @@ def backtests_context(session: Session, selected_id: int | None = None) -> dict:
             model_details[artifact.id] = json.loads(artifact.metadata_json)
         except (TypeError, ValueError):
             model_details[artifact.id] = {}
+    shadow_artifact = next((item for item in model_artifacts if item.status == "SHADOW"), None)
+    shadow_model_metadata = model_details.get(shadow_artifact.id, {}) if shadow_artifact else {}
+    try:
+        reports = [path for path in (config.root / "models/research").glob("selection-aligned-edge-study-*.json") if not path.name.endswith(".spec.json")]
+        latest_report = max(reports, key=lambda path: path.stat().st_mtime) if reports else None
+        edge_study = json.loads(latest_report.read_text()) if latest_report else {}
+    except (OSError, ValueError):
+        edge_study = {}
     return {
         "runs": runs,
         "selected": selected,
         "summary": summary,
         "warnings": warnings,
-        "model_ready": bool(model_metadata) and model_metadata.get("feature_schema") == FEATURE_SCHEMA,
+        "model_ready": bool(model_metadata) and model_metadata.get("feature_schema") in SUPPORTED_FEATURE_SCHEMAS,
         "model_metadata": model_metadata,
+        "active_model_ready": bool(model_metadata) and model_metadata.get("feature_schema") in SUPPORTED_FEATURE_SCHEMAS,
+        "active_model_metadata": model_metadata,
+        "shadow_model_ready": bool(shadow_model_metadata) and shadow_model_metadata.get("feature_schema") in SUPPORTED_FEATURE_SCHEMAS,
+        "shadow_model_metadata": shadow_model_metadata,
         "run_details": run_details,
         "verified_underlying": verified_underlying,
         "verified_futures": verified_futures,
@@ -240,6 +258,8 @@ def backtests_context(session: Session, selected_id: int | None = None) -> dict:
         "research_runs": research_runs,
         "model_artifacts": model_artifacts,
         "model_details": model_details,
+        "edge_study": edge_study,
+        "option_selection_records": session.scalar(select(func.count()).select_from(OptionSelectionAudit)) or 0,
         "active_broker": settings_dict(session).get("active_broker", "UPSTOX"),
         "default_historical_provider": settings_dict(session).get("default_historical_provider", "UPSTOX"),
     }

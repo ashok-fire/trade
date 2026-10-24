@@ -1,0 +1,33 @@
+{
+  "coverage": {
+    "spot_candles": 73820,
+    "futures_candles": 68133,
+    "option_contracts": 2486,
+    "candidate_setups": 33006,
+    "usable_option_outcomes": 31246,
+    "dropped_spot_days": 5,
+    "dropped_future_days": 3
+  },
+  "samples": 31246,
+  "discovery_samples": 25990,
+  "holdout_samples": 5256,
+  "candidates": [
+    {
+      "filter": "direction=CE & weekday=1",
+      "discovery": {
+        "trades": 82,
+        "win": 53.66,
+        "pf": 1.452,
+        "net": 12727.91,
+        "stress": 12196.58
+      },
+      "2026": {
+        "trades": 16,
+        "win": 37.5,
+        "pf": 1.313,
+        "net": 2962.09,
+        "stress": 2707.88
+      }
+    }
+  ]
+}

@@ -68,9 +68,10 @@ class ExecutionService:
         quote: Quote,
         moneyness: str,
         decision_context: dict | None = None,
+        model_version: str = "unknown",
     ) -> Trade:
         runtime = session.get(RuntimeSetting, 1)
-        if not runtime or runtime.execution_mode not in {"PAPER", "LIVE"} or runtime.entries_paused:
+        if not runtime or runtime.execution_mode not in {"SHADOW", "PAPER", "LIVE"} or runtime.entries_paused:
             raise ExecutionError("Execution is stopped")
         settings = settings_dict(session)
         provider = provider_name(settings.get("active_broker"))
@@ -78,7 +79,7 @@ class ExecutionService:
         signal_id = uuid.uuid5(uuid.NAMESPACE_URL, f"{provider}:{runtime.execution_mode}:{underlying_code}:{candle_time.isoformat()}:{direction}").hex
         if session.get(Signal, signal_id):
             raise ExecutionError("Duplicate signal")
-        signal = Signal(provider=provider, id=signal_id, mode=runtime.execution_mode, underlying_code=underlying_code, candle_timestamp=candle_time, direction=direction, regime=regime, confidence=confidence, selected_instrument=contract.instrument_key, status="VALIDATING", decision_json=json.dumps(decision_context or {}, default=str, sort_keys=True))
+        signal = Signal(provider=provider, id=signal_id, mode=runtime.execution_mode, underlying_code=underlying_code, candle_timestamp=candle_time, direction=direction, regime=regime, confidence=confidence, selected_instrument=contract.instrument_key, status="VALIDATING", decision_json=json.dumps(decision_context or {}, default=str, sort_keys=True), model_version=model_version)
         session.add(signal)
         session.flush()
         limits = limits_from_settings(settings)
@@ -118,7 +119,8 @@ class ExecutionService:
             signal.status, signal.rejection_reason = "REJECTED", plan.reason
             session.commit()
             raise ExecutionError(plan.reason)
-        order = Order(provider=provider, signal_id=signal_id, mode=mode, purpose="ENTRY", tag=f"np{signal_id[:18]}", instrument_key=contract.instrument_key, trading_symbol=contract.trading_symbol, side="BUY", quantity=plan.quantity, requested_price=expected, status="COMPLETE" if mode == "PAPER" else "CREATED", filled_quantity=plan.quantity if mode == "PAPER" else 0, average_price=expected if mode == "PAPER" else None)
+        simulated = mode in {"SHADOW", "PAPER"}
+        order = Order(provider=provider, signal_id=signal_id, mode=mode, purpose="ENTRY", tag=f"np{signal_id[:18]}", instrument_key=contract.instrument_key, trading_symbol=contract.trading_symbol, side="BUY", quantity=plan.quantity, requested_price=expected, status="COMPLETE" if simulated else "CREATED", filled_quantity=plan.quantity if simulated else 0, average_price=expected if simulated else None)
         session.add(order)
         signal.status = "APPROVED"
         session.commit()
@@ -153,7 +155,7 @@ class ExecutionService:
         settings = settings_dict(session)
         provider = provider_name(trade.provider)
         broker = self.trading_brokers[provider]
-        price = paper_fill("SELL", quote.bid, quote.ask, Decimal(settings["paper_slippage_pct"]), trade.tick_size) if trade.mode == "PAPER" else quote.bid
+        price = paper_fill("SELL", quote.bid, quote.ask, Decimal(settings["paper_slippage_pct"]), trade.tick_size) if trade.mode in {"SHADOW", "PAPER"} else quote.bid
         if trade.mode == "LIVE":
             order = Order(provider=provider, signal_id=trade.signal_id, mode="LIVE", purpose="EXIT", tag=f"npx{trade.signal_id[:17]}", instrument_key=trade.instrument_key, trading_symbol=trade.trading_symbol, side="SELL", quantity=trade.quantity, requested_price=quote.bid)
             session.add(order)

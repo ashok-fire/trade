@@ -1,0 +1,7 @@
+{
+  "quality_models": {
+    "CE": "candidate-v6-gated-20261023T154700131303.ce.cbm",
+    "PE": "candidate-v6-gated-20261023T154700131303.pe.cbm"
+  },
+  "ranker": "candidate-v6-gated-20261023T154700131303.ranker.json"
+}

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from decimal import Decimal
 from typing import Awaitable, Callable
 from zoneinfo import ZoneInfo
@@ -9,8 +9,9 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import select
 
 from .domain import Contract
-from .models import Candle, Instrument
-from .providers import BrokerClient, provider_name
+from .data_quality import futures_alignment_gaps
+from .models import Candle, Instrument, ResearchChunk
+from .providers import BrokerClient, RetryableBrokerError, provider_name
 
 
 @dataclass(frozen=True)
@@ -88,6 +89,29 @@ def _has_candles(
         ) is not None
 
 
+def _futures_gap_reasons(session_factory, provider, code, start, end) -> list[str]:
+    with session_factory() as session:
+        rows = session.execute(
+            select(Candle.data_role, Candle.timestamp).where(
+                Candle.provider == provider,
+                Candle.underlying_code == code,
+                Candle.data_role.in_(["SPOT", "FUTURE"]),
+                Candle.timeframe == "5minute",
+                Candle.source_verified.is_(True),
+                Candle.timestamp >= datetime.combine(start, time.min),
+                Candle.timestamp <= datetime.combine(end, time.max),
+            )
+        ).all()
+    gaps = futures_alignment_gaps(
+        [stamp for role, stamp in rows if role == "SPOT"],
+        [stamp for role, stamp in rows if role == "FUTURE"],
+    )
+    return [
+        f"{code}: {len(gaps)} sessions lack 90% aligned futures coverage "
+        f"({gaps[0]} to {gaps[-1]})"
+    ] if gaps else []
+
+
 async def _store_candles(
     client: BrokerClient,
     session_factory,
@@ -101,15 +125,88 @@ async def _store_candles(
     data_role: str = "SPOT",
     minutes: int = 5,
     warnings: list[str] | None = None,
+    incomplete_reasons: list[str] | None = None,
+    refresh_existing: bool = False,
 ) -> int:
     inserted = 0
     rejected = 0
-    for chunk_start, chunk_end in _chunks(start, end):
-        rows = (
-            await client.historical_option_candles(contract, chunk_start, chunk_end, minutes)
-            if contract
-            else await client.historical_candles(instrument_key, chunk_start, chunk_end, minutes)
+
+    def marker(session, chunk_start: date, chunk_end: date) -> ResearchChunk | None:
+        return session.scalar(
+            select(ResearchChunk).where(
+                ResearchChunk.provider == provider,
+                ResearchChunk.instrument_key == instrument_key,
+                ResearchChunk.timeframe == f"{minutes}minute",
+                ResearchChunk.start_date == chunk_start,
+                ResearchChunk.end_date == chunk_end,
+            )
         )
+
+    def save_marker(chunk_start: date, chunk_end: date, status: str, error: str | None = None) -> None:
+        with session_factory() as session:
+            item = marker(session, chunk_start, chunk_end)
+            if item is None:
+                item = ResearchChunk(
+                    provider=provider,
+                    instrument_key=instrument_key,
+                    underlying_code=underlying_code,
+                    data_role=data_role,
+                    timeframe=f"{minutes}minute",
+                    start_date=chunk_start,
+                    end_date=chunk_end,
+                )
+                session.add(item)
+            item.status = status
+            item.attempts = (item.attempts or 0) + 1
+            item.last_error = error[:1000] if error else None
+            session.commit()
+
+    async def sync_chunk(chunk_start: date, chunk_end: date) -> int:
+        nonlocal inserted, rejected
+        with session_factory() as session:
+            checkpoint = marker(session, chunk_start, chunk_end)
+            if checkpoint is not None and checkpoint.status == "COMPLETE" and not refresh_existing:
+                return 0
+            split_known_failure = (
+                checkpoint is not None
+                and checkpoint.status == "FAILED"
+                and chunk_start < chunk_end
+            )
+            # A candle inside a range does not prove that the entire range was
+            # downloaded. Without a completed checkpoint, ask the provider and
+            # deduplicate individual timestamps when storing the response.
+
+        if split_known_failure:
+            span = (chunk_end - chunk_start).days
+            midpoint = chunk_start + timedelta(days=span // 2)
+            return await sync_chunk(chunk_start, midpoint) + await sync_chunk(
+                midpoint + timedelta(days=1), chunk_end
+            )
+
+        try:
+            rows = (
+                await client.historical_option_candles(contract, chunk_start, chunk_end, minutes)
+                if contract
+                else await client.historical_candles(instrument_key, chunk_start, chunk_end, minutes)
+            )
+        except RetryableBrokerError as exc:
+            save_marker(chunk_start, chunk_end, "FAILED", str(exc))
+            if chunk_start < chunk_end:
+                span = (chunk_end - chunk_start).days
+                midpoint = chunk_start + timedelta(days=span // 2)
+                return await sync_chunk(chunk_start, midpoint) + await sync_chunk(
+                    midpoint + timedelta(days=1), chunk_end
+                )
+            message = (
+                f"{provider}: {data_role.lower()} candles unavailable for {instrument_key} "
+                f"on {chunk_start}: {exc}"
+            )
+            if warnings is not None and message not in warnings:
+                warnings.append(message)
+            if incomplete_reasons is not None and message not in incomplete_reasons:
+                incomplete_reasons.append(message)
+            return 0
+
         parsed = []
         for row in rows:
             candle = _parse(row)
@@ -117,8 +214,6 @@ async def _store_candles(
                 rejected += 1
                 continue
             parsed.append(candle)
-        if not parsed:
-            continue
         with session_factory() as session:
             existing = {
                 _naive_utc(value)
@@ -153,7 +248,26 @@ async def _store_candles(
                     )
                 )
                 inserted += 1
+            checkpoint = marker(session, chunk_start, chunk_end)
+            if checkpoint is None:
+                checkpoint = ResearchChunk(
+                    provider=provider,
+                    instrument_key=instrument_key,
+                    underlying_code=underlying_code,
+                    data_role=data_role,
+                    timeframe=f"{minutes}minute",
+                    start_date=chunk_start,
+                    end_date=chunk_end,
+                )
+                session.add(checkpoint)
+            checkpoint.status = "COMPLETE"
+            checkpoint.attempts = (checkpoint.attempts or 0) + 1
+            checkpoint.last_error = None
             session.commit()
+        return len(parsed)
+
+    for chunk_start, chunk_end in _chunks(start, end):
+        await sync_chunk(chunk_start, chunk_end)
     if rejected and warnings is not None:
         warnings.append(
             f"{provider}: skipped {rejected} malformed {data_role.lower()} candles for {instrument_key}"
@@ -233,7 +347,8 @@ async def sync_research_data(
     *,
     include_options: bool,
     include_one_minute: bool = False,
-    progress: Callable[[int, int, str], Awaitable[None]] | None = None,
+    refresh_existing: bool = False,
+    progress: Callable[[float, int, str], Awaitable[None]] | None = None,
 ) -> SyncResult:
     provider = provider_name(client.provider)
     underlying_count = 0
@@ -257,6 +372,8 @@ async def sync_research_data(
             provider=provider,
             data_role="SPOT",
             warnings=warnings,
+            incomplete_reasons=incomplete_reasons,
+            refresh_existing=refresh_existing,
         )
         if include_one_minute:
             underlying_count += await _store_candles(
@@ -270,12 +387,17 @@ async def sync_research_data(
                 data_role="SPOT",
                 minutes=1,
                 warnings=warnings,
+                incomplete_reasons=incomplete_reasons,
+                refresh_existing=refresh_existing,
             )
         completed_steps += 1
         if progress:
             await progress(completed_steps, total_steps, f"{code}: spot history stored")
 
-    expiry_end = min(date.today(), end + timedelta(days=45))
+    # The front contract for the final requested sessions may expire after
+    # both the requested end and today. Discovery is allowed to look ahead;
+    # candle requests below remain capped at the requested historical end.
+    expiry_end = end + timedelta(days=45)
     for code in indices:
         try:
             expiries = await client.historical_expiries(code, start, expiry_end)
@@ -291,6 +413,8 @@ async def sync_research_data(
             except Exception as exc:
                 warnings.append(f"{code}: futures metadata unavailable for {expiry}: {exc}")
                 continue
+            if not contracts:
+                warnings.append(f"{code}: no futures contract listed by {provider} for {expiry}")
             for contract in contracts:
                 candle_end = min(end, contract.expiry)
                 if candle_end < start:
@@ -306,6 +430,8 @@ async def sync_research_data(
                     contract=contract,
                     data_role="FUTURE",
                     warnings=warnings,
+                    incomplete_reasons=incomplete_reasons,
+                    refresh_existing=refresh_existing,
                 )
                 with session_factory() as session:
                     first_candle = session.scalar(
@@ -333,6 +459,17 @@ async def sync_research_data(
             await progress(completed_steps, total_steps, f"{code}: futures history stored")
 
     if not include_options:
+        for code in indices:
+            incomplete_reasons.extend(_futures_gap_reasons(session_factory, provider, code, start, end))
+        incomplete_reasons.extend(
+            reason
+            for code in indices
+            if not _has_candles(session_factory, provider, code, "FUTURE", start, end)
+            for reason in [
+                f"{code}: no verified {provider} futures candles are available for the requested period"
+            ]
+            if reason not in incomplete_reasons
+        )
         return SyncResult(
             underlying_count,
             futures_count,
@@ -340,11 +477,7 @@ async def sync_research_data(
             futures_contract_count,
             0,
             warnings,
-            [
-                f"{code}: no verified {provider} futures candles are available for the requested period"
-                for code in indices
-                if not _has_candles(session_factory, provider, code, "FUTURE", start, end)
-            ],
+            incomplete_reasons,
         )
 
     for code in indices:
@@ -398,7 +531,14 @@ async def sync_research_data(
             warnings.append(warning)
             continue
 
-        for contract in selected.values():
+        selected_contracts = list(selected.values())
+        for contract_index, contract in enumerate(selected_contracts, start=1):
+            if progress:
+                await progress(
+                    completed_steps + (contract_index - 1) / max(len(selected_contracts), 1),
+                    total_steps,
+                    f"{code}: options {contract_index}/{len(selected_contracts)} · {contract.trading_symbol}",
+                )
             candle_end = min(end, contract.expiry)
             if candle_end < start:
                 continue
@@ -413,6 +553,8 @@ async def sync_research_data(
                 contract=contract,
                 data_role="OPTION",
                 warnings=warnings,
+                incomplete_reasons=incomplete_reasons,
+                refresh_existing=refresh_existing,
             )
             option_count += count
             with session_factory() as session:
@@ -436,11 +578,15 @@ async def sync_research_data(
         if progress:
             await progress(completed_steps, total_steps, f"{code}: option history stored")
 
-    if option_count == 0:
+    if option_count == 0 and not any(
+        _has_candles(session_factory, provider, code, "OPTION", start, end)
+        for code in indices
+    ):
         warnings.append(
             f"No verified {provider} historical option candles were stored. The backtest will fail closed instead of manufacturing premiums."
         )
     for code in indices:
+        incomplete_reasons.extend(_futures_gap_reasons(session_factory, provider, code, start, end))
         if not _has_candles(session_factory, provider, code, "FUTURE", start, end):
             incomplete_reasons.append(
                 f"{code}: no verified {provider} futures candles are available for the requested period"

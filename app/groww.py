@@ -6,7 +6,7 @@ import io
 import os
 import re
 import time as monotonic_time
-from datetime import UTC, date, datetime, time
+from datetime import UTC, date, datetime, time, timedelta
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
@@ -15,9 +15,10 @@ from zoneinfo import ZoneInfo
 import httpx
 
 from .domain import BrokerOrder, Contract, Quote
+from .providers import BrokerError, RetryableBrokerError
 
 
-class GrowwError(RuntimeError):
+class GrowwError(BrokerError):
     pass
 
 
@@ -114,12 +115,23 @@ class GrowwClient:
 
     async def _json(self, method: str, path: str, **kwargs) -> dict[str, Any]:
         response: httpx.Response | None = None
+        historical = path.startswith("/v1/historical/")
+        retryable_statuses = {408, 425, 429, 500, 502, 503, 504}
         maximum_retries = (
             self._maximum_rate_limit_retries if path.startswith("/v1/historical/") else 0
         )
         for attempt in range(maximum_retries + 1):
-            response = await self._request(method, path, **kwargs)
-            if response.status_code != 429:
+            try:
+                response = await self._request(method, path, **kwargs)
+            except (httpx.TimeoutException, httpx.TransportError) as exc:
+                if not historical or attempt >= maximum_retries:
+                    error_type = RetryableBrokerError if historical else GrowwError
+                    raise error_type(
+                        f"Groww historical request failed after {attempt + 1} attempts: {exc}"
+                    ) from exc
+                await asyncio.sleep(min(float(2**attempt), 30.0))
+                continue
+            if response.status_code not in retryable_statuses:
                 break
             if attempt >= maximum_retries:
                 break
@@ -135,7 +147,14 @@ class GrowwClient:
         assert response is not None
         if response.is_error:
             detail = self._response_detail(response)
-            raise GrowwError(f"Groww request failed ({response.status_code}){': ' + detail if detail else ''}")
+            error_type = (
+                RetryableBrokerError
+                if historical and response.status_code in retryable_statuses
+                else GrowwError
+            )
+            raise error_type(
+                f"Groww request failed ({response.status_code}){': ' + detail if detail else ''}"
+            )
         payload = response.json()
         if str(payload.get("status", "SUCCESS")).upper() != "SUCCESS":
             raise GrowwError(str(payload.get("message") or payload.get("error") or "Groww request was unsuccessful"))
@@ -471,6 +490,22 @@ class GrowwClient:
             contract = self._historical_contract_from_symbol(key, underlying_code, self._instruments.get(key))
             if contract and contract.option_type == "FUT":
                 result.append(contract)
+        if not result:
+            # Some expired monthly listings omit FUT although the documented
+            # self-describing symbol still has real candles. Probe that symbol
+            # before returning it; an empty or malformed response proves
+            # nothing and must not create a fabricated contract.
+            key = f"{exchange}-{symbol}-{expiry.strftime('%d%b%y')}-FUT"
+            candidate = self._historical_contract_from_symbol(key, underlying_code)
+            probe_end = min(expiry, date.today())
+            rows = await self.historical_candles(key, probe_end - timedelta(days=7), probe_end)
+            has_prices = any(
+                len(row) >= 6
+                and all(self._decimal(value).is_finite() and self._decimal(value) > 0 for value in row[1:5])
+                for row in rows
+            )
+            if candidate is not None and has_prices:
+                result.append(candidate)
         return result
 
     async def historical_option_candles(

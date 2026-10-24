@@ -2,7 +2,7 @@
 {% block title %}Backtests · NiftyPilot{% endblock %}
 {% block heading %}<h1>Historical backtests</h1><p>Follow three simple steps: download data, train the model, then replay option trades</p>{% endblock %}
 {% block content %}
-{% set model_score = model_metadata.get('balanced_accuracy', model_metadata.get('validation_accuracy', 0)) if model_metadata else 0 %}
+{% set shadow_locked = shadow_model_metadata.get('locked_validation', {}) if shadow_model_metadata else {} %}
 
 <section class="research-context">
   <div><span>Execution broker</span><b>{{ active_broker }}</b><small>Used only for Paper and Live</small></div>
@@ -12,15 +12,16 @@
 
 <nav class="workflow-steps" aria-label="Backtest workflow">
   <a href="#download-data"><span>1</span><div><b>Download data</b><small>Spot, futures and options</small></div></a>
-  <a href="#train-model"><span>2</span><div><b>Train model</b><small>One common XGBoost model</small></div></a>
+  <a href="#train-model"><span>2</span><div><b>Train model</b><small>Cost-aware CE/PE quality model</small></div></a>
   <a href="#run-backtest"><span>3</span><div><b>Run backtest</b><small>Replay historical CE/PE trades</small></div></a>
 </nav>
 
 <div class="metrics three simple-readiness">
   <article class="metric">
-    <span>Common model</span>
-    <strong class="mode-text {{ 'positive' if model_ready else 'negative' }}">{{ 'Available' if model_ready else 'Not trained' }}</strong>
-    <small>{% if model_ready %}{{ (model_score * 100)|round(1) }}% balanced validation · {{ model_metadata.version }}{% else %}Complete steps 1 and 2 before model backtests{% endif %}</small>
+    <span>Shadow model</span>
+    <strong class="mode-text {{ 'positive' if shadow_model_ready else 'negative' }}">{{ 'Ready' if shadow_model_ready else 'Not selected' }}</strong>
+    <small>{% if shadow_model_ready %}{{ shadow_model_metadata.version }} · {{ shadow_locked.get('trades',0) }} locked trades · {{ shadow_locked.get('win_rate_pct',0) }}% wins{% else %}Train and select a candidate for Shadow validation{% endif %}</small>
+    <small>Live model: {{ 'activated' if active_model_ready else 'not activated — safety gates not passed' }}</small>
   </article>
   <article class="metric">
     <span>Training candles</span>
@@ -67,13 +68,14 @@
   </section>
 
   <section id="train-model" class="card form-card workflow-card">
-    <div class="step-heading"><span>2</span><div><h2>Train the model</h2><p>Uses aligned spot and futures candles. Options are not needed here.</p></div></div>
+    <div class="step-heading"><span>2</span><div><h2>Train the model</h2><p>V4 learns from the actual net result of historical NIFTY option trades after costs.</p></div></div>
     <form method="post" action="/backtests/train" class="form-stack">
       <input type="hidden" name="historical_provider" value="{{ active_broker }}">
       <div class="selected-source"><span>Train using</span><b>Stored {{ active_broker }} data</b></div>
+      <label>Algorithm<select name="model_type"><option value="V4_OPTION_QUALITY">V6 multi-setup option quality research</option><option value="V3_UNDERLYING">V3 underlying-only comparison</option></select></label>
       <fieldset><legend>Training indices</legend><label class="check"><input type="checkbox" name="indices" value="NIFTY" checked>NIFTY</label><label class="check"><input type="checkbox" name="indices" value="BANK_NIFTY" checked>BANK NIFTY</label><label class="check"><input type="checkbox" name="indices" value="SENSEX" checked>SENSEX</label></fieldset>
       <div class="form-grid"><label>Training from<input type="date" name="start_date" required></label><label>Training to<input type="date" name="end_date" required></label></div>
-      <div class="notice">Training creates a candidate model. Review its validation result below before activating it.</div>
+      <div class="notice">V6 requires verified spot, futures, options and lot sizes. It tests ORB, pullback, failed-breakout and VWAP-reclaim setups with family-specific gates. New candidates remain research-only until they pass locked validation and a genuinely forward paper-shadow period.</div>
       <button class="button primary">Train candidate model</button>
     </form>
   </section>
@@ -86,7 +88,43 @@
 
 <details class="card disclosure-card">
   <summary><span><b>Model history and diagnostics</b><small>Candidate quality, activation and technical details</small></span><em>{{ model_artifacts|length }} models</em></summary>
-  <div class="disclosure-content table-wrap"><table><thead><tr><th>Model</th><th>Training period</th><th>Samples</th><th>Balanced validation</th><th>Predictions ≥70%</th><th>Status</th><th></th></tr></thead><tbody>{% for artifact in model_artifacts %}{% set detail = model_details[artifact.id] %}<tr><td><b>{{ artifact.version }}</b><small>{{ detail.get('feature_schema','') }}</small><details><summary>Technical diagnostics</summary><small><b>Confusion matrix:</b> {{ detail.get('confusion_matrix',[]) }}</small>{% for name,values in detail.get('per_class_metrics',{}).items() %}<small>{{ name }} · precision {{ (values.precision * 100)|round(1) }}% · recall {{ (values.recall * 100)|round(1) }}%</small>{% endfor %}{% for fold in detail.get('walk_forward_validation',[]) %}<small><b>Walk-forward:</b> {{ fold.training_end[:10] }} → {{ fold.validation_end[:10] }} · {{ (fold.balanced_accuracy * 100)|round(1) }}% balanced</small>{% endfor %}<small><b>Feature gain:</b> {{ detail.get('feature_importance',{}) }}</small></details></td><td>{{ detail.get('training_data_provider','') }}<small>{{ detail.get('training_start','') }} → {{ detail.get('training_end','') }}</small></td><td>{{ detail.get('samples',0) }}</td><td>{{ (detail.get('balanced_accuracy',0) * 100)|round(1) }}%</td><td>{{ detail.get('validation_confidence',{}).get('above_70_percent',0) }}%</td><td><span class="status {{ 'green' if artifact.status == 'ACTIVE' else ('blue' if artifact.status == 'CANDIDATE' else 'muted') }}">{{ artifact.status }}</span></td><td>{% if artifact.status != 'ACTIVE' and artifact.status != 'PRUNED' %}<form method="post" action="/backtests/models/{{ artifact.id }}/activate"><button class="button small primary">Activate</button></form>{% endif %}</td></tr>{% else %}<tr><td colspan="7" class="empty-row">No candidate models yet.</td></tr>{% endfor %}</tbody></table></div>
+  <div class="disclosure-content table-wrap">
+    <table>
+      <thead><tr><th>Model</th><th>Training period</th><th>Samples</th><th>Locked validation</th><th>Qualified predictions</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+      {% for artifact in model_artifacts %}
+        {% set detail = model_details[artifact.id] %}
+        {% set locked = detail.get('locked_validation',{}) %}
+        <tr>
+          <td>
+            <b>{{ artifact.version }}</b><small>{{ detail.get('feature_schema','') }}</small>
+            <details><summary>Technical diagnostics</summary>
+              {% if locked %}<small><b>Cost-aware result:</b> {{ locked.get('trades',0) }} trades · {{ locked.get('win_rate_pct',0) }}% wins · PF {{ locked.get('profit_factor','—') }} · net ₹{{ locked.get('net_pnl',0) }} · stress ₹{{ locked.get('double_slippage_net_pnl',0) }}</small>{% endif %}
+              <small><b>Confusion matrix:</b> {{ detail.get('confusion_matrix',[]) }}</small>
+              {% for name,values in detail.get('per_class_metrics',{}).items() %}<small>{{ name }} · precision {{ (values.precision * 100)|round(1) }}% · recall {{ (values.recall * 100)|round(1) }}%</small>{% endfor %}
+              {% for fold in detail.get('walk_forward_validation',[]) %}
+                <small><b>Walk-forward:</b> {{ fold.get('development_end', fold.get('training_end',''))[:10] }} → {{ fold.get('validation_end','')[:10] }} · {% if fold.get('balanced_accuracy') is not none %}{{ (fold.get('balanced_accuracy',0) * 100)|round(1) }}% balanced{% else %}{{ fold.get('trades',0) }} trades · {{ fold.get('win_rate_pct',0) }}% wins · PF {{ fold.get('profit_factor','—') }}{% endif %}</small>
+              {% endfor %}
+              {% for blocker in detail.get('activation_blockers',[]) %}<small><b>Activation blocked:</b> {{ blocker }}</small>{% endfor %}
+              <small><b>Feature gain:</b> {{ detail.get('feature_importance',{}) }}</small>
+            </details>
+          </td>
+          <td>{{ detail.get('training_data_provider','') }}<small>{{ detail.get('training_start','') }} → {{ detail.get('training_end','') }}</small></td>
+          <td>{{ detail.get('samples',0) }}</td>
+          <td>{% if locked %}{{ locked.get('win_rate_pct',0) }}% wins<small>{{ locked.get('trades',0) }} trades · PF {{ locked.get('profit_factor','—') }}</small>{% else %}{{ (detail.get('balanced_accuracy',0) * 100)|round(1) }}%{% endif %}</td>
+          <td>{{ detail.get('validation_confidence',{}).get('above_decision_threshold_percent', detail.get('validation_confidence',{}).get('above_70_percent',0)) }}%<small>threshold {{ detail.get('decision_threshold',0.70) }}</small></td>
+          <td><span class="status {{ 'green' if artifact.status == 'ACTIVE' else ('blue' if artifact.status in ['CANDIDATE','SHADOW'] else 'muted') }}">{{ artifact.status }}</span></td>
+          <td>
+            {% if artifact.status in ['CANDIDATE','SHADOW'] %}<form method="post" action="/backtests/models/{{ artifact.id }}/shadow"><button class="button small secondary" {{ 'disabled' if artifact.status == 'SHADOW' }}>{{ 'Shadow selected' if artifact.status == 'SHADOW' else 'Use in Shadow' }}</button></form>{% endif %}
+            {% if artifact.status not in ['ACTIVE','PRUNED'] and detail.get('activation_eligible',False) %}<form method="post" action="/backtests/models/{{ artifact.id }}/activate"><button class="button small primary">Activate</button></form>{% endif %}
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="7" class="empty-row">No candidate models yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </details>
 
 <div id="run-backtest" class="grid-form backtest-run-area">
@@ -96,7 +134,7 @@
       <fieldset><legend>Indices</legend><label class="check"><input type="checkbox" name="indices" value="NIFTY" checked>NIFTY 50</label><label class="check"><input type="checkbox" name="indices" value="BANK_NIFTY" checked>BANK NIFTY</label><label class="check"><input type="checkbox" name="indices" value="SENSEX" checked>SENSEX</label></fieldset>
       <div class="form-grid">
         <label>Backtest from<input type="date" name="start_date" required></label><label>Backtest to<input type="date" name="end_date" required></label>
-        <label>Strategy<select name="strategy_mode"><option value="MODEL">Active XGBoost model</option><option value="RULE_ONLY">Rule-only comparison</option></select></label>
+        <label>Strategy<select name="strategy_mode"><option value="MODEL">Active validated model</option><option value="RULE_ONLY">Rule-only comparison</option></select></label>
         <label>Strike selection<select name="strike_policy"><option value="ATM_ITM1">ATM, then ITM1 fallback</option><option value="ATM_ONLY">ATM only</option></select></label>
         <label>Starting capital<input type="number" name="capital" value="500000" min="10000" step="1000"></label>
       </div>
@@ -115,6 +153,22 @@
   </section>
   <section class="card"><div class="card-head"><h2>Recent runs</h2><span>One at a time</span></div><div class="run-list">{% for run in runs %}<a href="/backtests?run_id={{ run.id }}#backtest-result" class="run-item {{ 'active' if selected and selected.id == run.id }}"><div><b>#{{ run.id }} · {{ run.start_date }} to {{ run.end_date }}</b><small>{{ run_details[run.id].get('historical_provider', 'UPSTOX') }} data · {{ run_details[run.id].get('cost_model', 'UPSTOX') }} costs</small></div><span class="status {{ 'green' if run.status == 'COMPLETE' else ('red' if run.status == 'FAILED' else 'amber') }}">{{ run.status }}</span></a>{% else %}<div class="empty-state compact"><p>No backtests have been submitted.</p></div>{% endfor %}</div></section>
 </div>
+
+{% if edge_study %}
+{% set research_candidate = edge_study.get('selected_on_tuning') or {} %}
+{% set research_result = research_candidate.get('historical_evaluation', {}) %}
+<section class="card">
+  <div class="card-head"><h2>Latest research validation</h2><span class="status amber">RESEARCH ONLY</span></div>
+  <p>Option expiry and ATM/ITM1 ordering are shared across research and runtime. Historical candles cannot reproduce every live quote check. This study has not produced an approved replacement model.</p>
+  <dl class="details">
+    <dt>Eligible setup observations</dt><dd>{{ edge_study.get('samples', 0) }} across {{ edge_study.get('distinct_days', 0) }} days; repeated observations are not independent trades</dd>
+    <dt>Candidate selected on tuning</dt><dd>{{ research_candidate.get('setup', 'None') }} · {{ research_candidate.get('regime', '') }}</dd>
+    <dt>Later historical result</dt><dd>{{ research_result.get('trades', 0) }} trades · {{ research_result.get('win_rate_pct', 0) }}% wins · PF {{ research_result.get('profit_factor', '—') }}</dd>
+    <dt>Recorded option-selection decisions</dt><dd>{{ option_selection_records }}{% if not option_selection_records %} · waiting for eligible market-session setups{% endif %}</dd>
+  </dl>
+  <p class="hint">Spread, quote freshness, delta, volume and OI snapshots are recorded during future setup checks so their decisions can be replayed. A trained candidate still requires later validation before promotion.</p>
+</section>
+{% endif %}
 
 <details class="card disclosure-card">
   <summary><span><b>Advanced data diagnostics</b><small>All providers, missing bars and historical contract metadata</small></span><em>For troubleshooting</em></summary>

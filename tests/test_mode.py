@@ -55,6 +55,34 @@ async def test_paper_requires_analytics_but_not_trading_token(session):
 
 
 @pytest.mark.asyncio
+async def test_shadow_requires_selected_model_and_never_checks_trading_token(session):
+    class TradingMustNotBeChecked(FakeUpstox):
+        async def health(self):
+            raise AssertionError("Shadow mode checked the trading token")
+
+    ok, message = await change_mode(
+        session,
+        FakeUpstox(),
+        TradingMustNotBeChecked(),
+        "SHADOW",
+        shadow_model_available=False,
+    )
+    assert not ok and "candidate" in message
+
+    ok, message = await change_mode(
+        session,
+        FakeUpstox(),
+        TradingMustNotBeChecked(),
+        "SHADOW",
+        shadow_model_available=True,
+    )
+    assert ok, message
+    runtime = session.get(RuntimeSetting, 1)
+    assert runtime.execution_mode == "SHADOW"
+    assert not runtime.entries_paused
+
+
+@pytest.mark.asyncio
 async def test_live_safety_gate_blocks_unready_model_and_paper_soak(session):
     ok, message = await change_mode(
         session,

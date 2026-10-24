@@ -14,9 +14,16 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from .models import BacktestRun, BacktestTrade, Candle, Instrument
+from .option_selector import option_candidates
 from .risk import RiskLimits, can_enter, option_charges, position_size
 from .strategy import RegimeModel, decide, rule_only_decide, with_futures_features
 from .training import front_future_frame
+from .v4_training import option_quality_context
+
+
+def _utc_datetime(value: datetime) -> datetime:
+    """Normalize database timestamps before chronological comparisons."""
+    return value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)
 
 
 def metrics(rows: list[dict], capital: Decimal) -> dict:
@@ -50,18 +57,7 @@ def metrics(rows: list[dict], capital: Decimal) -> dict:
 
 def _historical_contract(session: Session, provider: str, code: str, direction: str, day: date, spot: Decimal, policy: str = "ATM_ITM1") -> list[tuple[Instrument, str]]:
     available = session.scalars(select(Instrument).where(Instrument.provider == provider, Instrument.underlying_code == code, Instrument.instrument_kind == "OPTION", Instrument.option_type == direction, Instrument.metadata_verified.is_(True), Instrument.lot_size > 0, Instrument.expiry > day, Instrument.valid_from <= day, (Instrument.valid_to.is_(None) | (Instrument.valid_to >= day))).order_by(Instrument.expiry, Instrument.strike)).all()
-    if not available:
-        return []
-    expiry = min(item.expiry for item in available)
-    chain = [item for item in available if item.expiry == expiry]
-    strikes = sorted({item.strike for item in chain})
-    atm = min(strikes, key=lambda strike: abs(strike - spot))
-    position = strikes.index(atm)
-    itm = strikes[max(0, position - 1)] if direction == "CE" else strikes[min(len(strikes) - 1, position + 1)]
-    result = [(next(item for item in chain if item.strike == atm), "ATM")]
-    if policy == "ATM_ITM1" and itm != atm:
-        result.append((next(item for item in chain if item.strike == itm), "ITM1"))
-    return result
+    return option_candidates(available, spot=spot, direction=direction, trading_day=day, policy=policy)
 
 
 def _intrabar_underlying_outcome(
@@ -138,42 +134,140 @@ def run_backtest_job(db_url: str, run_id: int, model_path: str) -> None:
                     pd.DataFrame([{"timestamp": item.timestamp, "open": float(item.open), "high": float(item.high), "low": float(item.low), "close": float(item.close), "volume": item.volume} for item in candles]),
                     futures_frame,
                 )
+                spot_context_by_time = {
+                    _utc_datetime(item.timestamp): item for item in candles
+                }
+                option_feature_cache: dict[tuple[str, datetime], dict[str, float] | None] = {}
                 for index in range(50, len(frame)):
                     row = frame.iloc[index]
                     stamp = pd.Timestamp(row.timestamp).to_pydatetime().astimezone(UTC)
-                    source = candles[index]
+                    source = spot_context_by_time.get(stamp)
+                    if source is None:
+                        continue
+                    market_context = {"india_vix": source.india_vix, "futures_basis_pct": source.futures_basis_pct, "pcr": source.pcr}
+                    quality_instrument_key = None
                     decision = (
-                        decide(row, {"india_vix": source.india_vix, "futures_basis_pct": source.futures_basis_pct, "pcr": source.pcr}, model)
+                        decide(row, market_context, model)
                         if strategy_mode == "MODEL"
                         else rule_only_decide(row)
                     )
+                    if (
+                        strategy_mode == "MODEL"
+                        and model is not None
+                        and model.requires_option_context
+                        and decision.direction != "NO_TRADE"
+                    ):
+                        local_day = stamp.astimezone(ZoneInfo("Asia/Kolkata")).date()
+                        choices = _historical_contract(
+                            session,
+                            provider,
+                            code,
+                            decision.direction,
+                            local_day,
+                            Decimal(str(row.close)),
+                            strike_policy,
+                        )
+                        quality_context = None
+                        for instrument, _moneyness in choices:
+                            cache_key = (instrument.instrument_key, stamp)
+                            if cache_key not in option_feature_cache:
+                                option_candle = session.scalar(
+                                    select(Candle).where(
+                                        Candle.provider == provider,
+                                        Candle.instrument_key == instrument.instrument_key,
+                                        Candle.data_role == "OPTION",
+                                        Candle.timeframe == "5minute",
+                                        Candle.timestamp == stamp,
+                                        Candle.source_verified.is_(True),
+                                    )
+                                )
+                                option_feature_cache[cache_key] = (
+                                    option_quality_context(
+                                        premium=float(option_candle.close),
+                                        volume=option_candle.volume,
+                                        open_interest=option_candle.open_interest,
+                                        expiry=instrument.expiry,
+                                        strike=instrument.strike,
+                                        spot=float(row.close),
+                                        trading_day=local_day,
+                                    )
+                                    if option_candle is not None and option_candle.close > 0 and option_candle.volume > 0
+                                    else None
+                                )
+                            quality_context = option_feature_cache[cache_key]
+                            if quality_context is not None:
+                                quality_instrument_key = instrument.instrument_key
+                                break
+                        if quality_context is None:
+                            continue
+                        decision = decide(row, {**market_context, **quality_context}, model)
                     if decision.direction != "NO_TRADE":
-                        events.append({"time": stamp, "code": code, "decision": decision, "row": row})
+                        events.append({"time": stamp, "code": code, "decision": decision, "row": row, "quality_instrument_key": quality_instrument_key})
                 run.progress_percent = 5 + int((code_index + 1) / len(config["indices"]) * 30)
                 session.commit()
             events.sort(key=lambda item: (-item["decision"].confidence, item["code"]))
             events.sort(key=lambda item: item["time"])
             capital = Decimal(str(config["capital"]))
-            limits = RiskLimits(capital, Decimal(str(config["risk_pct"])), Decimal("0.75"), 5, 2, 1, 1, Decimal("25"), Decimal("1.5"))
+            daily_trade_limit = int(model.metadata.get("daily_trade_limit", 5)) if model else 5
+            limits = RiskLimits(capital, Decimal(str(config["risk_pct"])), Decimal("0.75"), daily_trade_limit, 2, 1, 1, Decimal("25"), Decimal("1.5"))
             recorded: list[dict] = []
             position_until: datetime | None = None
             daily: dict[date, dict[str, int | Decimal]] = {}
-            consecutive_losses = 0
+            replay_counts = {
+                "signal_events": len(events),
+                "overlapping_position": 0,
+                "after_square_off": 0,
+                "risk_rejected": 0,
+                "eligible_entry_attempts": 0,
+                "option_entry_unavailable": 0,
+                "position_size_rejected": 0,
+            }
             for event in events:
-                if position_until and event["time"] <= position_until: continue
+                if position_until and event["time"] <= position_until:
+                    replay_counts["overlapping_position"] += 1
+                    continue
                 row, decision = event["row"], event["decision"]
                 local_day = event["time"].astimezone(ZoneInfo("Asia/Kolkata")).date()
-                day_state = daily.setdefault(local_day, {"trades": 0, "pnl": Decimal("0")})
-                permitted, _ = can_enter(limits=limits, open_positions=0, trades_today=int(day_state["trades"]), consecutive_losses=consecutive_losses, realized_pnl_today=Decimal(day_state["pnl"]), quote_fresh=True, broker_connected=True, reconciled=True)
-                if not permitted:
+                entry_cutoff = datetime.combine(
+                    local_day, time(15, 10), tzinfo=ZoneInfo("Asia/Kolkata")
+                ).astimezone(UTC)
+                square_off = datetime.combine(
+                    local_day, time(15, 20), tzinfo=ZoneInfo("Asia/Kolkata")
+                ).astimezone(UTC)
+                if event["time"] + timedelta(minutes=5) >= entry_cutoff:
+                    replay_counts["after_square_off"] += 1
                     continue
-                cutoff = datetime.combine(local_day, time(15, 20), tzinfo=ZoneInfo("Asia/Kolkata")).astimezone(UTC)
+                day_state = daily.setdefault(
+                    local_day,
+                    {"trades": 0, "pnl": Decimal("0"), "consecutive_losses": 0},
+                )
+                permitted, _ = can_enter(
+                    limits=limits,
+                    open_positions=0,
+                    trades_today=int(day_state["trades"]),
+                    consecutive_losses=int(day_state["consecutive_losses"]),
+                    realized_pnl_today=Decimal(day_state["pnl"]),
+                    quote_fresh=True,
+                    broker_connected=True,
+                    reconciled=True,
+                )
+                if not permitted:
+                    replay_counts["risk_rejected"] += 1
+                    continue
+                replay_counts["eligible_entry_attempts"] += 1
                 contract_choices = _historical_contract(session, provider, event["code"], decision.direction, local_day, Decimal(str(row.close)), strike_policy)
+                if event.get("quality_instrument_key"):
+                    # Execute only the contract that the model actually scored.
+                    # Missing exit history cannot justify a different strike.
+                    contract_choices = [(item, label) for item, label in contract_choices if item.instrument_key == event["quality_instrument_key"]]
                 chosen = None
                 for instrument, moneyness in contract_choices:
-                    bars = session.scalars(select(Candle).where(Candle.provider == provider, Candle.instrument_key == instrument.instrument_key, Candle.data_role == "OPTION", Candle.timeframe == "5minute", Candle.timestamp > event["time"], Candle.timestamp <= cutoff, Candle.source_verified.is_(True)).order_by(Candle.timestamp)).all()
+                    bars = session.scalars(select(Candle).where(Candle.provider == provider, Candle.instrument_key == instrument.instrument_key, Candle.data_role == "OPTION", Candle.timeframe == "5minute", Candle.timestamp > event["time"], Candle.timestamp <= square_off, Candle.source_verified.is_(True)).order_by(Candle.timestamp)).all()
                     if len(bars) >= entry_delay_bars:
                         bars = bars[entry_delay_bars - 1 :]
+                        if _utc_datetime(bars[0].timestamp) != event["time"] + timedelta(minutes=5 * entry_delay_bars):
+                            warnings.add("Option entry rejected because the exact entry candle was missing")
+                            continue
                         if bars[0].volume < minimum_option_volume:
                             warnings.add(f"{event['code']}: option entry rejected below minimum volume")
                             continue
@@ -187,6 +281,7 @@ def run_backtest_job(db_url: str, run_id: int, model_path: str) -> None:
                         chosen = instrument, moneyness, bars, has_bid_ask
                         break
                 if not chosen:
+                    replay_counts["option_entry_unavailable"] += 1
                     warnings.add(f"{event['code']}: verified option candles unavailable for some signals")
                     continue
                 instrument, moneyness, bars, has_bid_ask = chosen
@@ -201,7 +296,9 @@ def run_backtest_job(db_url: str, run_id: int, model_path: str) -> None:
                 if not has_bid_ask:
                     warnings.add("Real option OHLC was used because historical bid/ask was unavailable; configured slippage was applied on both sides")
                 plan = position_size(entry, instrument.lot_size, limits, "BACKTEST")
-                if not plan.allowed: continue
+                if not plan.allowed:
+                    replay_counts["position_size_rejected"] += 1
+                    continue
                 underlying_risk = Decimal(str(row.atr))
                 underlying_stop = Decimal(str(row.close)) - underlying_risk if decision.direction == "CE" else Decimal(str(row.close)) + underlying_risk
                 underlying_target = Decimal(str(row.close)) + underlying_risk * limits.reward_risk if decision.direction == "CE" else Decimal(str(row.close)) - underlying_risk * limits.reward_risk
@@ -222,9 +319,23 @@ def run_backtest_job(db_url: str, run_id: int, model_path: str) -> None:
                 ).all()
                 underlying_by_time = {bar.timestamp.replace(tzinfo=UTC) if bar.timestamp.tzinfo is None else bar.timestamp.astimezone(UTC): bar for bar in underlying_bars}
                 resolution_timeframe = "5minute"
-                for bar in bars[1:]:
+                expected_time = _utc_datetime(bars[0].timestamp)
+                path_valid = True
+                for bar in bars:
                     bar_time = bar.timestamp.replace(tzinfo=UTC) if bar.timestamp.tzinfo is None else bar.timestamp.astimezone(UTC)
+                    if bar_time != expected_time:
+                        path_valid = False
+                        break
+                    expected_time += timedelta(minutes=5)
+                    if bar_time >= square_off:
+                        exit_bar, exit_reason = bar, "TIME_EXIT"
+                        exit_base = Decimal(bar.bid) if has_bid_ask else Decimal(bar.open)
+                        exit_price = exit_base * (1 - slip)
+                        break
                     underlying = underlying_by_time.get(bar_time)
+                    if underlying is None:
+                        path_valid = False
+                        break
                     premium_stop_hit = Decimal(bar.low) <= plan.premium_stop
                     stop_hit = underlying and ((decision.direction == "CE" and underlying.low <= underlying_stop) or (decision.direction == "PE" and underlying.high >= underlying_stop))
                     target_hit = underlying and ((decision.direction == "CE" and underlying.high >= underlying_target) or (decision.direction == "PE" and underlying.low <= underlying_target))
@@ -247,6 +358,9 @@ def run_backtest_job(db_url: str, run_id: int, model_path: str) -> None:
                         exit_base = Decimal(bar.bid) if has_bid_ask else Decimal(bar.close)
                         exit_price = exit_base * (1 - slip)
                         break
+                if not path_valid or (exit_reason == "TIME_EXIT" and _utc_datetime(exit_bar.timestamp) != square_off):
+                    warnings.add("Option outcome rejected because the observed exit path was incomplete")
+                    continue
                 gross = (exit_price - entry) * plan.quantity
                 charges = option_charges(
                     entry, exit_price, plan.quantity, cost_model, local_day, instrument.exchange
@@ -266,12 +380,21 @@ def run_backtest_job(db_url: str, run_id: int, model_path: str) -> None:
                 recorded.append({"exit_time": exit_bar.timestamp, "underlying_code": event["code"], "option_type": decision.direction, "moneyness": moneyness, "net_pnl": net, "stress_net_pnl": stress_net, "exit_reason": exit_reason})
                 day_state["trades"] = int(day_state["trades"]) + 1
                 day_state["pnl"] = Decimal(day_state["pnl"]) + net
-                consecutive_losses = consecutive_losses + 1 if net < 0 else 0
-                position_until = exit_bar.timestamp
+                day_state["consecutive_losses"] = (
+                    int(day_state["consecutive_losses"]) + 1 if net < 0 else 0
+                )
+                position_until = _utc_datetime(exit_bar.timestamp)
                 if events:
                     run.progress_percent = min(95, 35 + int(len(recorded) / len(events) * 60))
                     session.commit()
             summary = metrics(recorded, capital)
+            replay_counts["executed_trades"] = len(recorded)
+            attempts = replay_counts["eligible_entry_attempts"]
+            replay_counts["option_entry_coverage_pct"] = round(
+                (attempts - replay_counts["option_entry_unavailable"]) / attempts * 100,
+                2,
+            ) if attempts else 100.0
+            summary["replay_diagnostics"] = replay_counts
             summary["double_slippage_net_pnl"] = float(sum((row["stress_net_pnl"] for row in recorded), Decimal("0")))
             run.summary_json = json.dumps(summary)
             run.warnings_json = json.dumps(sorted(warnings))

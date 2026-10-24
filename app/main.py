@@ -22,7 +22,7 @@ from .config import config
 from .dashboard import backtests_context, dashboard_context, orders_context, system_context, telegram_context
 from .database import SessionLocal, database_health, get_session, init_db, settings_dict
 from .groww import GrowwClient
-from .model_registry import activate_candidate, register_candidate
+from .model_registry import activate_candidate, register_candidate, select_shadow_candidate
 from .mode_control import change_mode, reconcile
 from .models import BacktestRun, BacktestTrade, Candle, Instrument, Order, ResearchSyncRun, RuntimeSetting, Setting, SystemEvent, Trade
 from .providers import provider_name
@@ -30,7 +30,9 @@ from .operations import backup_status, file_permission_status
 from .research_jobs import ResearchJobService
 from .runtime import RuntimeService
 from .telegram import TelegramWorker, enqueue
+from .time_utils import format_ist
 from .training import load_model_metadata, train_regime_model
+from .v4_training import train_option_quality_model
 from .upstox import UpstoxClient
 
 templates = Jinja2Templates(directory=str(config.root / "templates"))
@@ -43,6 +45,15 @@ def money(value) -> str:
 
 
 templates.env.filters["money"] = money
+templates.env.filters["ist_datetime"] = format_ist
+
+
+def render_template_value(value):
+    """Render unformatted database timestamps consistently in IST."""
+    return format_ist(value) if isinstance(value, datetime) else value
+
+
+templates.env.finalize = render_template_value
 market_upstox = UpstoxClient(config.upstox_analytics_token_file, credential_name="Upstox Analytics")
 trading_upstox = UpstoxClient(config.upstox_trading_token_file, credential_name="Upstox Trading")
 groww = GrowwClient(config.groww_token_file)
@@ -57,6 +68,7 @@ research_service = ResearchJobService(market_brokers, SessionLocal)
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     init_db()
+    runtime_service.reload_shadow_model()
     tasks: list[asyncio.Task] = []
     with SessionLocal() as session:
         for interrupted in session.query(ResearchSyncRun).filter(ResearchSyncRun.status.in_(["QUEUED", "RUNNING"])):
@@ -171,6 +183,7 @@ async def set_mode(target: str = Form(...), confirmation: str = Form(""), sessio
         target,
         confirmation,
         model_available=runtime_service.model.available,
+        shadow_model_available=runtime_service.shadow_model.available,
         paper_sessions=int(paper_sessions),
         required_paper_sessions=int(app_settings.get("required_paper_sessions", "20")),
         enforce_paper_sessions=app_settings.get("enforce_paper_session_requirement", "true") == "true",
@@ -279,6 +292,7 @@ async def sync_backtest_data(
     historical_provider: str = Form("UPSTOX"),
     include_options: bool = Form(False),
     include_one_minute: bool = Form(False),
+    refresh_existing: bool = Form(False),
     session: Session = Depends(get_session),
 ):
     allowed = {"NIFTY", "BANK_NIFTY", "SENSEX"}
@@ -303,6 +317,7 @@ async def sync_backtest_data(
                 "end_date": end_date.isoformat(),
                 "include_options": include_options,
                 "include_one_minute": include_one_minute,
+                "refresh_existing": refresh_existing,
             }
         ),
     )
@@ -397,17 +412,19 @@ async def train_model(
     start_date: date = Form(...),
     end_date: date = Form(...),
     historical_provider: str = Form("UPSTOX"),
+    model_type: str = Form("V4_OPTION_QUALITY"),
     session: Session = Depends(get_session),
 ):
     allowed = {"NIFTY", "BANK_NIFTY", "SENSEX"}
     selected = [item for item in indices if item in allowed]
     historical_provider = provider_name(settings_dict(session).get("active_broker"))
-    if historical_provider not in {"UPSTOX", "GROWW"} or not selected or start_date >= end_date or end_date > date.today():
+    if historical_provider not in {"UPSTOX", "GROWW"} or model_type not in {"V4_OPTION_QUALITY", "V3_UNDERLYING"} or not selected or start_date >= end_date or end_date > date.today():
         return flash_redirect("/backtests", "Please check the training inputs", False)
     try:
         candidate_path = config.model_path.parent / "candidates" / f"candidate-{datetime.now().strftime('%Y%m%dT%H%M%S%f')}.json"
+        trainer = train_option_quality_model if model_type == "V4_OPTION_QUALITY" else train_regime_model
         metadata = await asyncio.to_thread(
-            train_regime_model,
+            trainer,
             config.database_url,
             candidate_path,
             selected,
@@ -421,7 +438,7 @@ async def train_model(
             f"Candidate #{artifact.id} trained on {metadata['samples']} samples; review validation results and activate it explicitly.",
         )
     except ModuleNotFoundError:
-        return flash_redirect("/backtests", "XGBoost is not installed. Run: pip install -r requirements.txt", False)
+        return flash_redirect("/backtests", "Model dependencies are not installed. Run: pip install -r requirements.txt", False)
     except Exception as exc:
         return flash_redirect("/backtests", f"Model training failed: {exc}", False)
 
@@ -436,9 +453,30 @@ def activate_model(artifact_id: int, session: Session = Depends(get_session)):
     try:
         artifact = activate_candidate(session, artifact_id, config.model_path)
         runtime_service.reload_model()
+        runtime_service.reload_shadow_model()
     except Exception as exc:
         return flash_redirect("/backtests", f"Model activation failed: {exc}", False)
     return flash_redirect("/backtests", f"Model {artifact.version} is now active")
+
+
+@app.post("/backtests/models/{artifact_id}/shadow")
+def select_shadow_model(artifact_id: int, session: Session = Depends(get_session)):
+    runtime = session.get(RuntimeSetting, 1)
+    if runtime and runtime.execution_mode != "STOPPED":
+        return flash_redirect("/backtests", "Stop execution before changing the Shadow model", False)
+    if session.scalar(select(Trade.id).where(Trade.mode == "SHADOW", Trade.status == "OPEN").limit(1)):
+        return flash_redirect("/backtests", "Close the open Shadow position before changing its model", False)
+    if session.scalar(select(BacktestRun.id).where(BacktestRun.status.in_(["QUEUED", "RUNNING"])).limit(1)):
+        return flash_redirect("/backtests", "Wait for queued backtests to finish before changing the Shadow model", False)
+    try:
+        artifact = select_shadow_candidate(session, artifact_id)
+        runtime_service.reload_shadow_model()
+    except Exception as exc:
+        return flash_redirect("/backtests", f"Shadow selection failed: {exc}", False)
+    return flash_redirect(
+        "/backtests",
+        f"Model {artifact.version} selected for no-broker Shadow validation; execution remains stopped",
+    )
 
 
 @app.get("/backtests/{run_id}/status", response_class=HTMLResponse)
@@ -524,6 +562,8 @@ async def settings_page(request: Request, message: str = "", ok: bool = True, se
         "active_market_ok": analytics_ok if active_broker == "UPSTOX" else groww_ok,
         "active_trading_ok": trading_ok if active_broker == "UPSTOX" else groww_ok,
         "model_metadata": load_model_metadata(config.model_path),
+        "active_model_metadata": load_model_metadata(config.model_path),
+        "shadow_model_metadata": runtime_service.shadow_model.metadata if runtime_service.shadow_model.available else {},
         "backup": backup_status(config.root),
         "permissions_ok": permissions_ok,
         "permissions_detail": permissions_detail,
@@ -708,6 +748,7 @@ def health(session: Session = Depends(get_session)):
     provider, market_broker, trading_broker = selected_brokers(session)
     db_ok, db_detail = database_health(session)
     model_ok = runtime_service.model.available
+    shadow_model_ok = runtime_service.shadow_model.available
     last_tick_age = None
     if runtime_service.last_tick:
         tick = runtime_service.last_tick.replace(tzinfo=UTC) if runtime_service.last_tick.tzinfo is None else runtime_service.last_tick.astimezone(UTC)
@@ -716,7 +757,8 @@ def health(session: Session = Depends(get_session)):
     permissions_ok, permissions_detail = file_permission_status(
         [config.upstox_analytics_token_file, config.upstox_trading_token_file, config.groww_token_file]
     )
-    healthy = db_ok and model_ok and permissions_ok and runtime_service.last_error is None
+    effective_model_ok = shadow_model_ok if runtime.execution_mode == "SHADOW" else model_ok
+    healthy = db_ok and effective_model_ok and permissions_ok and runtime_service.last_error is None
     return {
         "status": "ok" if healthy else "degraded",
         "mode": runtime.execution_mode,
@@ -724,6 +766,11 @@ def health(session: Session = Depends(get_session)):
         "active_broker": provider,
         "database": {"ok": db_ok, "detail": db_detail},
         "model": {"ok": model_ok, "version": runtime_service.model.metadata.get("version")},
+        "shadow_model": {
+            "ok": shadow_model_ok,
+            "version": runtime_service.shadow_model.metadata.get("version"),
+            "artifact_id": runtime_service.shadow_artifact_id,
+        },
         "market_data": {"last_tick": runtime_service.last_tick, "age_seconds": last_tick_age},
         "backup": backup,
         "secret_permissions": {"ok": permissions_ok, "detail": permissions_detail},

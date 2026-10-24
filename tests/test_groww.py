@@ -15,6 +15,39 @@ def _client(tmp_path, handler):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("candles,expected", [
+    ([["2026-09-25T09:15:00", 100, 102, 99, 101, 1000, 0]], 1),
+    ([], 0),
+    ([["2026-09-25T09:15:00", "--", "--", "--", "--", 0, 0]], 0),
+])
+async def test_missing_future_listing_requires_real_candle_evidence(tmp_path, monkeypatch, candles, expected):
+    client = _client(tmp_path, lambda request: httpx.Response(200))
+
+    async def load():
+        return None
+
+    async def request(_method, _path, **_kwargs):
+        return {"payload": {"contracts": ["NSE-NIFTY-29Sep26-24000-CE"]}}
+
+    async def history(key, start, end):
+        assert key == "NSE-NIFTY-29Sep26-FUT"
+        assert (end - start).days <= 7
+        return candles
+
+    monkeypatch.setattr(client, "_load_instruments", load)
+    monkeypatch.setattr(client, "_json", request)
+    monkeypatch.setattr(client, "historical_candles", history)
+    try:
+        contracts = await client.historical_future_contracts("NIFTY", date(2026, 9, 29))
+        assert len(contracts) == expected
+        if contracts:
+            assert contracts[0].lot_size == 0
+            assert not contracts[0].metadata_verified
+    finally:
+        await client.client.aclose()
+
+
+@pytest.mark.asyncio
 async def test_groww_index_quote_uses_official_live_quote_shape(tmp_path):
     requested = []
 
@@ -154,6 +187,42 @@ async def test_groww_historical_request_retries_rate_limit(tmp_path):
                 429,
                 headers={"Retry-After": "0"},
                 json={"code": "429", "message": "Rate limit has breached"},
+            )
+        return httpx.Response(
+            200,
+            json={
+                "status": "SUCCESS",
+                "payload": {
+                    "candles": [["2026-09-01T09:15:00", 100, 102, 99, 101, 1000, 0]]
+                },
+            },
+        )
+
+    client = _client(tmp_path, handler)
+    client._historical_min_interval_seconds = 0
+    try:
+        rows = await client.historical_candles(
+            client.index_key("NIFTY"), date(2026, 9, 1), date(2026, 9, 1)
+        )
+        assert attempts == 2
+        assert rows[0][4] == 101
+    finally:
+        await client.client.aclose()
+
+
+@pytest.mark.asyncio
+async def test_groww_historical_request_retries_server_timeout(tmp_path):
+    attempts = 0
+
+    def handler(request: httpx.Request):
+        nonlocal attempts
+        assert request.url.path == "/v1/historical/candles"
+        attempts += 1
+        if attempts == 1:
+            return httpx.Response(
+                500,
+                headers={"Retry-After": "0"},
+                json={"code": "GA000", "message": "timeout executing request"},
             )
         return httpx.Response(
             200,

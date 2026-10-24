@@ -1,0 +1,322 @@
+[
+  {
+    "reward_risk": "0.50",
+    "samples": 877,
+    "discovery": {
+      "trades": 596,
+      "win_rate_pct": 47.65,
+      "profit_factor": 0.794,
+      "net_pnl": -40644.17,
+      "stress_net_pnl": -44491.51,
+      "active_months": 36,
+      "positive_months": 14
+    },
+    "research_2026": {
+      "trades": 130,
+      "win_rate_pct": 51.54,
+      "profit_factor": 0.762,
+      "net_pnl": -13232.11,
+      "stress_net_pnl": -14710.16,
+      "active_months": 8,
+      "positive_months": 2
+    },
+    "by_direction": {
+      "CE": {
+        "discovery": {
+          "trades": 358,
+          "win_rate_pct": 49.72,
+          "profit_factor": 0.848,
+          "net_pnl": -16251.9,
+          "stress_net_pnl": -18660.23,
+          "active_months": 36,
+          "positive_months": 17
+        },
+        "research_2026": {
+          "trades": 80,
+          "win_rate_pct": 52.5,
+          "profit_factor": 0.967,
+          "net_pnl": -993.1,
+          "stress_net_pnl": -1904.97,
+          "active_months": 8,
+          "positive_months": 5
+        }
+      },
+      "PE": {
+        "discovery": {
+          "trades": 354,
+          "win_rate_pct": 45.2,
+          "profit_factor": 0.748,
+          "net_pnl": -31784.77,
+          "stress_net_pnl": -33889.53,
+          "active_months": 36,
+          "positive_months": 13
+        },
+        "research_2026": {
+          "trades": 85,
+          "win_rate_pct": 51.76,
+          "profit_factor": 0.958,
+          "net_pnl": -1681.93,
+          "stress_net_pnl": -2654.01,
+          "active_months": 8,
+          "positive_months": 4
+        }
+      }
+    }
+  },
+  {
+    "reward_risk": "0.75",
+    "samples": 877,
+    "discovery": {
+      "trades": 596,
+      "win_rate_pct": 48.66,
+      "profit_factor": 0.801,
+      "net_pnl": -43558.57,
+      "stress_net_pnl": -47404.43,
+      "active_months": 36,
+      "positive_months": 12
+    },
+    "research_2026": {
+      "trades": 130,
+      "win_rate_pct": 45.38,
+      "profit_factor": 0.832,
+      "net_pnl": -10853.8,
+      "stress_net_pnl": -12333.04,
+      "active_months": 8,
+      "positive_months": 4
+    },
+    "by_direction": {
+      "CE": {
+        "discovery": {
+          "trades": 358,
+          "win_rate_pct": 51.4,
+          "profit_factor": 0.852,
+          "net_pnl": -18064.23,
+          "stress_net_pnl": -20471.62,
+          "active_months": 36,
+          "positive_months": 14
+        },
+        "research_2026": {
+          "trades": 80,
+          "win_rate_pct": 42.5,
+          "profit_factor": 0.906,
+          "net_pnl": -3809.16,
+          "stress_net_pnl": -4719.57,
+          "active_months": 8,
+          "positive_months": 3
+        }
+      },
+      "PE": {
+        "discovery": {
+          "trades": 354,
+          "win_rate_pct": 46.89,
+          "profit_factor": 0.771,
+          "net_pnl": -30692.7,
+          "stress_net_pnl": -32798.02,
+          "active_months": 36,
+          "positive_months": 10
+        },
+        "research_2026": {
+          "trades": 85,
+          "win_rate_pct": 51.76,
+          "profit_factor": 1.042,
+          "net_pnl": 1831.48,
+          "stress_net_pnl": 857.61,
+          "active_months": 8,
+          "positive_months": 3
+        }
+      }
+    }
+  },
+  {
+    "reward_risk": "1.00",
+    "samples": 877,
+    "discovery": {
+      "trades": 596,
+      "win_rate_pct": 46.14,
+      "profit_factor": 0.787,
+      "net_pnl": -53005.06,
+      "stress_net_pnl": -56846.19,
+      "active_months": 36,
+      "positive_months": 12
+    },
+    "research_2026": {
+      "trades": 130,
+      "win_rate_pct": 42.31,
+      "profit_factor": 0.789,
+      "net_pnl": -16617.82,
+      "stress_net_pnl": -18094.17,
+      "active_months": 8,
+      "positive_months": 1
+    },
+    "by_direction": {
+      "CE": {
+        "discovery": {
+          "trades": 358,
+          "win_rate_pct": 48.32,
+          "profit_factor": 0.82,
+          "net_pnl": -25976.5,
+          "stress_net_pnl": -28379.95,
+          "active_months": 36,
+          "positive_months": 14
+        },
+        "research_2026": {
+          "trades": 80,
+          "win_rate_pct": 41.25,
+          "profit_factor": 0.94,
+          "net_pnl": -2786.78,
+          "stress_net_pnl": -3697.72,
+          "active_months": 8,
+          "positive_months": 5
+        }
+      },
+      "PE": {
+        "discovery": {
+          "trades": 354,
+          "win_rate_pct": 45.76,
+          "profit_factor": 0.773,
+          "net_pnl": -33284.92,
+          "stress_net_pnl": -35388.94,
+          "active_months": 36,
+          "positive_months": 10
+        },
+        "research_2026": {
+          "trades": 85,
+          "win_rate_pct": 48.24,
+          "profit_factor": 0.87,
+          "net_pnl": -7031.31,
+          "stress_net_pnl": -8000.71,
+          "active_months": 8,
+          "positive_months": 3
+        }
+      }
+    }
+  },
+  {
+    "reward_risk": "1.25",
+    "samples": 877,
+    "discovery": {
+      "trades": 596,
+      "win_rate_pct": 42.95,
+      "profit_factor": 0.748,
+      "net_pnl": -71288.45,
+      "stress_net_pnl": -75120.49,
+      "active_months": 36,
+      "positive_months": 10
+    },
+    "research_2026": {
+      "trades": 130,
+      "win_rate_pct": 43.08,
+      "profit_factor": 0.929,
+      "net_pnl": -5814.87,
+      "stress_net_pnl": -7296.66,
+      "active_months": 8,
+      "positive_months": 4
+    },
+    "by_direction": {
+      "CE": {
+        "discovery": {
+          "trades": 358,
+          "win_rate_pct": 45.81,
+          "profit_factor": 0.784,
+          "net_pnl": -36098.69,
+          "stress_net_pnl": -38497.03,
+          "active_months": 36,
+          "positive_months": 11
+        },
+        "research_2026": {
+          "trades": 80,
+          "win_rate_pct": 40.0,
+          "profit_factor": 0.971,
+          "net_pnl": -1487.55,
+          "stress_net_pnl": -2399.17,
+          "active_months": 8,
+          "positive_months": 4
+        }
+      },
+      "PE": {
+        "discovery": {
+          "trades": 354,
+          "win_rate_pct": 41.53,
+          "profit_factor": 0.729,
+          "net_pnl": -43800.12,
+          "stress_net_pnl": -45898.93,
+          "active_months": 36,
+          "positive_months": 10
+        },
+        "research_2026": {
+          "trades": 85,
+          "win_rate_pct": 49.41,
+          "profit_factor": 0.986,
+          "net_pnl": -802.12,
+          "stress_net_pnl": -1774.65,
+          "active_months": 8,
+          "positive_months": 4
+        }
+      }
+    }
+  },
+  {
+    "reward_risk": "1.50",
+    "samples": 877,
+    "discovery": {
+      "trades": 596,
+      "win_rate_pct": 40.1,
+      "profit_factor": 0.776,
+      "net_pnl": -67304.41,
+      "stress_net_pnl": -71138.41,
+      "active_months": 36,
+      "positive_months": 10
+    },
+    "research_2026": {
+      "trades": 130,
+      "win_rate_pct": 41.54,
+      "profit_factor": 1.01,
+      "net_pnl": 909.08,
+      "stress_net_pnl": -576.1,
+      "active_months": 8,
+      "positive_months": 6
+    },
+    "by_direction": {
+      "CE": {
+        "discovery": {
+          "trades": 358,
+          "win_rate_pct": 41.62,
+          "profit_factor": 0.809,
+          "net_pnl": -34033.57,
+          "stress_net_pnl": -36432.94,
+          "active_months": 36,
+          "positive_months": 11
+        },
+        "research_2026": {
+          "trades": 80,
+          "win_rate_pct": 40.0,
+          "profit_factor": 1.167,
+          "net_pnl": 8610.73,
+          "stress_net_pnl": 7694.05,
+          "active_months": 8,
+          "positive_months": 5
+        }
+      },
+      "PE": {
+        "discovery": {
+          "trades": 354,
+          "win_rate_pct": 41.24,
+          "profit_factor": 0.79,
+          "net_pnl": -35413.17,
+          "stress_net_pnl": -37516.13,
+          "active_months": 36,
+          "positive_months": 12
+        },
+        "research_2026": {
+          "trades": 85,
+          "win_rate_pct": 47.06,
+          "profit_factor": 0.978,
+          "net_pnl": -1325.33,
+          "stress_net_pnl": -2297.63,
+          "active_months": 8,
+          "positive_months": 5
+        }
+      }
+    }
+  }
+]

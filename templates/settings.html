@@ -56,14 +56,28 @@
       <hr class="section-divider">
       <form method="post" action="/settings/trading-token" class="form-stack token-form">
         <label>Daily Trading Token<input type="password" name="token" placeholder="Paste token only for Live trading" required></label>
-        <div class="notice {{ 'success' if trading_ok else '' }}">{% if trading_ok %}Expected cutoff: {{ trading_expiry.strftime('%d %b %Y, %I:%M %p IST') }}.{% else %}Paper and Backtest do not require this token.{% endif %}</div>
+        <div class="notice {{ 'success' if trading_ok else '' }}">{% if trading_ok %}Expected cutoff: {{ trading_expiry|ist_datetime('%d %b %Y, %I:%M %p IST') }}.{% else %}Paper and Backtest do not require this token.{% endif %}</div>
         <button class="button secondary">Verify &amp; save trading token</button>
       </form>
     {% endif %}
   </section>
 </div>
 
-<section class="card"><div class="card-head"><h2>Common XGBoost model</h2><span class="status {{ 'green' if model_metadata else 'amber' }}">{{ 'READY' if model_metadata else 'NOT TRAINED' }}</span></div>{% if model_metadata %}<dl class="details"><dt>Version</dt><dd>{{ model_metadata.version }}</dd><dt>Training source</dt><dd>{{ model_metadata.get('training_data_provider', model_metadata.get('provider', 'Unknown')) }}</dd><dt>Feature schema</dt><dd>{{ model_metadata.get('feature_schema', 'Legacy — retrain required') }}</dd><dt>Compatible live feeds</dt><dd>{{ model_metadata.get('compatible_live_providers', [])|join(', ') }}</dd></dl>{% else %}<p class="hint">Download verified spot and futures history, then train from the Backtests screen. Only one active model is stored.</p>{% endif %}</section>
+<section class="card">
+  <div class="card-head"><h2>Model status</h2><span class="status {{ 'green' if shadow_model_metadata else 'amber' }}">{{ 'SHADOW READY' if shadow_model_metadata else 'NO SHADOW MODEL' }}</span></div>
+  {% if shadow_model_metadata %}
+    <dl class="details">
+      <dt>Shadow version</dt><dd>{{ shadow_model_metadata.version }}</dd>
+      <dt>Training source</dt><dd>{{ shadow_model_metadata.get('training_data_provider', shadow_model_metadata.get('provider', 'Unknown')) }}</dd>
+      <dt>Feature schema</dt><dd>{{ shadow_model_metadata.get('feature_schema', 'Unknown') }}</dd>
+      <dt>Execution</dt><dd>Research-only simulated fills; no broker orders</dd>
+      <dt>Live activation</dt><dd>{{ 'ACTIVE' if active_model_metadata else 'NOT ACTIVATED — validation gates not passed' }}</dd>
+    </dl>
+    {% for blocker in shadow_model_metadata.get('activation_blockers',[]) %}<p class="hint"><b>Live blocked:</b> {{ blocker }}</p>{% endfor %}
+  {% else %}
+    <p class="hint">Train a candidate from Backtests and select it for Shadow validation.</p>
+  {% endif %}
+</section>
 
 <div class="grid-two">
   <section class="card form-card">

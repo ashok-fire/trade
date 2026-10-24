@@ -1,0 +1,218 @@
+{
+  "coverage": {
+    "spot_candles": 73820,
+    "futures_candles": 68133,
+    "option_contracts": 2486,
+    "candidate_setups": 2296,
+    "usable_option_outcomes": 1876,
+    "dropped_spot_days": 5,
+    "dropped_future_days": 3,
+    "reward_risk": "1.5",
+    "premium_stop_pct": "25",
+    "setup_families": [
+      "ORB",
+      "PULLBACK",
+      "FAILED_BREAKOUT"
+    ]
+  },
+  "rows": [
+    {
+      "setup_family": "ORB",
+      "direction": "ALL",
+      "discovery": {
+        "trades": 596,
+        "win_rate_pct": 40.1,
+        "profit_factor": 0.776,
+        "net_pnl": -67304.41,
+        "stress_net_pnl": -71138.41,
+        "active_months": 36,
+        "positive_months": 10
+      },
+      "research_2026": {
+        "trades": 130,
+        "win_rate_pct": 41.54,
+        "profit_factor": 1.01,
+        "net_pnl": 909.08,
+        "stress_net_pnl": -576.1,
+        "active_months": 8,
+        "positive_months": 6
+      }
+    },
+    {
+      "setup_family": "ORB",
+      "direction": "CE",
+      "discovery": {
+        "trades": 358,
+        "win_rate_pct": 41.62,
+        "profit_factor": 0.809,
+        "net_pnl": -34033.57,
+        "stress_net_pnl": -36432.94,
+        "active_months": 36,
+        "positive_months": 11
+      },
+      "research_2026": {
+        "trades": 80,
+        "win_rate_pct": 40.0,
+        "profit_factor": 1.167,
+        "net_pnl": 8610.73,
+        "stress_net_pnl": 7694.05,
+        "active_months": 8,
+        "positive_months": 5
+      }
+    },
+    {
+      "setup_family": "ORB",
+      "direction": "PE",
+      "discovery": {
+        "trades": 354,
+        "win_rate_pct": 41.24,
+        "profit_factor": 0.79,
+        "net_pnl": -35413.17,
+        "stress_net_pnl": -37516.13,
+        "active_months": 36,
+        "positive_months": 12
+      },
+      "research_2026": {
+        "trades": 85,
+        "win_rate_pct": 47.06,
+        "profit_factor": 0.978,
+        "net_pnl": -1325.33,
+        "stress_net_pnl": -2297.63,
+        "active_months": 8,
+        "positive_months": 5
+      }
+    },
+    {
+      "setup_family": "PULLBACK",
+      "direction": "ALL",
+      "discovery": {
+        "trades": 654,
+        "win_rate_pct": 41.74,
+        "profit_factor": 0.72,
+        "net_pnl": -91752.28,
+        "stress_net_pnl": -96003.2,
+        "active_months": 36,
+        "positive_months": 10
+      },
+      "research_2026": {
+        "trades": 138,
+        "win_rate_pct": 42.75,
+        "profit_factor": 0.822,
+        "net_pnl": -15188.27,
+        "stress_net_pnl": -16750.73,
+        "active_months": 8,
+        "positive_months": 2
+      }
+    },
+    {
+      "setup_family": "PULLBACK",
+      "direction": "CE",
+      "discovery": {
+        "trades": 442,
+        "win_rate_pct": 42.08,
+        "profit_factor": 0.767,
+        "net_pnl": -46925.12,
+        "stress_net_pnl": -49846.73,
+        "active_months": 36,
+        "positive_months": 10
+      },
+      "research_2026": {
+        "trades": 88,
+        "win_rate_pct": 36.36,
+        "profit_factor": 0.692,
+        "net_pnl": -18103.75,
+        "stress_net_pnl": -19095.07,
+        "active_months": 8,
+        "positive_months": 2
+      }
+    },
+    {
+      "setup_family": "PULLBACK",
+      "direction": "PE",
+      "discovery": {
+        "trades": 375,
+        "win_rate_pct": 39.47,
+        "profit_factor": 0.668,
+        "net_pnl": -62571.98,
+        "stress_net_pnl": -64893.66,
+        "active_months": 36,
+        "positive_months": 10
+      },
+      "research_2026": {
+        "trades": 94,
+        "win_rate_pct": 42.55,
+        "profit_factor": 0.966,
+        "net_pnl": -1897.23,
+        "stress_net_pnl": -2933.9,
+        "active_months": 8,
+        "positive_months": 4
+      }
+    },
+    {
+      "setup_family": "FAILED_BREAKOUT",
+      "direction": "ALL",
+      "discovery": {
+        "trades": 0,
+        "win_rate_pct": 0,
+        "profit_factor": null,
+        "net_pnl": 0.0,
+        "stress_net_pnl": 0.0,
+        "active_months": 0,
+        "positive_months": 0
+      },
+      "research_2026": {
+        "trades": 0,
+        "win_rate_pct": 0,
+        "profit_factor": null,
+        "net_pnl": 0.0,
+        "stress_net_pnl": 0.0,
+        "active_months": 0,
+        "positive_months": 0
+      }
+    },
+    {
+      "setup_family": "FAILED_BREAKOUT",
+      "direction": "CE",
+      "discovery": {
+        "trades": 0,
+        "win_rate_pct": 0,
+        "profit_factor": null,
+        "net_pnl": 0.0,
+        "stress_net_pnl": 0.0,
+        "active_months": 0,
+        "positive_months": 0
+      },
+      "research_2026": {
+        "trades": 0,
+        "win_rate_pct": 0,
+        "profit_factor": null,
+        "net_pnl": 0.0,
+        "stress_net_pnl": 0.0,
+        "active_months": 0,
+        "positive_months": 0
+      }
+    },
+    {
+      "setup_family": "FAILED_BREAKOUT",
+      "direction": "PE",
+      "discovery": {
+        "trades": 0,
+        "win_rate_pct": 0,
+        "profit_factor": null,
+        "net_pnl": 0.0,
+        "stress_net_pnl": 0.0,
+        "active_months": 0,
+        "positive_months": 0
+      },
+      "research_2026": {
+        "trades": 0,
+        "win_rate_pct": 0,
+        "profit_factor": null,
+        "net_pnl": 0.0,
+        "stress_net_pnl": 0.0,
+        "active_months": 0,
+        "positive_months": 0
+      }
+    }
+  ]
+}

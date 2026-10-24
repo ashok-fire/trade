@@ -1,0 +1,2550 @@
+{
+  "actual_first_sample": "2023-01-03",
+  "actual_last_sample": "2026-08-24",
+  "coverage": {
+    "candidate_setups": 37698,
+    "dropped_future_days": 3,
+    "dropped_spot_days": 5,
+    "entry_cutoff_ist": "15:10:00",
+    "futures_candles": 68133,
+    "option_contracts": 2486,
+    "premium_stop_pct": "25",
+    "rejections": {
+      "gap_in_option_exit_path": 20,
+      "missing_next_bar_entry": 4,
+      "missing_required_features": 723,
+      "missing_signal_or_future_option_candle": 38
+    },
+    "reward_risk": "1.5",
+    "sampling_policy": "all_eligible_bars",
+    "setup_families": [
+      "ORB",
+      "PULLBACK",
+      "FAILED_BREAKOUT",
+      "VWAP_RECLAIM"
+    ],
+    "simulator_revision": "entry-bar-stops-exact-next-bar-contiguous-path-v2",
+    "spot_candles": 73820,
+    "usable_option_outcomes": 36913
+  },
+  "created_at": "2026-10-24T06:57:17.702824+00:00",
+  "features": [
+    "spot_vwap_distance",
+    "futures_vwap_distance",
+    "futures_basis_pct",
+    "spot_return_1",
+    "spot_return_3",
+    "spot_return_6",
+    "futures_return_1",
+    "futures_return_3",
+    "futures_atr_pct",
+    "futures_volume_ratio",
+    "ema9_20_distance",
+    "ema20_50_distance",
+    "atr_pct",
+    "rsi",
+    "previous_day_high_distance",
+    "previous_day_low_distance",
+    "previous_day_close_distance",
+    "opening_range_high_distance",
+    "opening_range_low_distance",
+    "gap_pct",
+    "time_sin",
+    "time_cos",
+    "setup_direction",
+    "option_premium_pct",
+    "days_to_expiry",
+    "moneyness_pct",
+    "day_open_distance",
+    "opening_range_width_pct",
+    "trend_atr_strength",
+    "realized_vol_6",
+    "rsi_change_3",
+    "atr_change_3",
+    "basis_change_3",
+    "return_spread_3",
+    "weekday_sin",
+    "weekday_cos"
+  ],
+  "fresh_holdout_required": true,
+  "historical_evaluation_previously_exposed": true,
+  "partition_dates": {
+    "calibration": {
+      "days": 88,
+      "first": "2025-03-06",
+      "last": "2025-07-15",
+      "samples": 3411
+    },
+    "evaluation": {
+      "days": 179,
+      "first": "2025-12-01",
+      "last": "2026-08-24",
+      "samples": 7185
+    },
+    "fit": {
+      "days": 533,
+      "first": "2023-01-03",
+      "last": "2025-03-04",
+      "samples": 22400
+    },
+    "tuning": {
+      "days": 88,
+      "first": "2025-07-17",
+      "last": "2025-11-27",
+      "samples": 3815
+    }
+  },
+  "requested_end": "2026-10-13",
+  "requested_start": "2023-01-01",
+  "research_only": true,
+  "specialists": [
+    {
+      "blockers": [
+        "evaluation win rate below 55%",
+        "fresh future data and parallel Shadow evaluation are still required"
+      ],
+      "calibration_slope": 1.1002,
+      "evaluation_scores": {
+        "auc": 0.609,
+        "brier": 0.2041,
+        "days": 110,
+        "samples": 2798,
+        "score_p05_p50_p95": [
+          0.123,
+          0.2923,
+          0.5339
+        ]
+      },
+      "historical_evaluation": {
+        "active_months": 9,
+        "ce_trades": 50,
+        "double_slippage_net_pnl": 7431.89,
+        "max_consecutive_losses": 5,
+        "max_drawdown": 6744.49,
+        "max_drawdown_pct": 1.349,
+        "monthly": {
+          "2025-12": -2195.08,
+          "2026-01": -1094.7,
+          "2026-02": -242.31,
+          "2026-03": 7652.12,
+          "2026-04": -4756.06,
+          "2026-05": 7373.75,
+          "2026-06": 2967.18,
+          "2026-07": -1844.05,
+          "2026-08": 82.21
+        },
+        "net_pnl": 7943.06,
+        "pe_trades": 0,
+        "positive_months": 4,
+        "profit_factor": 1.313,
+        "threshold": 0.44,
+        "trades": 50,
+        "win_rate_pct": 44.0
+      },
+      "partition_counts": {
+        "calibration": {
+          "days": 54,
+          "samples": 1543
+        },
+        "evaluation": {
+          "days": 110,
+          "samples": 2798
+        },
+        "fit": {
+          "days": 314,
+          "samples": 9135
+        },
+        "tuning": {
+          "days": 56,
+          "samples": 1682
+        }
+      },
+      "setup": "ORB:CE",
+      "status": "RESEARCH_ONLY",
+      "threshold": 0.44,
+      "tuning": {
+        "active_months": 5,
+        "ce_trades": 24,
+        "double_slippage_net_pnl": 10010.08,
+        "max_consecutive_losses": 3,
+        "max_drawdown": 2239.47,
+        "max_drawdown_pct": 0.448,
+        "monthly": {
+          "2025-07": 119.95,
+          "2025-08": -65.13,
+          "2025-09": 2391.97,
+          "2025-10": 2449.24,
+          "2025-11": 5322.3
+        },
+        "net_pnl": 10218.33,
+        "pe_trades": 0,
+        "positive_months": 4,
+        "profit_factor": 2.661,
+        "threshold": 0.44,
+        "trades": 24,
+        "win_rate_pct": 66.67
+      },
+      "tuning_curve": [
+        {
+          "active_months": 5,
+          "ce_trades": 33,
+          "double_slippage_net_pnl": 11735.97,
+          "max_consecutive_losses": 3,
+          "max_drawdown": 1207.49,
+          "max_drawdown_pct": 0.241,
+          "monthly": {
+            "2025-07": 2820.38,
+            "2025-08": 1214.16,
+            "2025-09": 332.31,
+            "2025-10": 5101.41,
+            "2025-11": 2555.52
+          },
+          "net_pnl": 12023.77,
+          "pe_trades": 0,
+          "positive_months": 5,
+          "profit_factor": 2.33,
+          "threshold": 0.4,
+          "trades": 33,
+          "win_rate_pct": 54.55
+        },
+        {
+          "active_months": 5,
+          "ce_trades": 29,
+          "double_slippage_net_pnl": 6862.46,
+          "max_consecutive_losses": 3,
+          "max_drawdown": 1507.07,
+          "max_drawdown_pct": 0.301,
+          "monthly": {
+            "2025-07": 219.56,
+            "2025-08": 667.28,
+            "2025-09": 1180.83,
+            "2025-10": 484.99,
+            "2025-11": 4551.73
+          },
+          "net_pnl": 7104.38,
+          "pe_trades": 0,
+          "positive_months": 5,
+          "profit_factor": 1.745,
+          "threshold": 0.42,
+          "trades": 29,
+          "win_rate_pct": 51.72
+        },
+        {
+          "active_months": 5,
+          "ce_trades": 24,
+          "double_slippage_net_pnl": 10010.08,
+          "max_consecutive_losses": 3,
+          "max_drawdown": 2239.47,
+          "max_drawdown_pct": 0.448,
+          "monthly": {
+            "2025-07": 119.95,
+            "2025-08": -65.13,
+            "2025-09": 2391.97,
+            "2025-10": 2449.24,
+            "2025-11": 5322.3
+          },
+          "net_pnl": 10218.33,
+          "pe_trades": 0,
+          "positive_months": 4,
+          "profit_factor": 2.661,
+          "threshold": 0.44,
+          "trades": 24,
+          "win_rate_pct": 66.67
+        },
+        {
+          "active_months": 5,
+          "ce_trades": 21,
+          "double_slippage_net_pnl": 6096.41,
+          "max_consecutive_losses": 2,
+          "max_drawdown": 1634.94,
+          "max_drawdown_pct": 0.327,
+          "monthly": {
+            "2025-07": 119.95,
+            "2025-08": 573.19,
+            "2025-09": 1135.64,
+            "2025-10": 260.69,
+            "2025-11": 4195.77
+          },
+          "net_pnl": 6285.24,
+          "pe_trades": 0,
+          "positive_months": 5,
+          "profit_factor": 1.905,
+          "threshold": 0.46,
+          "trades": 21,
+          "win_rate_pct": 61.9
+        },
+        {
+          "active_months": 5,
+          "ce_trades": 18,
+          "double_slippage_net_pnl": 4054.77,
+          "max_consecutive_losses": 3,
+          "max_drawdown": 3094.69,
+          "max_drawdown_pct": 0.619,
+          "monthly": {
+            "2025-07": 119.95,
+            "2025-08": -872.88,
+            "2025-09": -215.5,
+            "2025-10": -772.88,
+            "2025-11": 5957.27
+          },
+          "net_pnl": 4215.97,
+          "pe_trades": 0,
+          "positive_months": 2,
+          "profit_factor": 1.68,
+          "threshold": 0.48,
+          "trades": 18,
+          "win_rate_pct": 55.56
+        },
+        {
+          "active_months": 4,
+          "ce_trades": 11,
+          "double_slippage_net_pnl": 2332.86,
+          "max_consecutive_losses": 2,
+          "max_drawdown": 3265.98,
+          "max_drawdown_pct": 0.653,
+          "monthly": {
+            "2025-08": 46.28,
+            "2025-09": 688.46,
+            "2025-10": -931.55,
+            "2025-11": 2619.76
+          },
+          "net_pnl": 2422.96,
+          "pe_trades": 0,
+          "positive_months": 3,
+          "profit_factor": 1.588,
+          "threshold": 0.5,
+          "trades": 11,
+          "win_rate_pct": 63.64
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 8,
+          "double_slippage_net_pnl": 2264.18,
+          "max_consecutive_losses": 2,
+          "max_drawdown": 2941.95,
+          "max_drawdown_pct": 0.588,
+          "monthly": {
+            "2025-08": 1125.68,
+            "2025-10": -998.45,
+            "2025-11": 2204.9
+          },
+          "net_pnl": 2332.12,
+          "pe_trades": 0,
+          "positive_months": 2,
+          "profit_factor": 1.751,
+          "threshold": 0.52,
+          "trades": 8,
+          "win_rate_pct": 62.5
+        },
+        {
+          "active_months": 2,
+          "ce_trades": 7,
+          "double_slippage_net_pnl": 1157.41,
+          "max_consecutive_losses": 2,
+          "max_drawdown": 2607.66,
+          "max_drawdown_pct": 0.522,
+          "monthly": {
+            "2025-10": -664.16,
+            "2025-11": 1877.77
+          },
+          "net_pnl": 1213.61,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": 1.419,
+          "threshold": 0.54,
+          "trades": 7,
+          "win_rate_pct": 57.14
+        },
+        {
+          "active_months": 2,
+          "ce_trades": 7,
+          "double_slippage_net_pnl": -800.39,
+          "max_consecutive_losses": 3,
+          "max_drawdown": 3042.76,
+          "max_drawdown_pct": 0.609,
+          "monthly": {
+            "2025-10": -1082.06,
+            "2025-11": 335.26
+          },
+          "net_pnl": -746.79,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": 0.776,
+          "threshold": 0.56,
+          "trades": 7,
+          "win_rate_pct": 42.86
+        },
+        {
+          "active_months": 2,
+          "ce_trades": 6,
+          "double_slippage_net_pnl": 808.81,
+          "max_consecutive_losses": 2,
+          "max_drawdown": 2532.95,
+          "max_drawdown_pct": 0.507,
+          "monthly": {
+            "2025-10": 1136.77,
+            "2025-11": -284.76
+          },
+          "net_pnl": 852.01,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": 1.336,
+          "threshold": 0.58,
+          "trades": 6,
+          "win_rate_pct": 66.67
+        },
+        {
+          "active_months": 2,
+          "ce_trades": 5,
+          "double_slippage_net_pnl": 749.57,
+          "max_consecutive_losses": 1,
+          "max_drawdown": 1943.5,
+          "max_drawdown_pct": 0.389,
+          "monthly": {
+            "2025-10": 1076.0,
+            "2025-11": -284.76
+          },
+          "net_pnl": 791.24,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": 1.407,
+          "threshold": 0.6,
+          "trades": 5,
+          "win_rate_pct": 80.0
+        },
+        {
+          "active_months": 1,
+          "ce_trades": 2,
+          "double_slippage_net_pnl": -836.04,
+          "max_consecutive_losses": 1,
+          "max_drawdown": 1943.5,
+          "max_drawdown_pct": 0.389,
+          "monthly": {
+            "2025-11": -820.69
+          },
+          "net_pnl": -820.69,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": 0.578,
+          "threshold": 0.62,
+          "trades": 2,
+          "win_rate_pct": 50.0
+        },
+        {
+          "active_months": 1,
+          "ce_trades": 2,
+          "double_slippage_net_pnl": -836.04,
+          "max_consecutive_losses": 1,
+          "max_drawdown": 1943.5,
+          "max_drawdown_pct": 0.389,
+          "monthly": {
+            "2025-11": -820.69
+          },
+          "net_pnl": -820.69,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": 0.578,
+          "threshold": 0.64,
+          "trades": 2,
+          "win_rate_pct": 50.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.66,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.68,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.7,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.72,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.74,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.76,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        }
+      ],
+      "tuning_scores": {
+        "auc": 0.715,
+        "brier": 0.2052,
+        "days": 56,
+        "samples": 1682,
+        "score_p05_p50_p95": [
+          0.1484,
+          0.3185,
+          0.5107
+        ]
+      }
+    },
+    {
+      "blockers": [
+        "no tuning threshold passed the trade-count, cost and neighbouring-cutoff gates"
+      ],
+      "calibration_slope": 0.947,
+      "partition_counts": {
+        "calibration": {
+          "days": 43,
+          "samples": 1159
+        },
+        "evaluation": {
+          "days": 114,
+          "samples": 2964
+        },
+        "fit": {
+          "days": 322,
+          "samples": 8842
+        },
+        "tuning": {
+          "days": 50,
+          "samples": 1420
+        }
+      },
+      "setup": "ORB:PE",
+      "status": "RESEARCH_ONLY",
+      "threshold": null,
+      "tuning_curve": [
+        {
+          "active_months": 5,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": -3418.94,
+          "max_consecutive_losses": 6,
+          "max_drawdown": 4385.39,
+          "max_drawdown_pct": 0.877,
+          "monthly": {
+            "2025-07": -337.92,
+            "2025-08": 1422.32,
+            "2025-09": -2668.44,
+            "2025-10": -1685.03,
+            "2025-11": -31.92
+          },
+          "net_pnl": -3300.99,
+          "pe_trades": 15,
+          "positive_months": 1,
+          "profit_factor": 0.534,
+          "threshold": 0.4,
+          "trades": 15,
+          "win_rate_pct": 26.67
+        },
+        {
+          "active_months": 5,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": -5726.65,
+          "max_consecutive_losses": 7,
+          "max_drawdown": 6068.4,
+          "max_drawdown_pct": 1.214,
+          "monthly": {
+            "2025-07": 429.7,
+            "2025-08": -2139.09,
+            "2025-09": -3002.26,
+            "2025-10": -637.51,
+            "2025-11": -289.54
+          },
+          "net_pnl": -5638.7,
+          "pe_trades": 11,
+          "positive_months": 1,
+          "profit_factor": 0.172,
+          "threshold": 0.42,
+          "trades": 11,
+          "win_rate_pct": 18.18
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": -1252.13,
+          "max_consecutive_losses": 2,
+          "max_drawdown": 1540.34,
+          "max_drawdown_pct": 0.308,
+          "monthly": {
+            "2025-07": 332.27,
+            "2025-09": -902.83,
+            "2025-10": -637.51
+          },
+          "net_pnl": -1208.08,
+          "pe_trades": 6,
+          "positive_months": 1,
+          "profit_factor": 0.532,
+          "threshold": 0.44,
+          "trades": 6,
+          "win_rate_pct": 33.33
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": -129.16,
+          "max_consecutive_losses": 1,
+          "max_drawdown": 1456.83,
+          "max_drawdown_pct": 0.291,
+          "monthly": {
+            "2025-07": -1088.89,
+            "2025-09": -367.94,
+            "2025-10": 1355.82
+          },
+          "net_pnl": -101.01,
+          "pe_trades": 4,
+          "positive_months": 1,
+          "profit_factor": 0.95,
+          "threshold": 0.46,
+          "trades": 4,
+          "win_rate_pct": 50.0
+        },
+        {
+          "active_months": 1,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": -313.76,
+          "max_consecutive_losses": 1,
+          "max_drawdown": 308.81,
+          "max_drawdown_pct": 0.062,
+          "monthly": {
+            "2025-09": -308.81
+          },
+          "net_pnl": -308.81,
+          "pe_trades": 1,
+          "positive_months": 0,
+          "profit_factor": 0.0,
+          "threshold": 0.48,
+          "trades": 1,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.5,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.52,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.54,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.56,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.58,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.6,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.62,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.64,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.66,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.68,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.7,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.72,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.74,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.76,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        }
+      ],
+      "tuning_scores": {
+        "auc": 0.5483,
+        "brier": 0.224,
+        "days": 50,
+        "samples": 1420,
+        "score_p05_p50_p95": [
+          0.2021,
+          0.3272,
+          0.4218
+        ]
+      }
+    },
+    {
+      "blockers": [
+        "no tuning threshold passed the trade-count, cost and neighbouring-cutoff gates"
+      ],
+      "calibration_slope": 1.3272,
+      "partition_counts": {
+        "calibration": {
+          "days": 64,
+          "samples": 267
+        },
+        "evaluation": {
+          "days": 113,
+          "samples": 484
+        },
+        "fit": {
+          "days": 358,
+          "samples": 1684
+        },
+        "tuning": {
+          "days": 60,
+          "samples": 269
+        }
+      },
+      "setup": "PULLBACK:CE",
+      "status": "RESEARCH_ONLY",
+      "threshold": null,
+      "tuning_curve": [
+        {
+          "active_months": 4,
+          "ce_trades": 11,
+          "double_slippage_net_pnl": -1666.15,
+          "max_consecutive_losses": 5,
+          "max_drawdown": 3068.23,
+          "max_drawdown_pct": 0.614,
+          "monthly": {
+            "2025-07": -728.45,
+            "2025-09": -1619.05,
+            "2025-10": 384.42,
+            "2025-11": 395.66
+          },
+          "net_pnl": -1567.42,
+          "pe_trades": 0,
+          "positive_months": 2,
+          "profit_factor": 0.683,
+          "threshold": 0.4,
+          "trades": 11,
+          "win_rate_pct": 36.36
+        },
+        {
+          "active_months": 4,
+          "ce_trades": 10,
+          "double_slippage_net_pnl": -1167.61,
+          "max_consecutive_losses": 4,
+          "max_drawdown": 2578.8,
+          "max_drawdown_pct": 0.516,
+          "monthly": {
+            "2025-07": -728.45,
+            "2025-09": -1129.62,
+            "2025-10": 384.42,
+            "2025-11": 395.66
+          },
+          "net_pnl": -1077.99,
+          "pe_trades": 0,
+          "positive_months": 2,
+          "profit_factor": 0.758,
+          "threshold": 0.42,
+          "trades": 10,
+          "win_rate_pct": 40.0
+        },
+        {
+          "active_months": 4,
+          "ce_trades": 7,
+          "double_slippage_net_pnl": 1879.51,
+          "max_consecutive_losses": 3,
+          "max_drawdown": 1788.41,
+          "max_drawdown_pct": 0.358,
+          "monthly": {
+            "2025-07": -728.45,
+            "2025-09": -339.22,
+            "2025-10": 384.42,
+            "2025-11": 2618.35
+          },
+          "net_pnl": 1935.09,
+          "pe_trades": 0,
+          "positive_months": 2,
+          "profit_factor": 2.082,
+          "threshold": 0.44,
+          "trades": 7,
+          "win_rate_pct": 57.14
+        },
+        {
+          "active_months": 4,
+          "ce_trades": 7,
+          "double_slippage_net_pnl": 2401.87,
+          "max_consecutive_losses": 2,
+          "max_drawdown": 1206.82,
+          "max_drawdown_pct": 0.241,
+          "monthly": {
+            "2025-07": 1046.54,
+            "2025-09": -339.22,
+            "2025-10": -867.59,
+            "2025-11": 2618.35
+          },
+          "net_pnl": 2458.07,
+          "pe_trades": 0,
+          "positive_months": 2,
+          "profit_factor": 2.573,
+          "threshold": 0.46,
+          "trades": 7,
+          "win_rate_pct": 57.14
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 6,
+          "double_slippage_net_pnl": 2765.17,
+          "max_consecutive_losses": 1,
+          "max_drawdown": 503.12,
+          "max_drawdown_pct": 0.101,
+          "monthly": {
+            "2025-09": -339.22,
+            "2025-10": 1275.34,
+            "2025-11": 1881.06
+          },
+          "net_pnl": 2817.18,
+          "pe_trades": 0,
+          "positive_months": 2,
+          "profit_factor": 4.344,
+          "threshold": 0.48,
+          "trades": 6,
+          "win_rate_pct": 66.67
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 5,
+          "double_slippage_net_pnl": 1352.08,
+          "max_consecutive_losses": 1,
+          "max_drawdown": 503.12,
+          "max_drawdown_pct": 0.101,
+          "monthly": {
+            "2025-09": -339.22,
+            "2025-10": -146.86,
+            "2025-11": 1881.06
+          },
+          "net_pnl": 1394.98,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": 2.656,
+          "threshold": 0.5,
+          "trades": 5,
+          "win_rate_pct": 60.0
+        },
+        {
+          "active_months": 2,
+          "ce_trades": 4,
+          "double_slippage_net_pnl": 1702.93,
+          "max_consecutive_losses": 1,
+          "max_drawdown": 503.12,
+          "max_drawdown_pct": 0.101,
+          "monthly": {
+            "2025-10": -146.86,
+            "2025-11": 1881.06
+          },
+          "net_pnl": 1734.2,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": 4.447,
+          "threshold": 0.52,
+          "trades": 4,
+          "win_rate_pct": 75.0
+        },
+        {
+          "active_months": 2,
+          "ce_trades": 4,
+          "double_slippage_net_pnl": 1702.93,
+          "max_consecutive_losses": 1,
+          "max_drawdown": 503.12,
+          "max_drawdown_pct": 0.101,
+          "monthly": {
+            "2025-10": -146.86,
+            "2025-11": 1881.06
+          },
+          "net_pnl": 1734.2,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": 4.447,
+          "threshold": 0.54,
+          "trades": 4,
+          "win_rate_pct": 75.0
+        },
+        {
+          "active_months": 2,
+          "ce_trades": 3,
+          "double_slippage_net_pnl": 2440.33,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {
+            "2025-10": 935.51,
+            "2025-11": 1525.3
+          },
+          "net_pnl": 2460.81,
+          "pe_trades": 0,
+          "positive_months": 2,
+          "profit_factor": null,
+          "threshold": 0.56,
+          "trades": 3,
+          "win_rate_pct": 100.0
+        },
+        {
+          "active_months": 1,
+          "ce_trades": 2,
+          "double_slippage_net_pnl": 927.38,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {
+            "2025-10": 935.51
+          },
+          "net_pnl": 935.51,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": null,
+          "threshold": 0.58,
+          "trades": 2,
+          "win_rate_pct": 100.0
+        },
+        {
+          "active_months": 1,
+          "ce_trades": 2,
+          "double_slippage_net_pnl": 1462.78,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {
+            "2025-10": 1472.03
+          },
+          "net_pnl": 1472.03,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": null,
+          "threshold": 0.6,
+          "trades": 2,
+          "win_rate_pct": 100.0
+        },
+        {
+          "active_months": 1,
+          "ce_trades": 2,
+          "double_slippage_net_pnl": 1462.78,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {
+            "2025-10": 1472.03
+          },
+          "net_pnl": 1472.03,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": null,
+          "threshold": 0.62,
+          "trades": 2,
+          "win_rate_pct": 100.0
+        },
+        {
+          "active_months": 1,
+          "ce_trades": 1,
+          "double_slippage_net_pnl": 732.72,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {
+            "2025-10": 738.46
+          },
+          "net_pnl": 738.46,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": null,
+          "threshold": 0.64,
+          "trades": 1,
+          "win_rate_pct": 100.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.66,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.68,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.7,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.72,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.74,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.76,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        }
+      ],
+      "tuning_scores": {
+        "auc": 0.585,
+        "brier": 0.2476,
+        "days": 60,
+        "samples": 269,
+        "score_p05_p50_p95": [
+          0.1011,
+          0.2572,
+          0.4832
+        ]
+      }
+    },
+    {
+      "blockers": [
+        "no tuning threshold passed the trade-count, cost and neighbouring-cutoff gates"
+      ],
+      "calibration_slope": 0.6886,
+      "partition_counts": {
+        "calibration": {
+          "days": 48,
+          "samples": 226
+        },
+        "evaluation": {
+          "days": 115,
+          "samples": 484
+        },
+        "fit": {
+          "days": 322,
+          "samples": 1290
+        },
+        "tuning": {
+          "days": 46,
+          "samples": 229
+        }
+      },
+      "setup": "PULLBACK:PE",
+      "status": "RESEARCH_ONLY",
+      "threshold": null,
+      "tuning_curve": [
+        {
+          "active_months": 5,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": -3002.21,
+          "max_consecutive_losses": 4,
+          "max_drawdown": 6079.02,
+          "max_drawdown_pct": 1.216,
+          "monthly": {
+            "2025-07": 620.27,
+            "2025-08": -2516.1,
+            "2025-09": -215.5,
+            "2025-10": -2158.99,
+            "2025-11": 1468.5
+          },
+          "net_pnl": -2801.81,
+          "pe_trades": 27,
+          "positive_months": 2,
+          "profit_factor": 0.789,
+          "threshold": 0.4,
+          "trades": 27,
+          "win_rate_pct": 44.44
+        },
+        {
+          "active_months": 5,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": -1905.3,
+          "max_consecutive_losses": 2,
+          "max_drawdown": 5287.94,
+          "max_drawdown_pct": 1.058,
+          "monthly": {
+            "2025-07": 2194.98,
+            "2025-08": -1208.21,
+            "2025-09": -2695.38,
+            "2025-10": -462.98,
+            "2025-11": 435.43
+          },
+          "net_pnl": -1736.16,
+          "pe_trades": 23,
+          "positive_months": 2,
+          "profit_factor": 0.841,
+          "threshold": 0.42,
+          "trades": 23,
+          "win_rate_pct": 47.83
+        },
+        {
+          "active_months": 5,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": -7528.45,
+          "max_consecutive_losses": 8,
+          "max_drawdown": 9963.98,
+          "max_drawdown_pct": 1.993,
+          "monthly": {
+            "2025-07": 2194.98,
+            "2025-08": -1448.12,
+            "2025-09": -2695.38,
+            "2025-10": -2788.56,
+            "2025-11": -2637.32
+          },
+          "net_pnl": -7374.4,
+          "pe_trades": 21,
+          "positive_months": 1,
+          "profit_factor": 0.371,
+          "threshold": 0.44,
+          "trades": 21,
+          "win_rate_pct": 28.57
+        },
+        {
+          "active_months": 5,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": -4448.39,
+          "max_consecutive_losses": 5,
+          "max_drawdown": 4996.9,
+          "max_drawdown_pct": 0.999,
+          "monthly": {
+            "2025-07": 44.93,
+            "2025-08": -1486.73,
+            "2025-09": -1592.87,
+            "2025-10": 155.15,
+            "2025-11": -1482.61
+          },
+          "net_pnl": -4362.13,
+          "pe_trades": 13,
+          "positive_months": 2,
+          "profit_factor": 0.327,
+          "threshold": 0.46,
+          "trades": 13,
+          "win_rate_pct": 23.08
+        },
+        {
+          "active_months": 5,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": -3087.64,
+          "max_consecutive_losses": 4,
+          "max_drawdown": 3661.96,
+          "max_drawdown_pct": 0.732,
+          "monthly": {
+            "2025-07": -221.06,
+            "2025-08": -1644.0,
+            "2025-09": -229.3,
+            "2025-10": -748.37,
+            "2025-11": -184.45
+          },
+          "net_pnl": -3027.19,
+          "pe_trades": 9,
+          "positive_months": 0,
+          "profit_factor": 0.287,
+          "threshold": 0.48,
+          "trades": 9,
+          "win_rate_pct": 22.22
+        },
+        {
+          "active_months": 4,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": -513.0,
+          "max_consecutive_losses": 2,
+          "max_drawdown": 1300.18,
+          "max_drawdown_pct": 0.26,
+          "monthly": {
+            "2025-07": -221.06,
+            "2025-08": -444.34,
+            "2025-09": 937.86,
+            "2025-10": -748.37
+          },
+          "net_pnl": -475.91,
+          "pe_trades": 6,
+          "positive_months": 1,
+          "profit_factor": 0.768,
+          "threshold": 0.5,
+          "trades": 6,
+          "win_rate_pct": 50.0
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": -625.69,
+          "max_consecutive_losses": 1,
+          "max_drawdown": 748.37,
+          "max_drawdown_pct": 0.15,
+          "monthly": {
+            "2025-08": -444.34,
+            "2025-09": 582.66,
+            "2025-10": -748.37
+          },
+          "net_pnl": -610.06,
+          "pe_trades": 3,
+          "positive_months": 1,
+          "profit_factor": 0.489,
+          "threshold": 0.52,
+          "trades": 3,
+          "win_rate_pct": 33.33
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.54,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.56,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.58,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.6,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.62,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.64,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.66,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.68,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.7,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.72,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.74,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.76,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        }
+      ],
+      "tuning_scores": {
+        "auc": 0.4664,
+        "brier": 0.2483,
+        "days": 46,
+        "samples": 229,
+        "score_p05_p50_p95": [
+          0.2847,
+          0.3819,
+          0.4772
+        ]
+      }
+    },
+    {
+      "blockers": [
+        "insufficient distinct days or mixed outcomes in a chronological partition"
+      ],
+      "partition_counts": {
+        "calibration": {
+          "days": 15,
+          "samples": 19
+        },
+        "evaluation": {
+          "days": 33,
+          "samples": 58
+        },
+        "fit": {
+          "days": 140,
+          "samples": 249
+        },
+        "tuning": {
+          "days": 18,
+          "samples": 31
+        }
+      },
+      "setup": "FAILED_BREAKOUT:CE",
+      "status": "RESEARCH_ONLY"
+    },
+    {
+      "blockers": [
+        "insufficient distinct days or mixed outcomes in a chronological partition"
+      ],
+      "partition_counts": {
+        "calibration": {
+          "days": 14,
+          "samples": 28
+        },
+        "evaluation": {
+          "days": 35,
+          "samples": 64
+        },
+        "fit": {
+          "days": 110,
+          "samples": 176
+        },
+        "tuning": {
+          "days": 13,
+          "samples": 17
+        }
+      },
+      "setup": "FAILED_BREAKOUT:PE",
+      "status": "RESEARCH_ONLY"
+    },
+    {
+      "blockers": [
+        "no tuning threshold passed the trade-count, cost and neighbouring-cutoff gates"
+      ],
+      "calibration_slope": 0.4861,
+      "partition_counts": {
+        "calibration": {
+          "days": 46,
+          "samples": 83
+        },
+        "evaluation": {
+          "days": 82,
+          "samples": 157
+        },
+        "fit": {
+          "days": 267,
+          "samples": 523
+        },
+        "tuning": {
+          "days": 49,
+          "samples": 85
+        }
+      },
+      "setup": "VWAP_RECLAIM:CE",
+      "status": "RESEARCH_ONLY",
+      "threshold": null,
+      "tuning_curve": [
+        {
+          "active_months": 5,
+          "ce_trades": 41,
+          "double_slippage_net_pnl": -71.92,
+          "max_consecutive_losses": 8,
+          "max_drawdown": 11273.07,
+          "max_drawdown_pct": 2.255,
+          "monthly": {
+            "2025-07": -493.51,
+            "2025-08": -5286.55,
+            "2025-09": -3195.05,
+            "2025-10": 6381.15,
+            "2025-11": 2908.2
+          },
+          "net_pnl": 314.23,
+          "pe_trades": 0,
+          "positive_months": 2,
+          "profit_factor": 1.014,
+          "threshold": 0.4,
+          "trades": 41,
+          "win_rate_pct": 43.9
+        },
+        {
+          "active_months": 5,
+          "ce_trades": 39,
+          "double_slippage_net_pnl": 1933.95,
+          "max_consecutive_losses": 3,
+          "max_drawdown": 9258.88,
+          "max_drawdown_pct": 1.852,
+          "monthly": {
+            "2025-07": -493.51,
+            "2025-08": -3272.36,
+            "2025-09": -3216.89,
+            "2025-10": 6381.15,
+            "2025-11": 2908.2
+          },
+          "net_pnl": 2306.59,
+          "pe_trades": 0,
+          "positive_months": 2,
+          "profit_factor": 1.113,
+          "threshold": 0.42,
+          "trades": 39,
+          "win_rate_pct": 46.15
+        },
+        {
+          "active_months": 5,
+          "ce_trades": 36,
+          "double_slippage_net_pnl": 3977.19,
+          "max_consecutive_losses": 3,
+          "max_drawdown": 8716.88,
+          "max_drawdown_pct": 1.743,
+          "monthly": {
+            "2025-07": 125.72,
+            "2025-08": -2730.36,
+            "2025-09": -3216.89,
+            "2025-10": 7236.7,
+            "2025-11": 2908.2
+          },
+          "net_pnl": 4323.36,
+          "pe_trades": 0,
+          "positive_months": 3,
+          "profit_factor": 1.234,
+          "threshold": 0.44,
+          "trades": 36,
+          "win_rate_pct": 50.0
+        },
+        {
+          "active_months": 5,
+          "ce_trades": 29,
+          "double_slippage_net_pnl": 2502.87,
+          "max_consecutive_losses": 4,
+          "max_drawdown": 6487.23,
+          "max_drawdown_pct": 1.297,
+          "monthly": {
+            "2025-07": 1955.74,
+            "2025-08": -2330.74,
+            "2025-09": -2417.74,
+            "2025-10": 3705.15,
+            "2025-11": 1865.47
+          },
+          "net_pnl": 2777.89,
+          "pe_trades": 0,
+          "positive_months": 3,
+          "profit_factor": 1.18,
+          "threshold": 0.46,
+          "trades": 29,
+          "win_rate_pct": 48.28
+        },
+        {
+          "active_months": 5,
+          "ce_trades": 21,
+          "double_slippage_net_pnl": 8320.54,
+          "max_consecutive_losses": 3,
+          "max_drawdown": 3298.26,
+          "max_drawdown_pct": 0.66,
+          "monthly": {
+            "2025-07": 1955.74,
+            "2025-08": -1530.85,
+            "2025-09": 2350.58,
+            "2025-10": 3781.13,
+            "2025-11": 1955.33
+          },
+          "net_pnl": 8511.93,
+          "pe_trades": 0,
+          "positive_months": 4,
+          "profit_factor": 2.113,
+          "threshold": 0.48,
+          "trades": 21,
+          "win_rate_pct": 57.14
+        },
+        {
+          "active_months": 5,
+          "ce_trades": 15,
+          "double_slippage_net_pnl": 3209.14,
+          "max_consecutive_losses": 5,
+          "max_drawdown": 4069.39,
+          "max_drawdown_pct": 0.814,
+          "monthly": {
+            "2025-07": 948.15,
+            "2025-08": -1925.0,
+            "2025-09": -1413.03,
+            "2025-10": 3781.13,
+            "2025-11": 1955.33
+          },
+          "net_pnl": 3346.57,
+          "pe_trades": 0,
+          "positive_months": 3,
+          "profit_factor": 1.534,
+          "threshold": 0.5,
+          "trades": 15,
+          "win_rate_pct": 46.67
+        },
+        {
+          "active_months": 5,
+          "ce_trades": 9,
+          "double_slippage_net_pnl": 4885.86,
+          "max_consecutive_losses": 3,
+          "max_drawdown": 2735.84,
+          "max_drawdown_pct": 0.547,
+          "monthly": {
+            "2025-07": 1325.12,
+            "2025-08": -1508.24,
+            "2025-09": -653.97,
+            "2025-10": 3781.13,
+            "2025-11": 2018.43
+          },
+          "net_pnl": 4962.47,
+          "pe_trades": 0,
+          "positive_months": 3,
+          "profit_factor": 2.814,
+          "threshold": 0.52,
+          "trades": 9,
+          "win_rate_pct": 66.67
+        },
+        {
+          "active_months": 4,
+          "ce_trades": 5,
+          "double_slippage_net_pnl": 3776.72,
+          "max_consecutive_losses": 1,
+          "max_drawdown": 278.53,
+          "max_drawdown_pct": 0.056,
+          "monthly": {
+            "2025-07": 1325.12,
+            "2025-09": -278.53,
+            "2025-10": 748.89,
+            "2025-11": 2018.43
+          },
+          "net_pnl": 3813.92,
+          "pe_trades": 0,
+          "positive_months": 3,
+          "profit_factor": 14.693,
+          "threshold": 0.54,
+          "trades": 5,
+          "win_rate_pct": 80.0
+        },
+        {
+          "active_months": 4,
+          "ce_trades": 4,
+          "double_slippage_net_pnl": 2888.22,
+          "max_consecutive_losses": 1,
+          "max_drawdown": 278.53,
+          "max_drawdown_pct": 0.056,
+          "monthly": {
+            "2025-07": 1325.12,
+            "2025-09": -278.53,
+            "2025-10": 748.89,
+            "2025-11": 1122.81
+          },
+          "net_pnl": 2918.29,
+          "pe_trades": 0,
+          "positive_months": 3,
+          "profit_factor": 11.477,
+          "threshold": 0.56,
+          "trades": 4,
+          "win_rate_pct": 75.0
+        },
+        {
+          "active_months": 2,
+          "ce_trades": 2,
+          "double_slippage_net_pnl": 1858.06,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {
+            "2025-10": 748.89,
+            "2025-11": 1122.81
+          },
+          "net_pnl": 1871.7,
+          "pe_trades": 0,
+          "positive_months": 2,
+          "profit_factor": null,
+          "threshold": 0.58,
+          "trades": 2,
+          "win_rate_pct": 100.0
+        },
+        {
+          "active_months": 2,
+          "ce_trades": 2,
+          "double_slippage_net_pnl": 1858.06,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {
+            "2025-10": 748.89,
+            "2025-11": 1122.81
+          },
+          "net_pnl": 1871.7,
+          "pe_trades": 0,
+          "positive_months": 2,
+          "profit_factor": null,
+          "threshold": 0.6,
+          "trades": 2,
+          "win_rate_pct": 100.0
+        },
+        {
+          "active_months": 1,
+          "ce_trades": 1,
+          "double_slippage_net_pnl": 1113.88,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {
+            "2025-11": 1122.81
+          },
+          "net_pnl": 1122.81,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": null,
+          "threshold": 0.62,
+          "trades": 1,
+          "win_rate_pct": 100.0
+        },
+        {
+          "active_months": 1,
+          "ce_trades": 1,
+          "double_slippage_net_pnl": 1113.88,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {
+            "2025-11": 1122.81
+          },
+          "net_pnl": 1122.81,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": null,
+          "threshold": 0.64,
+          "trades": 1,
+          "win_rate_pct": 100.0
+        },
+        {
+          "active_months": 1,
+          "ce_trades": 1,
+          "double_slippage_net_pnl": 1113.88,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {
+            "2025-11": 1122.81
+          },
+          "net_pnl": 1122.81,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": null,
+          "threshold": 0.66,
+          "trades": 1,
+          "win_rate_pct": 100.0
+        },
+        {
+          "active_months": 1,
+          "ce_trades": 1,
+          "double_slippage_net_pnl": 1113.88,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {
+            "2025-11": 1122.81
+          },
+          "net_pnl": 1122.81,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": null,
+          "threshold": 0.68,
+          "trades": 1,
+          "win_rate_pct": 100.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.7,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.72,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.74,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.76,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        }
+      ],
+      "tuning_scores": {
+        "auc": 0.678,
+        "brier": 0.2312,
+        "days": 49,
+        "samples": 85,
+        "score_p05_p50_p95": [
+          0.3593,
+          0.4541,
+          0.547
+        ]
+      }
+    },
+    {
+      "blockers": [
+        "no tuning threshold passed the trade-count, cost and neighbouring-cutoff gates"
+      ],
+      "calibration_slope": 0.2705,
+      "partition_counts": {
+        "calibration": {
+          "days": 41,
+          "samples": 86
+        },
+        "evaluation": {
+          "days": 92,
+          "samples": 176
+        },
+        "fit": {
+          "days": 264,
+          "samples": 501
+        },
+        "tuning": {
+          "days": 42,
+          "samples": 82
+        }
+      },
+      "setup": "VWAP_RECLAIM:PE",
+      "status": "RESEARCH_ONLY",
+      "threshold": null,
+      "tuning_curve": [
+        {
+          "active_months": 5,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": -15065.13,
+          "max_consecutive_losses": 4,
+          "max_drawdown": 15956.66,
+          "max_drawdown_pct": 3.191,
+          "monthly": {
+            "2025-07": -2234.59,
+            "2025-08": -349.66,
+            "2025-09": -1001.89,
+            "2025-10": -5387.78,
+            "2025-11": -5791.57
+          },
+          "net_pnl": -14765.49,
+          "pe_trades": 42,
+          "positive_months": 0,
+          "profit_factor": 0.428,
+          "threshold": 0.4,
+          "trades": 42,
+          "win_rate_pct": 28.57
+        },
+        {
+          "active_months": 5,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": -16762.2,
+          "max_consecutive_losses": 6,
+          "max_drawdown": 17673.71,
+          "max_drawdown_pct": 3.535,
+          "monthly": {
+            "2025-07": -2234.59,
+            "2025-08": -349.66,
+            "2025-09": -1046.42,
+            "2025-10": -5387.78,
+            "2025-11": -7464.08
+          },
+          "net_pnl": -16482.53,
+          "pe_trades": 41,
+          "positive_months": 0,
+          "profit_factor": 0.362,
+          "threshold": 0.42,
+          "trades": 41,
+          "win_rate_pct": 26.83
+        },
+        {
+          "active_months": 5,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": -14354.84,
+          "max_consecutive_losses": 5,
+          "max_drawdown": 15102.86,
+          "max_drawdown_pct": 3.021,
+          "monthly": {
+            "2025-07": -3068.65,
+            "2025-08": -349.66,
+            "2025-09": -1046.42,
+            "2025-10": -4944.24,
+            "2025-11": -4682.75
+          },
+          "net_pnl": -14091.72,
+          "pe_trades": 39,
+          "positive_months": 0,
+          "profit_factor": 0.389,
+          "threshold": 0.44,
+          "trades": 39,
+          "win_rate_pct": 25.64
+        },
+        {
+          "active_months": 5,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": -11325.16,
+          "max_consecutive_losses": 4,
+          "max_drawdown": 12119.92,
+          "max_drawdown_pct": 2.424,
+          "monthly": {
+            "2025-07": -2451.17,
+            "2025-08": 849.68,
+            "2025-09": -459.78,
+            "2025-10": -5920.03,
+            "2025-11": -3127.49
+          },
+          "net_pnl": -11108.79,
+          "pe_trades": 32,
+          "positive_months": 1,
+          "profit_factor": 0.403,
+          "threshold": 0.46,
+          "trades": 32,
+          "win_rate_pct": 31.25
+        },
+        {
+          "active_months": 5,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": -9288.41,
+          "max_consecutive_losses": 7,
+          "max_drawdown": 11914.04,
+          "max_drawdown_pct": 2.383,
+          "monthly": {
+            "2025-07": -1360.71,
+            "2025-08": -1401.64,
+            "2025-09": -459.78,
+            "2025-10": -6931.15,
+            "2025-11": 1033.97
+          },
+          "net_pnl": -9119.3,
+          "pe_trades": 26,
+          "positive_months": 1,
+          "profit_factor": 0.398,
+          "threshold": 0.48,
+          "trades": 26,
+          "win_rate_pct": 30.77
+        },
+        {
+          "active_months": 5,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": -6732.03,
+          "max_consecutive_losses": 4,
+          "max_drawdown": 7644.82,
+          "max_drawdown_pct": 1.529,
+          "monthly": {
+            "2025-07": -972.18,
+            "2025-08": -1401.64,
+            "2025-09": -903.26,
+            "2025-10": -2606.97,
+            "2025-11": -749.64
+          },
+          "net_pnl": -6633.69,
+          "pe_trades": 16,
+          "positive_months": 0,
+          "profit_factor": 0.352,
+          "threshold": 0.5,
+          "trades": 16,
+          "win_rate_pct": 31.25
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": -1428.4,
+          "max_consecutive_losses": 3,
+          "max_drawdown": 2403.65,
+          "max_drawdown_pct": 0.481,
+          "monthly": {
+            "2025-09": -427.21,
+            "2025-10": -1374.37,
+            "2025-11": 410.88
+          },
+          "net_pnl": -1390.7,
+          "pe_trades": 7,
+          "positive_months": 1,
+          "profit_factor": 0.519,
+          "threshold": 0.52,
+          "trades": 7,
+          "win_rate_pct": 42.86
+        },
+        {
+          "active_months": 2,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": -339.98,
+          "max_consecutive_losses": 1,
+          "max_drawdown": 813.11,
+          "max_drawdown_pct": 0.163,
+          "monthly": {
+            "2025-10": -813.11,
+            "2025-11": 485.25
+          },
+          "net_pnl": -327.86,
+          "pe_trades": 2,
+          "positive_months": 1,
+          "profit_factor": 0.597,
+          "threshold": 0.54,
+          "trades": 2,
+          "win_rate_pct": 50.0
+        },
+        {
+          "active_months": 1,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": -818.78,
+          "max_consecutive_losses": 1,
+          "max_drawdown": 813.11,
+          "max_drawdown_pct": 0.163,
+          "monthly": {
+            "2025-10": -813.11
+          },
+          "net_pnl": -813.11,
+          "pe_trades": 1,
+          "positive_months": 0,
+          "profit_factor": 0.0,
+          "threshold": 0.56,
+          "trades": 1,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 1,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": -818.78,
+          "max_consecutive_losses": 1,
+          "max_drawdown": 813.11,
+          "max_drawdown_pct": 0.163,
+          "monthly": {
+            "2025-10": -813.11
+          },
+          "net_pnl": -813.11,
+          "pe_trades": 1,
+          "positive_months": 0,
+          "profit_factor": 0.0,
+          "threshold": 0.58,
+          "trades": 1,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.6,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.62,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.64,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.66,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.68,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.7,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.72,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.74,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "double_slippage_net_pnl": 0.0,
+          "max_consecutive_losses": 0,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "threshold": 0.76,
+          "trades": 0,
+          "win_rate_pct": 0.0
+        }
+      ],
+      "tuning_scores": {
+        "auc": 0.489,
+        "brier": 0.2465,
+        "days": 42,
+        "samples": 82,
+        "score_p05_p50_p95": [
+          0.4216,
+          0.4795,
+          0.534
+        ]
+      }
+    }
+  ]
+}

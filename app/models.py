@@ -108,6 +108,19 @@ class Signal(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
+class OptionSelectionAudit(Base):
+    __tablename__ = "option_selection_audits"
+
+    id: Mapped[str] = mapped_column(String(160), primary_key=True)
+    provider: Mapped[str] = mapped_column(String(16), index=True)
+    mode: Mapped[str] = mapped_column(String(16))
+    underlying_code: Mapped[str] = mapped_column(String(24))
+    candle_timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    model_version: Mapped[str] = mapped_column(String(80))
+    evidence_json: Mapped[str] = mapped_column(Text)
+
+
 class Order(Base):
     __tablename__ = "orders"
     __table_args__ = (
@@ -229,6 +242,34 @@ class ResearchSyncRun(Base):
     error_message: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class ResearchChunk(Base):
+    __tablename__ = "research_chunks"
+    __table_args__ = (
+        UniqueConstraint(
+            "provider",
+            "instrument_key",
+            "timeframe",
+            "start_date",
+            "end_date",
+            name="uq_research_chunk",
+        ),
+        Index("ix_research_chunk_status", "provider", "status"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    provider: Mapped[str] = mapped_column(String(16), index=True)
+    instrument_key: Mapped[str] = mapped_column(String(100))
+    underlying_code: Mapped[str | None] = mapped_column(String(24), index=True)
+    data_role: Mapped[str] = mapped_column(String(8))
+    timeframe: Mapped[str] = mapped_column(String(16))
+    start_date: Mapped[date] = mapped_column(Date)
+    end_date: Mapped[date] = mapped_column(Date)
+    status: Mapped[str] = mapped_column(String(16), default="PENDING", index=True)
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    last_error: Mapped[str | None] = mapped_column(Text)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
 
 
 class ModelArtifact(Base):

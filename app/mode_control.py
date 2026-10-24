@@ -32,6 +32,7 @@ async def change_mode(
     confirmation: str = "",
     *,
     model_available: bool | None = None,
+    shadow_model_available: bool | None = None,
     paper_sessions: int | None = None,
     required_paper_sessions: int = 0,
     enforce_paper_sessions: bool = True,
@@ -42,16 +43,26 @@ async def change_mode(
     market_provider = _broker_provider(market_broker)
     trading_provider = _broker_provider(trading_broker)
     runtime = session.get(RuntimeSetting, 1)
-    if target not in {"STOPPED", "PAPER", "LIVE"}:
+    if target not in {"STOPPED", "SHADOW", "PAPER", "LIVE"}:
         return False, "Unknown mode"
     unresolved = session.scalar(select(Order.id).where(Order.mode == "LIVE", Order.status.in_(["CREATED", "SUBMITTED", "OPEN", "PARTIAL", "PENDING"])).limit(1))
     live_trade = session.scalar(select(Trade.id).where(Trade.mode == "LIVE", Trade.status == "OPEN").limit(1))
     if runtime.execution_mode == "LIVE" and target != "LIVE" and (unresolved or live_trade):
         return False, "Exit or reconcile the live position/order before leaving LIVE"
-    if target == "PAPER":
+    if target in {"SHADOW", "PAPER"}:
+        incompatible_trade = session.scalar(
+            select(Trade.id)
+            .where(Trade.status == "OPEN", Trade.mode != target)
+            .limit(1)
+        )
+        if incompatible_trade:
+            return False, "Close the existing position before changing simulated modes"
+    if target in {"SHADOW", "PAPER"}:
+        if target == "SHADOW" and shadow_model_available is False:
+            return False, "Select a compatible candidate for Shadow mode first"
         market_connected, detail = await market_broker.market_data_health()
         if not market_connected:
-            return False, f"Paper mode requires valid {market_provider} market-data access: {detail}"
+            return False, f"{target.title()} mode requires valid {market_provider} market-data access: {detail}"
     if target == "LIVE":
         if confirmation != "LIVE TRADING":
             return False, "Type LIVE TRADING exactly"
@@ -63,8 +74,8 @@ async def change_mode(
             return False, "Verify the broker static-IP setup in Settings before enabling LIVE"
         if feed_fresh is False:
             return False, "Live futures data is missing or stale; wait for a completed market-data sync"
-        if session.scalar(select(Trade.id).where(Trade.mode == "PAPER", Trade.status == "OPEN").limit(1)):
-            return False, "Close the paper position before enabling LIVE"
+        if session.scalar(select(Trade.id).where(Trade.mode.in_(["PAPER", "SHADOW"]), Trade.status == "OPEN").limit(1)):
+            return False, "Close the simulated position before enabling LIVE"
         ok, detail = database_health(session)
         if not ok:
             return False, f"Database preflight failed: {detail}"

@@ -14,6 +14,10 @@ class BrokerError(RuntimeError):
     """Normalized broker/provider failure used by the runtime safety loop."""
 
 
+class RetryableBrokerError(BrokerError):
+    """Transient provider failure that may succeed for a smaller range or later retry."""
+
+
 class BrokerClient(Protocol):
     provider: str
     client: httpx.AsyncClient

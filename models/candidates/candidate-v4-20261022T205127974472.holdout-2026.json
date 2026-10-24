@@ -1,0 +1,44 @@
+{
+  "active_months": 7,
+  "ce_trades": 28,
+  "coverage": {
+    "NIFTY": {
+      "candidate_setups": 5537,
+      "dropped_future_days": 0,
+      "dropped_spot_days": 1,
+      "futures_candles": 12071,
+      "option_contracts": 482,
+      "spot_candles": 15941,
+      "usable_option_outcomes": 5237
+    }
+  },
+  "double_slippage_net_pnl": 2376.57,
+  "end_date": "2026-10-21",
+  "evaluated_at": "2026-10-22T15:23:51.005382+00:00",
+  "frozen_model_version": "quality-v4-20261022T152203Z",
+  "max_consecutive_losses": 3,
+  "max_drawdown": 5244.32,
+  "max_drawdown_pct": 1.049,
+  "monthly": {
+    "2026-01": -1894.99,
+    "2026-02": -3349.34,
+    "2026-03": 4322.44,
+    "2026-04": 1888.21,
+    "2026-05": -651.92,
+    "2026-06": 3492.41,
+    "2026-07": -1145.88
+  },
+  "net_pnl": 2660.93,
+  "pe_trades": 0,
+  "positive_months": 3,
+  "profit_factor": 1.154,
+  "provider": "GROWW",
+  "samples": 5237,
+  "start_date": "2026-01-01",
+  "threshold": {
+    "CE": 0.52,
+    "PE": 1.01
+  },
+  "trades": 28,
+  "win_rate_pct": 46.43
+}

@@ -1,0 +1,7 @@
+{
+  "quality_models": {
+    "CE": "candidate-v5-20261022T210143430176.ce.cbm",
+    "PE": "candidate-v5-20261022T210143430176.pe.cbm"
+  },
+  "ranker": "candidate-v5-20261022T210143430176.ranker.json"
+}

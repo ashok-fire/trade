@@ -10,9 +10,10 @@ from urllib.parse import quote as urlquote
 import httpx
 
 from .domain import BrokerOrder, Contract, Quote
+from .providers import BrokerError
 
 
-class UpstoxError(RuntimeError):
+class UpstoxError(BrokerError):
     pass
 
 

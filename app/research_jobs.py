@@ -33,7 +33,7 @@ class ResearchJobService:
             run.current_step = "Connecting to historical provider"
             session.commit()
 
-        async def update(completed: int, total: int, message: str) -> None:
+        async def update(completed: float, total: int, message: str) -> None:
             with self.session_factory() as progress_session:
                 current = progress_session.get(ResearchSyncRun, run_id)
                 if current is None:
@@ -52,6 +52,7 @@ class ResearchJobService:
                 date.fromisoformat(configuration["end_date"]),
                 include_options=bool(configuration["include_options"]),
                 include_one_minute=bool(configuration.get("include_one_minute", False)),
+                refresh_existing=bool(configuration.get("refresh_existing", False)),
                 progress=update,
             )
             with self.session_factory() as session:

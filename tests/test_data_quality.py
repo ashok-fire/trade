@@ -1,7 +1,7 @@
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
-from app.data_quality import research_readiness
+from app.data_quality import futures_alignment_gaps, research_readiness
 from app.models import Candle, Instrument
 
 
@@ -61,3 +61,20 @@ def test_research_readiness_reports_alignment_gaps_and_metadata(session):
     assert row.zero_volume_percent == 100
     assert row.option_count == 1
     assert row.verified_contracts == 1
+
+
+def test_futures_gaps_detect_missing_sessions_despite_large_older_history():
+    first = datetime(2026, 8, 24, 3, 45, tzinfo=UTC)
+    second = first + timedelta(days=1)
+    spots = [first + timedelta(minutes=5 * bar) for bar in range(75)]
+    spots += [second + timedelta(minutes=5 * bar) for bar in range(75)]
+    # Duplicate contracts cannot mask an entirely missing next session.
+    futures = spots[:75] * 3
+    assert futures_alignment_gaps(spots, futures) == ["2026-08-25"]
+
+
+def test_futures_gaps_ignore_preopen_and_allow_small_intraday_gaps():
+    start = datetime(2026, 8, 24, 3, 45, tzinfo=UTC)
+    regular = [start + timedelta(minutes=5 * bar) for bar in range(75)]
+    spots = [start - timedelta(minutes=10), *regular]
+    assert futures_alignment_gaps(spots, regular[:-2]) == []

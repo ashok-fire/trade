@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from collections import Counter
+from datetime import UTC, datetime, time
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -31,6 +33,26 @@ class DataReadiness:
 
 def _utc_naive(value: datetime) -> datetime:
     return (value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)).replace(tzinfo=None)
+
+
+def futures_alignment_gaps(spot_values, future_values) -> list[str]:
+    """Find observed spot sessions with less than 90% futures alignment.
+
+    Use actual regular-session spot timestamps, so holidays and pre-open
+    records do not become false missing sessions. Duplicate future contracts
+    at the same timestamp count only once.
+    """
+    zone = ZoneInfo("Asia/Kolkata")
+    expected = {}
+    for value in spot_values:
+        stamp = _utc_naive(value)
+        local = stamp.replace(tzinfo=UTC).astimezone(zone)
+        if time(9, 15) <= local.time() < time(15, 30):
+            expected[stamp] = local.date().isoformat()
+    futures = {_utc_naive(value) for value in future_values}
+    counts = Counter(expected.values())
+    matched = Counter(day for stamp, day in expected.items() if stamp in futures)
+    return sorted(day for day, total in counts.items() if matched[day] / total < 0.90)
 
 
 def _missing_intervals(values: list[datetime]) -> int:
@@ -92,7 +114,8 @@ def research_readiness(session: Session) -> list[DataReadiness]:
             spot_stamps = {_utc_naive(value) for value in spot_values}
             future_stamps = {_utc_naive(value) for value in future_values}
             aligned = len(spot_stamps & future_stamps)
-            training_ready = aligned >= 500
+            gap_days = futures_alignment_gaps(spot_values, future_values)
+            training_ready = aligned >= 500 and not gap_days
             backtest_ready = training_ready and option_count > 0 and verified_contracts > 0
             reasons = []
             if len(spot_values) < 500:
@@ -103,6 +126,11 @@ def research_readiness(session: Session) -> list[DataReadiness]:
                 reasons.append("no option candles")
             if verified_contracts == 0:
                 reasons.append("no verified option lot metadata")
+            if gap_days:
+                reasons.append(
+                    f"{len(gap_days)} spot sessions have less than 90% futures coverage "
+                    f"({gap_days[0]} to {gap_days[-1]}); repair gaps or select a complete period"
+                )
             rows.append(
                 DataReadiness(
                     provider=provider,
