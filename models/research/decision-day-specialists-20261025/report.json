@@ -1,0 +1,18 @@
+{
+  "activation_eligible": false,
+  "app_model_selection_changed": false,
+  "highest_win_100plus_trades_diagnostic_only": null,
+  "historical_audit": null,
+  "limitations": [
+    "Many-profile development selection is biased and not fresh performance evidence",
+    "Different first-decision contract is not compatible with current all-bars runtime",
+    "Existing candle fills/costs and historical feature semantics require fresh quote-based validation",
+    "Quarter ledgers reset; one historical lot per trade, not full compounded account sizing"
+  ],
+  "policy_hash": "b6d5ca35802b8fc05e2a58399d3d4f8d5ff2d2e030c8035d496784bc8b2fda06",
+  "profiles_fitted": 36,
+  "selection": null,
+  "specification_hash": "126a680369d2ace786ffc114b771c71b73060796bccf07aa15ec3373b0c31f12",
+  "status": "REJECTED_NO_SUPPORTED_DAILY_SPECIALIST",
+  "uncertainty": null
+}

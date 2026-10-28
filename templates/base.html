@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>{% block title %}NiftyPilot{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}?v={{ static_asset_version('app.css') }}">
   <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
 </head>
 <body>
@@ -14,6 +14,7 @@
       <a class="nav-item {% if active == 'overview' %}active{% endif %}" href="/overview"><span>▦</span>Overview</a>
       <a class="nav-item {% if active == 'orders' %}active{% endif %}" href="/orders"><span>⇄</span>Orders</a>
       <a class="nav-item {% if active == 'backtests' %}active{% endif %}" href="/backtests"><span>♙</span>Backtests</a>
+      <a class="nav-item {% if active == 'shadow-research' %}active{% endif %}" href="/shadow-research"><span>◉</span>Shadow research</a>
       <a class="nav-item {% if active == 'telegram' %}active{% endif %}" href="/telegram"><span>➤</span>Telegram</a>
       <a class="nav-item {% if active == 'settings' %}active{% endif %}" href="/settings"><span>⚙</span>Settings</a>
     </nav>

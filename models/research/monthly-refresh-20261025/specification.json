@@ -1,0 +1,125 @@
+{
+  "activation_eligible": false,
+  "app_or_registry_changes": false,
+  "arms": [
+    "frozen50",
+    "monthly50",
+    "monthly44"
+  ],
+  "code_hash": "5e882b0d939ce4a3a551e0eac4f5563a907b28b57b6f3fbee12b44a21f5f98eb",
+  "cutoff": 0.45,
+  "dependency_code_hashes": {
+    "app/aligned_training.py": "dbbfe55b03394a244a83bb12144f4f62d82e06df7e47625f3375a5a220dbd5df",
+    "research/option_path_models.py": "181b41976cd0065f57a65397fab9ea0c14dc8572dcdfff27759f655ef5799ed3"
+  },
+  "economic_gates": "100completed selected trades/coverage99%/PF1.3/positive base and double-slip net/DD<=20000/no daily overshoot/>=60% positive active months/>=3of4 stress-positive quarters with10trades/positive lower95 mean expectancy and paired improvement vs both controls",
+  "exits": {
+    "hold_minutes": 60,
+    "stop_pct": 25,
+    "target_pct": 15
+  },
+  "folds": [
+    [
+      "2026-01",
+      "2025-07-01",
+      "2025-12-31",
+      "2026-01-08",
+      "2026-01-31"
+    ],
+    [
+      "2026-02",
+      "2025-08-01",
+      "2026-01-31",
+      "2026-02-01",
+      "2026-02-28"
+    ],
+    [
+      "2026-03",
+      "2025-09-01",
+      "2026-02-28",
+      "2026-03-01",
+      "2026-03-31"
+    ],
+    [
+      "2026-04",
+      "2025-10-01",
+      "2026-03-31",
+      "2026-04-01",
+      "2026-04-30"
+    ],
+    [
+      "2026-05",
+      "2025-11-01",
+      "2026-04-30",
+      "2026-05-01",
+      "2026-05-31"
+    ],
+    [
+      "2026-06",
+      "2025-12-01",
+      "2026-05-31",
+      "2026-06-01",
+      "2026-06-30"
+    ],
+    [
+      "2026-07",
+      "2026-01-01",
+      "2026-06-30",
+      "2026-07-01",
+      "2026-07-31"
+    ],
+    [
+      "2026-08",
+      "2026-02-01",
+      "2026-07-31",
+      "2026-08-01",
+      "2026-08-31"
+    ],
+    [
+      "2026-09",
+      "2026-03-01",
+      "2026-08-31",
+      "2026-09-01",
+      "2026-09-30"
+    ],
+    [
+      "2026-10",
+      "2026-04-01",
+      "2026-09-30",
+      "2026-10-01",
+      "2026-10-13"
+    ]
+  ],
+  "hypothesis": "Scheduled causal monthly model/calibration refresh may reduce the observed temporal degradation of a year-frozen estimator",
+  "label_cache_hash": "62822d585cd94c3d8800bdf2bf85a929ed363c343157ca6853917bbff521bb74",
+  "ledger": "continuous200000, one historical lot, 3%/5%, cash plus reserve fees, first passing/day, no monthly reset; first selected unknown outcome halts entire ledger",
+  "model": "unchanged fixed HGB100iterations/7leaves/lr.05/minleaf20/L2=10/seed42; full inputs50 or paired44; half-life252 days; no learner/cutoff/exit/capital/window optimisation",
+  "previously_inspected_history": true,
+  "primary_contrast": "monthly50 minus frozen50",
+  "profile": {
+    "capital": 200000,
+    "half_life": 252,
+    "option_path": true
+  },
+  "reference_hashes": {
+    "candidate.joblib": "a3710c6db687b52e895410191c9c7a6ace26e7e7d3d76c8fe4977cbfbf3bb5f3",
+    "development-features.pkl": "cff079b312f5f01301c91b373376743138e493637ee56980f753465c731e4056",
+    "feature-audit.json": "71677f37c4c5c6b0c729e0712fc954931df938dfe852ca47c10ff9af73f0c972",
+    "policy.json": "07e5f4ee299f45ca1de7ea4f641284c99046176cdc4b1276643c73c2d5ffbeaf",
+    "report.json": "910d7a455a3dd2eb2e02f50517c4def3a9b92222f8309297837d0d86d509de40",
+    "specification.json": "a29e739a7196da1292fff43a24758e209bcf124c6cbc425504abc9f3ef0fae81"
+  },
+  "refresh": "before first observed evaluated session of each calendar month; preceding6 complete months calibration; expanding earlier fit; purge final observed day in both; same sample/positive-slope gates and effective-day weights as frozen study",
+  "reserved_dates_excluded": [
+    "2026-10-14",
+    "2026-10-23"
+  ],
+  "runtime_compatible": false,
+  "schema": "monthly-refresh-diagnostic-v1",
+  "scope": "CE",
+  "secondary_contrast": "monthly50 minus monthly44",
+  "source_report_hash": "bec10187b2b8771965da4a6575354e43fa6f1737f5ac96300b7f3de5007681cd",
+  "stop_rule": "one fixed three-arm diagnostic; if unsupported, wait for meaningful fresh quote-based Shadow outcomes; no grid expansion",
+  "uncertainty": "10000 five-observed-day circular day-block resamples, seed42; descriptive only",
+  "win_gate": "strictly>70% realised net wins; economic partial track separately>=60%; no final success even if passed because history is already exposed"
+}

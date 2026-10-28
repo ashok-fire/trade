@@ -1,0 +1,89 @@
+{
+  "coverage": {
+    "candidate_setups": 31270,
+    "causal_opportunities": true,
+    "dropped_future_days": 0,
+    "dropped_spot_days": 0,
+    "entry_cutoff_ist": "15:10:00",
+    "futures_alignment_gap_days": [
+      "2024-05-18",
+      "2025-10-21"
+    ],
+    "futures_candles": 70755,
+    "moneyness_counts": {
+      "ATM": 30868,
+      "ITM1": 29
+    },
+    "option_contracts": 2514,
+    "premium_stop_pct": "25",
+    "rejections": {
+      "gap_in_option_exit_path": 22,
+      "gap_in_underlying_exit_path": 6,
+      "missing_next_bar_entry": 7,
+      "missing_required_features": 331,
+      "no_signal_time_liquid_option": 7
+    },
+    "required_features": [
+      "spot_vwap_distance",
+      "futures_vwap_distance",
+      "futures_basis_pct",
+      "spot_return_1",
+      "spot_return_3",
+      "spot_return_6",
+      "futures_return_1",
+      "futures_return_3",
+      "futures_atr_pct",
+      "futures_volume_ratio",
+      "ema9_20_distance",
+      "ema20_50_distance",
+      "atr_pct",
+      "rsi",
+      "previous_day_high_distance",
+      "previous_day_low_distance",
+      "previous_day_close_distance",
+      "opening_range_high_distance",
+      "opening_range_low_distance",
+      "gap_pct",
+      "time_sin",
+      "time_cos",
+      "setup_direction",
+      "option_premium_pct",
+      "days_to_expiry",
+      "moneyness_pct",
+      "day_open_distance",
+      "opening_range_width_pct",
+      "trend_atr_strength",
+      "realized_vol_6",
+      "rsi_change_3",
+      "atr_change_3",
+      "basis_change_3",
+      "return_spread_3",
+      "weekday_sin",
+      "weekday_cos",
+      "setup_orb",
+      "setup_pullback",
+      "setup_failed_breakout",
+      "setup_vwap_reclaim"
+    ],
+    "reward_risk": "1.5",
+    "sampling_policy": "all_eligible_bars",
+    "setup_families": [
+      "ORB"
+    ],
+    "setup_policy": "first_confirmed",
+    "simulator_revision": "entry-bar-stops-exact-next-bar-contiguous-path-v2",
+    "spot_candles": 74169,
+    "strike_policy": "ATM_ITM1",
+    "unlabelled_opportunities": 35,
+    "unreplayed_runtime_filters": [
+      "bid_ask_spread",
+      "quote_age",
+      "delta",
+      "live_volume_and_oi_semantics"
+    ],
+    "usable_option_outcomes": 30897
+  },
+  "hash": "c5990b991eda9eb286e7aaf9aa700418eb2a752b12c4aae579c578a817191c26",
+  "opportunities": 30932,
+  "risk_eligible": 26690
+}

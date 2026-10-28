@@ -1,0 +1,10 @@
+{
+  "activation_eligible": false,
+  "cutoff": null,
+  "dataset_hash": "c5990b991eda9eb286e7aaf9aa700418eb2a752b12c4aae579c578a817191c26",
+  "development_target_passed": false,
+  "learner": null,
+  "schema": "pooled-day-research-v1",
+  "scope": null,
+  "specification_hash": "39282a60f625e9fe535864d462f6b5be7608623e83ff83c8184ad030dc5a682e"
+}

@@ -7,7 +7,6 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-import pandas as pd
 from sqlalchemy import select
 
 from .config import config
@@ -15,14 +14,16 @@ from .database import settings_dict
 from .domain import Contract
 from .execution import ExecutionService
 from .mode_control import reconcile
+from .market_frames import market_frame_for_boundary
+from .parallel_shadow import ParallelShadowService
 from .models import Candle, Instrument, ModelArtifact, RuntimeSetting, Signal, SystemEvent, Trade
 from .option_selector import option_candidates, select_option
 from .selection_audit import record_option_selection
 from .providers import BrokerClient, provider_name
-from .strategy import SETUP_FEATURES, RegimeModel, decide, with_futures_features
+from .strategy import SETUP_FEATURES, RegimeModel, decide
 from .telegram import enqueue
-from .training import front_future_frame
 from .v4_training import option_quality_context
+from .training_contract import entry_window_open, runtime_contract_error
 
 
 class RuntimeService:
@@ -31,6 +32,7 @@ class RuntimeService:
         self.trading_brokers = trading_brokers
         self.session_factory = session_factory
         self.execution = ExecutionService(trading_brokers)
+        self.parallel_shadow = ParallelShadowService(market_brokers, session_factory)
         self.model = RegimeModel(config.model_path)
         self.shadow_model = RegimeModel(config.model_path.parent / ".shadow-unavailable.json")
         self.shadow_artifact_id: int | None = None
@@ -93,9 +95,7 @@ class RuntimeService:
     @staticmethod
     def _entry_window_open(boundary: datetime) -> bool:
         """Do not open fresh positions close to the mandatory 15:20 square-off."""
-        stamp = boundary.replace(tzinfo=UTC) if boundary.tzinfo is None else boundary.astimezone(UTC)
-        local = stamp.astimezone(ZoneInfo("Asia/Kolkata"))
-        return local.weekday() < 5 and time(9, 35) <= local.time() < time(15, 10)
+        return entry_window_open(boundary)
 
     def _store_runtime_rows(
         self,
@@ -281,30 +281,17 @@ class RuntimeService:
             if not model.available: return
             if session.scalar(select(Trade.id).where(Trade.status == "OPEN").limit(1)): return
             settings = settings_dict(session)
+            contract_error = runtime_contract_error(model.metadata, settings)
+            if contract_error:
+                raise RuntimeError(f"Model contract mismatch: {contract_error}")
             provider = provider_name(settings.get("active_broker"))
             broker = self.market_brokers[provider]
             candidates = []
             for code in settings["enabled_indices"].split(","):
-                # Keep complete previous sessions and a long EMA warm-up. Eighty
-                # bars can contain only today's session plus pre-open rows,
-                # causing prior-day levels to disappear late in the session.
-                rows = session.scalars(select(Candle).where(Candle.provider == provider, Candle.underlying_code == code, Candle.data_role == "SPOT", Candle.timeframe == "5minute", Candle.timestamp < boundary).order_by(Candle.timestamp.desc()).limit(1500)).all()[::-1]
-                if len(rows) < 50: continue
-                # A delayed or previous-session candle must never trigger a
-                # current quote entry after a restart or feed interruption.
-                candle_stamp = rows[-1].timestamp
-                candle_stamp = candle_stamp.replace(tzinfo=UTC) if candle_stamp.tzinfo is None else candle_stamp.astimezone(UTC)
-                if boundary.astimezone(UTC) - candle_stamp != timedelta(minutes=5):
+                result = market_frame_for_boundary(session, provider, code, boundary)
+                if result is None:
                     continue
-                future_rows = session.scalars(select(Candle).where(Candle.provider == provider, Candle.underlying_code == code, Candle.data_role == "FUTURE", Candle.timeframe == "5minute", Candle.timestamp >= rows[0].timestamp, Candle.timestamp < boundary).order_by(Candle.timestamp)).all()
-                future_instruments = session.scalars(select(Instrument).where(Instrument.provider == provider, Instrument.underlying_code == code, Instrument.instrument_kind == "FUTURE")).all()
-                futures_frame = front_future_frame(future_rows, future_instruments)
-                if len(futures_frame) < 50: continue
-                frame = with_futures_features(
-                    pd.DataFrame([{"timestamp": item.timestamp, "open": float(item.open), "high": float(item.high), "low": float(item.low), "close": float(item.close), "volume": item.volume} for item in rows]),
-                    futures_frame,
-                )
-                candle = rows[-1]
+                frame, candle = result
                 decision = decide(frame.iloc[-1], {"india_vix": candle.india_vix, "futures_basis_pct": candle.futures_basis_pct, "pcr": candle.pcr}, model)
                 if decision.direction == "NO_TRADE":
                     signal_id = f"reject-{runtime.execution_mode.lower()}-{provider.lower()}-{code}-{int(candle.timestamp.timestamp())}"
@@ -530,4 +517,5 @@ class RuntimeService:
 
     def stop(self) -> None:
         self.stop_event.set()
+        self.parallel_shadow.stop()
 

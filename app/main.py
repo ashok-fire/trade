@@ -10,8 +10,8 @@ from decimal import Decimal
 from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
-from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, Request, UploadFile
+from fastapi.responses import HTMLResponse, RedirectResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, select
@@ -24,7 +24,9 @@ from .database import SessionLocal, database_health, get_session, init_db, setti
 from .groww import GrowwClient
 from .model_registry import activate_candidate, register_candidate, select_shadow_candidate
 from .mode_control import change_mode, reconcile
-from .models import BacktestRun, BacktestTrade, Candle, Instrument, Order, ResearchSyncRun, RuntimeSetting, Setting, SystemEvent, Trade
+from .models import BacktestRun, BacktestTrade, Candle, Instrument, Order, ResearchSyncRun, RuntimeSetting, Setting, SetupObservation, SystemEvent, Trade
+from .shadow_dashboard import observation_export, shadow_context
+from .parallel_shadow import encode
 from .providers import provider_name
 from .operations import backup_status, file_permission_status
 from .research_jobs import ResearchJobService
@@ -32,6 +34,7 @@ from .runtime import RuntimeService
 from .telegram import TelegramWorker, enqueue
 from .time_utils import format_ist
 from .training import load_model_metadata, train_regime_model
+from .research_history import read_report
 from .v4_training import train_option_quality_model
 from .upstox import UpstoxClient
 
@@ -46,6 +49,17 @@ def money(value) -> str:
 
 templates.env.filters["money"] = money
 templates.env.filters["ist_datetime"] = format_ist
+
+
+def static_asset_version(name: str, root=config.root) -> str:
+    """Keep browser caching, but invalidate an asset whenever its file changes."""
+    try:
+        return str((root / "static" / name).stat().st_mtime_ns)
+    except OSError:
+        return "0"
+
+
+templates.env.globals["static_asset_version"] = static_asset_version
 
 
 def render_template_value(value):
@@ -69,6 +83,7 @@ research_service = ResearchJobService(market_brokers, SessionLocal)
 async def lifespan(_app: FastAPI):
     init_db()
     runtime_service.reload_shadow_model()
+    runtime_service.parallel_shadow.reload_model()
     tasks: list[asyncio.Task] = []
     with SessionLocal() as session:
         for interrupted in session.query(ResearchSyncRun).filter(ResearchSyncRun.status.in_(["QUEUED", "RUNNING"])):
@@ -105,6 +120,7 @@ async def lifespan(_app: FastAPI):
         session.commit()
     if config.trading_loop_enabled:
         tasks.append(asyncio.create_task(runtime_service.run(), name="trading-loop"))
+        tasks.append(asyncio.create_task(runtime_service.parallel_shadow.run(), name="parallel-shadow"))
     tasks.append(asyncio.create_task(telegram_worker.run(), name="telegram-outbox"))
     try:
         yield
@@ -240,8 +256,22 @@ def orders_page(request: Request, session: Session = Depends(get_session)):
 
 
 @app.get("/backtests", response_class=HTMLResponse)
-def backtests_page(request: Request, run_id: int | None = None, message: str = "", ok: bool = True, session: Session = Depends(get_session)):
-    return page(request, "backtests.html", {**backtests_context(session, run_id), "message": message, "message_ok": ok})
+def backtests_page(request: Request, run_id: int | None = None, message: str = "", ok: bool = True,
+                   runs_page: int = Query(1, ge=1), models_page: int = Query(1, ge=1),
+                   downloads_page: int = Query(1, ge=1), research_page: int = Query(1, ge=1),
+                   session: Session = Depends(get_session)):
+    context = backtests_context(session, run_id, runs_page=runs_page, models_page=models_page,
+                               downloads_page=downloads_page, research_page=research_page)
+    return page(request, "backtests.html", {**context, "message": message, "message_ok": ok})
+
+
+@app.get("/backtests/research-reports/{study_id}")
+def offline_research_report(study_id: str):
+    try:
+        report = read_report(config.root / "models/research", study_id)
+    except (OSError, ValueError):
+        raise HTTPException(404, "Research report not available")
+    return Response(json.dumps(report), media_type="application/json", headers={"X-Content-Type-Options":"nosniff"})
 
 
 @app.post("/backtests")
@@ -249,8 +279,8 @@ def start_backtest(
     indices: list[str] = Form(...),
     start_date: date = Form(...),
     end_date: date = Form(...),
-    capital: Decimal = Form(Decimal("500000")),
-    risk_pct: Decimal = Form(Decimal("0.25")),
+    capital: Decimal = Form(Decimal("100000")),
+    risk_pct: Decimal = Form(Decimal("3")),
     slippage_pct: Decimal = Form(Decimal("0.05")),
     historical_provider: str = Form("UPSTOX"),
     cost_model: str = Form("UPSTOX"),
@@ -270,14 +300,17 @@ def start_backtest(
         cost_model = "UPSTOX"
     if historical_provider not in {"UPSTOX", "GROWW"} or cost_model not in {"UPSTOX", "GROWW", "UPSTOX_PLUS"} or strategy_mode not in {"MODEL", "RULE_ONLY"} or strike_policy not in {"ATM_ONLY", "ATM_ITM1"}:
         return flash_redirect("/backtests", "Unknown data provider or cost model", False)
-    if not selected or start_date > end_date or capital <= 0 or not (Decimal("0") < risk_pct <= Decimal("2")) or slippage_pct < 0 or entry_delay_bars < 1 or minimum_option_volume < 0 or maximum_spread_pct <= 0:
+    if not selected or start_date > end_date or capital <= 0 or not (Decimal("0") < risk_pct <= Decimal("3")) or slippage_pct < 0 or entry_delay_bars < 1 or minimum_option_volume < 0 or maximum_spread_pct <= 0:
         return flash_redirect("/backtests", "Please check the backtest inputs", False)
     model_metadata = load_model_metadata(config.model_path)
+    daily_loss_limit_pct = settings_dict(session).get("daily_loss_limit_pct", "5")
     run = BacktestRun(
         configuration_json=json.dumps({"indices": selected, "capital": str(capital), "risk_pct": str(risk_pct), "slippage_pct": str(slippage_pct), "historical_provider": historical_provider, "cost_model": cost_model, "strategy_mode": strategy_mode, "strike_policy": strike_policy, "entry_delay_bars": entry_delay_bars, "minimum_option_volume": minimum_option_volume, "maximum_spread_pct": str(maximum_spread_pct), "model_version": model_metadata.get("version"), "feature_schema": model_metadata.get("feature_schema")}),
         start_date=start_date,
         end_date=end_date,
     )
+    run.configuration_json = json.dumps({**json.loads(run.configuration_json),
+                                         "daily_loss_limit_pct": daily_loss_limit_pct})
     session.add(run)
     session.commit()
     backtest_service.submit(run.id)
@@ -435,7 +468,9 @@ async def train_model(
         artifact = register_candidate(session, candidate_path, metadata)
         return flash_redirect(
             "/backtests",
-            f"Candidate #{artifact.id} trained on {metadata['samples']} samples; review validation results and activate it explicitly.",
+            f"Candidate #{artifact.id} trained on {metadata['samples']} labelled outcomes; review its blockers. "
+            + ("It remains research-only; no model was selected or activated." if metadata.get("research_only")
+               else "Activate only after validation passes."),
         )
     except ModuleNotFoundError:
         return flash_redirect("/backtests", "Model dependencies are not installed. Run: pip install -r requirements.txt", False)
@@ -658,7 +693,7 @@ def save_risk(
 ):
     values = locals().copy()
     values.pop("session")
-    if paper_capital <= 0 or not (Decimal("0") < risk_per_trade_pct <= 2) or not (Decimal("0") < daily_loss_limit_pct <= 5) or max_trades_per_day < 1 or max_consecutive_losses < 1 or not (Decimal("5") <= premium_emergency_stop_pct <= 50) or reward_risk <= 0 or paper_slippage_pct < 0:
+    if paper_capital <= 0 or not (Decimal("0") < risk_per_trade_pct <= 3) or not (Decimal("0") < daily_loss_limit_pct <= 5) or max_trades_per_day < 1 or max_consecutive_losses < 1 or not (Decimal("5") <= premium_emergency_stop_pct <= 50) or reward_risk <= 0 or paper_slippage_pct < 0:
         return flash_redirect("/settings", "Risk values are outside safe limits", False)
     for key, value in values.items():
         session.get(Setting, key).value = str(value)
@@ -742,6 +777,28 @@ async def reconcile_now(session: Session = Depends(get_session)):
     return flash_redirect("/settings", detail, matched)
 
 
+@app.get("/shadow-research", response_class=HTMLResponse)
+def shadow_research(request: Request, session: Session = Depends(get_session)):
+    return page(request, "shadow-research.html", shadow_context(session, runtime_service.parallel_shadow))
+
+
+@app.post("/shadow-research/enabled")
+def shadow_research_enabled(enabled: bool = Form(...), session: Session = Depends(get_session)):
+    session.get(Setting, "parallel_shadow_enabled").value = "true" if enabled else "false"
+    session.commit()
+    return RedirectResponse("/shadow-research", status_code=303)
+
+
+@app.get("/shadow-research/export.jsonl")
+def shadow_research_export():
+    def records():
+        with SessionLocal() as session:
+            for row in session.scalars(select(SetupObservation).order_by(SetupObservation.observed_at, SetupObservation.id).execution_options(yield_per=500)):
+                yield encode(observation_export(row)) + "\n"
+    return StreamingResponse(records(), media_type="application/x-ndjson",
+                             headers={"Content-Disposition": 'attachment; filename="shadow-observations.jsonl"'})
+
+
 @app.get("/health")
 def health(session: Session = Depends(get_session)):
     runtime = session.get(RuntimeSetting, 1)
@@ -777,4 +834,5 @@ def health(session: Session = Depends(get_session)):
         "market_token_configured": bool(market_broker.access_token()),
         "trading_token_configured": bool(trading_broker.access_token()),
         "runtime_error": runtime_service.last_error,
+        "parallel_shadow": runtime_service.parallel_shadow.health(),
     }

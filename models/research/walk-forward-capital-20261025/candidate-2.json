@@ -1,0 +1,1799 @@
+{
+  "candidate": 2,
+  "curve": [
+    {
+      "active_months": 18,
+      "ce_trades": 109,
+      "censored": 0,
+      "coverage": 1.0,
+      "cutoff": 0.4,
+      "daily_loss_overshoots": 0,
+      "folds": [
+        {
+          "active_months": 3,
+          "ce_trades": 21,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q2",
+          "max_drawdown": 12318.48,
+          "monthly": {
+            "2024-04": -4748.22,
+            "2024-05": -2496.05,
+            "2024-06": -4712.85
+          },
+          "net_pnl": -11957.12,
+          "pe_trades": 16,
+          "positive_months": 0,
+          "profit_factor": 0.357,
+          "selected": 37,
+          "stress_net_pnl": -12114.34,
+          "trades": 37,
+          "win_rate_pct": 29.73
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 20,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q3",
+          "max_drawdown": 698.23,
+          "monthly": {
+            "2024-07": 690.18,
+            "2024-08": -99.25,
+            "2024-09": 682.35
+          },
+          "net_pnl": 1273.27,
+          "pe_trades": 0,
+          "positive_months": 2,
+          "profit_factor": 1.442,
+          "selected": 20,
+          "stress_net_pnl": 1216.36,
+          "trades": 20,
+          "win_rate_pct": 50.0
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 18,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q4",
+          "max_drawdown": 2999.26,
+          "monthly": {
+            "2024-10": 292.77,
+            "2024-11": -1057.39,
+            "2024-12": 2716.7
+          },
+          "net_pnl": 1952.07,
+          "pe_trades": 16,
+          "positive_months": 2,
+          "profit_factor": 1.202,
+          "selected": 34,
+          "stress_net_pnl": 1815.04,
+          "trades": 34,
+          "win_rate_pct": 52.94
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 15,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q2",
+          "max_drawdown": 6116.95,
+          "monthly": {
+            "2025-04": 6013.27,
+            "2025-05": 2118.68,
+            "2025-06": 2817.46
+          },
+          "net_pnl": 10949.41,
+          "pe_trades": 10,
+          "positive_months": 3,
+          "profit_factor": 2.006,
+          "selected": 25,
+          "stress_net_pnl": 10729.55,
+          "trades": 25,
+          "win_rate_pct": 60.0
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 8,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q3",
+          "max_drawdown": 2363.08,
+          "monthly": {
+            "2025-07": -759.38,
+            "2025-08": -347.51,
+            "2025-09": 3270.34
+          },
+          "net_pnl": 2163.46,
+          "pe_trades": 12,
+          "positive_months": 1,
+          "profit_factor": 1.366,
+          "selected": 20,
+          "stress_net_pnl": 2009.53,
+          "trades": 20,
+          "win_rate_pct": 50.0
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 27,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q4",
+          "max_drawdown": 4393.39,
+          "monthly": {
+            "2025-10": 5149.85,
+            "2025-11": 7789.07,
+            "2025-12": -2501.63
+          },
+          "net_pnl": 10437.29,
+          "pe_trades": 18,
+          "positive_months": 2,
+          "profit_factor": 1.714,
+          "selected": 45,
+          "stress_net_pnl": 10092.01,
+          "trades": 45,
+          "win_rate_pct": 53.33
+        }
+      ],
+      "max_drawdown": 13016.71,
+      "monthly": {
+        "2024-04": -4748.22,
+        "2024-05": -2496.05,
+        "2024-06": -4712.85,
+        "2024-07": 690.18,
+        "2024-08": -99.25,
+        "2024-09": 682.35,
+        "2024-10": 292.77,
+        "2024-11": -1057.39,
+        "2024-12": 2716.7,
+        "2025-04": 6013.27,
+        "2025-05": 2118.68,
+        "2025-06": 2817.46,
+        "2025-07": -759.38,
+        "2025-08": -347.51,
+        "2025-09": 3270.34,
+        "2025-10": 5149.85,
+        "2025-11": 7789.07,
+        "2025-12": -2501.63
+      },
+      "net_pnl": 14818.38,
+      "passes": false,
+      "pe_trades": 72,
+      "positive_months": 10,
+      "profit_factor": 1.237,
+      "selected": 181,
+      "stress_net_pnl": 13748.15,
+      "trades": 181,
+      "win_rate_pct": 48.62
+    },
+    {
+      "active_months": 18,
+      "ce_trades": 85,
+      "censored": 0,
+      "coverage": 1.0,
+      "cutoff": 0.44,
+      "daily_loss_overshoots": 0,
+      "folds": [
+        {
+          "active_months": 3,
+          "ce_trades": 15,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q2",
+          "max_drawdown": 2795.38,
+          "monthly": {
+            "2024-04": -995.88,
+            "2024-05": 1399.32,
+            "2024-06": 4256.66
+          },
+          "net_pnl": 4660.1,
+          "pe_trades": 15,
+          "positive_months": 2,
+          "profit_factor": 1.615,
+          "selected": 30,
+          "stress_net_pnl": 4528.71,
+          "trades": 30,
+          "win_rate_pct": 50.0
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 12,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q3",
+          "max_drawdown": 544.24,
+          "monthly": {
+            "2024-07": 536.6,
+            "2024-08": 67.23,
+            "2024-09": 10.07
+          },
+          "net_pnl": 613.9,
+          "pe_trades": 0,
+          "positive_months": 3,
+          "profit_factor": 1.311,
+          "selected": 12,
+          "stress_net_pnl": 578.78,
+          "trades": 12,
+          "win_rate_pct": 50.0
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 16,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q4",
+          "max_drawdown": 1975.97,
+          "monthly": {
+            "2024-10": -1040.62,
+            "2024-11": -541.11,
+            "2024-12": 2365.19
+          },
+          "net_pnl": 783.46,
+          "pe_trades": 10,
+          "positive_months": 1,
+          "profit_factor": 1.139,
+          "selected": 26,
+          "stress_net_pnl": 688.66,
+          "trades": 26,
+          "win_rate_pct": 57.69
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 15,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q2",
+          "max_drawdown": 6266.19,
+          "monthly": {
+            "2025-04": 6747.45,
+            "2025-05": 3048.4,
+            "2025-06": 1337.19
+          },
+          "net_pnl": 11133.04,
+          "pe_trades": 9,
+          "positive_months": 3,
+          "profit_factor": 1.964,
+          "selected": 24,
+          "stress_net_pnl": 10918.93,
+          "trades": 24,
+          "win_rate_pct": 58.33
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 2,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q3",
+          "max_drawdown": 4306.14,
+          "monthly": {
+            "2025-07": -1237.28,
+            "2025-08": -2436.12,
+            "2025-09": 1745.73
+          },
+          "net_pnl": -1927.67,
+          "pe_trades": 5,
+          "positive_months": 1,
+          "profit_factor": 0.552,
+          "selected": 7,
+          "stress_net_pnl": -1977.46,
+          "trades": 7,
+          "win_rate_pct": 28.57
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 25,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q4",
+          "max_drawdown": 1868.45,
+          "monthly": {
+            "2025-10": 7559.22,
+            "2025-11": 6424.34,
+            "2025-12": 83.06
+          },
+          "net_pnl": 14066.62,
+          "pe_trades": 7,
+          "positive_months": 3,
+          "profit_factor": 3.119,
+          "selected": 32,
+          "stress_net_pnl": 13811.86,
+          "trades": 32,
+          "win_rate_pct": 62.5
+        }
+      ],
+      "max_drawdown": 6266.19,
+      "monthly": {
+        "2024-04": -995.88,
+        "2024-05": 1399.32,
+        "2024-06": 4256.66,
+        "2024-07": 536.6,
+        "2024-08": 67.23,
+        "2024-09": 10.07,
+        "2024-10": -1040.62,
+        "2024-11": -541.11,
+        "2024-12": 2365.19,
+        "2025-04": 6747.45,
+        "2025-05": 3048.4,
+        "2025-06": 1337.19,
+        "2025-07": -1237.28,
+        "2025-08": -2436.12,
+        "2025-09": 1745.73,
+        "2025-10": 7559.22,
+        "2025-11": 6424.34,
+        "2025-12": 83.06
+      },
+      "net_pnl": 29329.44,
+      "passes": true,
+      "pe_trades": 46,
+      "positive_months": 13,
+      "profit_factor": 1.778,
+      "selected": 131,
+      "stress_net_pnl": 28549.48,
+      "trades": 131,
+      "win_rate_pct": 54.96
+    },
+    {
+      "active_months": 16,
+      "ce_trades": 63,
+      "censored": 0,
+      "coverage": 1.0,
+      "cutoff": 0.48,
+      "daily_loss_overshoots": 0,
+      "folds": [
+        {
+          "active_months": 3,
+          "ce_trades": 6,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q2",
+          "max_drawdown": 1256.59,
+          "monthly": {
+            "2024-04": 300.92,
+            "2024-05": 408.64,
+            "2024-06": 2515.66
+          },
+          "net_pnl": 3225.22,
+          "pe_trades": 9,
+          "positive_months": 3,
+          "profit_factor": 1.79,
+          "selected": 15,
+          "stress_net_pnl": 3147.91,
+          "trades": 15,
+          "win_rate_pct": 46.67
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 10,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q3",
+          "max_drawdown": 409.7,
+          "monthly": {
+            "2024-07": 1564.28,
+            "2024-08": 67.23,
+            "2024-09": 289.95
+          },
+          "net_pnl": 1921.46,
+          "pe_trades": 0,
+          "positive_months": 3,
+          "profit_factor": 3.46,
+          "selected": 10,
+          "stress_net_pnl": 1893.34,
+          "trades": 10,
+          "win_rate_pct": 70.0
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 13,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q4",
+          "max_drawdown": 1555.4,
+          "monthly": {
+            "2024-10": -328.42,
+            "2024-11": -73.0,
+            "2024-12": 858.15
+          },
+          "net_pnl": 456.73,
+          "pe_trades": 6,
+          "positive_months": 1,
+          "profit_factor": 1.117,
+          "selected": 19,
+          "stress_net_pnl": 393.77,
+          "trades": 19,
+          "win_rate_pct": 47.37
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 13,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q2",
+          "max_drawdown": 2615.87,
+          "monthly": {
+            "2025-04": 6739.9,
+            "2025-05": 5173.66,
+            "2025-06": -690.37
+          },
+          "net_pnl": 11223.18,
+          "pe_trades": 7,
+          "positive_months": 2,
+          "profit_factor": 2.197,
+          "selected": 20,
+          "stress_net_pnl": 11040.02,
+          "trades": 20,
+          "win_rate_pct": 55.0
+        },
+        {
+          "active_months": 1,
+          "ce_trades": 0,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q3",
+          "max_drawdown": 692.48,
+          "monthly": {
+            "2025-09": -692.48
+          },
+          "net_pnl": -692.48,
+          "pe_trades": 1,
+          "positive_months": 0,
+          "profit_factor": 0.0,
+          "selected": 1,
+          "stress_net_pnl": -697.91,
+          "trades": 1,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 21,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q4",
+          "max_drawdown": 4478.8,
+          "monthly": {
+            "2025-10": -143.92,
+            "2025-11": 5844.83,
+            "2025-12": -2940.56
+          },
+          "net_pnl": 2760.35,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": 1.287,
+          "selected": 21,
+          "stress_net_pnl": 2593.76,
+          "trades": 21,
+          "win_rate_pct": 38.1
+        }
+      ],
+      "max_drawdown": 4478.8,
+      "monthly": {
+        "2024-04": 300.92,
+        "2024-05": 408.64,
+        "2024-06": 2515.66,
+        "2024-07": 1564.28,
+        "2024-08": 67.23,
+        "2024-09": 289.95,
+        "2024-10": -328.42,
+        "2024-11": -73.0,
+        "2024-12": 858.15,
+        "2025-04": 6739.9,
+        "2025-05": 5173.66,
+        "2025-06": -690.37,
+        "2025-09": -692.48,
+        "2025-10": -143.92,
+        "2025-11": 5844.83,
+        "2025-12": -2940.56
+      },
+      "net_pnl": 18894.47,
+      "passes": false,
+      "pe_trades": 23,
+      "positive_months": 10,
+      "profit_factor": 1.664,
+      "selected": 86,
+      "stress_net_pnl": 18370.88,
+      "trades": 86,
+      "win_rate_pct": 48.84
+    },
+    {
+      "active_months": 15,
+      "ce_trades": 52,
+      "censored": 0,
+      "coverage": 1.0,
+      "cutoff": 0.52,
+      "daily_loss_overshoots": 0,
+      "folds": [
+        {
+          "active_months": 2,
+          "ce_trades": 4,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q2",
+          "max_drawdown": 1131.67,
+          "monthly": {
+            "2024-04": -993.17,
+            "2024-05": 869.01
+          },
+          "net_pnl": -124.16,
+          "pe_trades": 6,
+          "positive_months": 1,
+          "profit_factor": 0.952,
+          "selected": 10,
+          "stress_net_pnl": -170.66,
+          "trades": 10,
+          "win_rate_pct": 40.0
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 10,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q3",
+          "max_drawdown": 409.7,
+          "monthly": {
+            "2024-07": 1608.87,
+            "2024-08": 67.23,
+            "2024-09": 329.19
+          },
+          "net_pnl": 2005.29,
+          "pe_trades": 0,
+          "positive_months": 3,
+          "profit_factor": 3.869,
+          "selected": 10,
+          "stress_net_pnl": 1976.81,
+          "trades": 10,
+          "win_rate_pct": 70.0
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 11,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q4",
+          "max_drawdown": 1134.13,
+          "monthly": {
+            "2024-10": -951.96,
+            "2024-11": 1521.92,
+            "2024-12": 2131.66
+          },
+          "net_pnl": 2701.61,
+          "pe_trades": 3,
+          "positive_months": 2,
+          "profit_factor": 2.783,
+          "selected": 14,
+          "stress_net_pnl": 2652.09,
+          "trades": 14,
+          "win_rate_pct": 64.29
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 10,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q2",
+          "max_drawdown": 2229.39,
+          "monthly": {
+            "2025-04": 2336.89,
+            "2025-05": 2991.16,
+            "2025-06": 2187.74
+          },
+          "net_pnl": 7515.79,
+          "pe_trades": 2,
+          "positive_months": 3,
+          "profit_factor": 3.083,
+          "selected": 12,
+          "stress_net_pnl": 7414.4,
+          "trades": 12,
+          "win_rate_pct": 58.33
+        },
+        {
+          "active_months": 1,
+          "ce_trades": 0,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q3",
+          "max_drawdown": 308.81,
+          "monthly": {
+            "2025-09": -308.81
+          },
+          "net_pnl": -308.81,
+          "pe_trades": 1,
+          "positive_months": 0,
+          "profit_factor": 0.0,
+          "selected": 1,
+          "stress_net_pnl": -313.76,
+          "trades": 1,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 17,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q4",
+          "max_drawdown": 3763.99,
+          "monthly": {
+            "2025-10": -614.65,
+            "2025-11": 6400.36,
+            "2025-12": -2749.94
+          },
+          "net_pnl": 3035.78,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": 1.433,
+          "selected": 17,
+          "stress_net_pnl": 2896.65,
+          "trades": 17,
+          "win_rate_pct": 47.06
+        }
+      ],
+      "max_drawdown": 3763.99,
+      "monthly": {
+        "2024-04": -993.17,
+        "2024-05": 869.01,
+        "2024-07": 1608.87,
+        "2024-08": 67.23,
+        "2024-09": 329.19,
+        "2024-10": -951.96,
+        "2024-11": 1521.92,
+        "2024-12": 2131.66,
+        "2025-04": 2336.89,
+        "2025-05": 2991.16,
+        "2025-06": 2187.74,
+        "2025-09": -308.81,
+        "2025-10": -614.65,
+        "2025-11": 6400.36,
+        "2025-12": -2749.94
+      },
+      "net_pnl": 14825.49,
+      "passes": false,
+      "pe_trades": 12,
+      "positive_months": 10,
+      "profit_factor": 1.941,
+      "selected": 64,
+      "stress_net_pnl": 14455.53,
+      "trades": 64,
+      "win_rate_pct": 54.69
+    },
+    {
+      "active_months": 14,
+      "ce_trades": 36,
+      "censored": 0,
+      "coverage": 1.0,
+      "cutoff": 0.56,
+      "daily_loss_overshoots": 0,
+      "folds": [
+        {
+          "active_months": 2,
+          "ce_trades": 2,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q2",
+          "max_drawdown": 1414.33,
+          "monthly": {
+            "2024-04": 29.72,
+            "2024-05": -25.74
+          },
+          "net_pnl": 3.98,
+          "pe_trades": 4,
+          "positive_months": 1,
+          "profit_factor": 1.003,
+          "selected": 6,
+          "stress_net_pnl": -25.62,
+          "trades": 6,
+          "win_rate_pct": 50.0
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 7,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q3",
+          "max_drawdown": 635.54,
+          "monthly": {
+            "2024-07": -79.96,
+            "2024-08": -292.8,
+            "2024-09": 74.26
+          },
+          "net_pnl": -298.5,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": 0.821,
+          "selected": 7,
+          "stress_net_pnl": -318.13,
+          "trades": 7,
+          "win_rate_pct": 42.86
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 6,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q4",
+          "max_drawdown": 164.76,
+          "monthly": {
+            "2024-10": 182.17,
+            "2024-11": 758.27,
+            "2024-12": 2378.91
+          },
+          "net_pnl": 3319.36,
+          "pe_trades": 2,
+          "positive_months": 3,
+          "profit_factor": 21.146,
+          "selected": 8,
+          "stress_net_pnl": 3287.15,
+          "trades": 8,
+          "win_rate_pct": 87.5
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 9,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q2",
+          "max_drawdown": 2105.67,
+          "monthly": {
+            "2025-04": 787.37,
+            "2025-05": 2991.16,
+            "2025-06": 443.89
+          },
+          "net_pnl": 4222.42,
+          "pe_trades": 2,
+          "positive_months": 3,
+          "profit_factor": 1.935,
+          "selected": 11,
+          "stress_net_pnl": 4128.51,
+          "trades": 11,
+          "win_rate_pct": 45.45
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "censored": 0,
+          "coverage": 0.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q3",
+          "max_drawdown": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "selected": 0,
+          "stress_net_pnl": 0.0,
+          "trades": 0,
+          "win_rate_pct": null
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 12,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q4",
+          "max_drawdown": 3385.96,
+          "monthly": {
+            "2025-10": -78.61,
+            "2025-11": 2672.5,
+            "2025-12": -2620.71
+          },
+          "net_pnl": -26.82,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": 0.996,
+          "selected": 12,
+          "stress_net_pnl": -123.08,
+          "trades": 12,
+          "win_rate_pct": 50.0
+        }
+      ],
+      "max_drawdown": 3385.96,
+      "monthly": {
+        "2024-04": 29.72,
+        "2024-05": -25.74,
+        "2024-07": -79.96,
+        "2024-08": -292.8,
+        "2024-09": 74.26,
+        "2024-10": 182.17,
+        "2024-11": 758.27,
+        "2024-12": 2378.91,
+        "2025-04": 787.37,
+        "2025-05": 2991.16,
+        "2025-06": 443.89,
+        "2025-10": -78.61,
+        "2025-11": 2672.5,
+        "2025-12": -2620.71
+      },
+      "net_pnl": 7220.43,
+      "passes": false,
+      "pe_trades": 8,
+      "positive_months": 9,
+      "profit_factor": 1.514,
+      "selected": 44,
+      "stress_net_pnl": 6948.84,
+      "trades": 44,
+      "win_rate_pct": 54.55
+    },
+    {
+      "active_months": 13,
+      "ce_trades": 27,
+      "censored": 0,
+      "coverage": 1.0,
+      "cutoff": 0.6,
+      "daily_loss_overshoots": 0,
+      "folds": [
+        {
+          "active_months": 1,
+          "ce_trades": 0,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q2",
+          "max_drawdown": 290.89,
+          "monthly": {
+            "2024-05": -290.89
+          },
+          "net_pnl": -290.89,
+          "pe_trades": 1,
+          "positive_months": 0,
+          "profit_factor": 0.0,
+          "selected": 1,
+          "stress_net_pnl": -293.63,
+          "trades": 1,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 4,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q3",
+          "max_drawdown": 545.99,
+          "monthly": {
+            "2024-07": 808.99,
+            "2024-08": -395.81,
+            "2024-09": -150.18
+          },
+          "net_pnl": 263.0,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": 1.326,
+          "selected": 4,
+          "stress_net_pnl": 252.36,
+          "trades": 4,
+          "win_rate_pct": 50.0
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 5,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q4",
+          "max_drawdown": 467.11,
+          "monthly": {
+            "2024-10": 182.17,
+            "2024-11": 385.75,
+            "2024-12": 424.55
+          },
+          "net_pnl": 992.47,
+          "pe_trades": 0,
+          "positive_months": 3,
+          "profit_factor": 2.571,
+          "selected": 5,
+          "stress_net_pnl": 972.57,
+          "trades": 5,
+          "win_rate_pct": 60.0
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 8,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q2",
+          "max_drawdown": 1676.11,
+          "monthly": {
+            "2025-04": 1139.66,
+            "2025-05": 2991.16,
+            "2025-06": 940.29
+          },
+          "net_pnl": 5071.11,
+          "pe_trades": 1,
+          "positive_months": 3,
+          "profit_factor": 2.572,
+          "selected": 9,
+          "stress_net_pnl": 4989.25,
+          "trades": 9,
+          "win_rate_pct": 44.44
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "censored": 0,
+          "coverage": 0.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q3",
+          "max_drawdown": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "selected": 0,
+          "stress_net_pnl": 0.0,
+          "trades": 0,
+          "win_rate_pct": null
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 10,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q4",
+          "max_drawdown": 3124.32,
+          "monthly": {
+            "2025-10": 4.9,
+            "2025-11": 3295.6,
+            "2025-12": -72.45
+          },
+          "net_pnl": 3228.04,
+          "pe_trades": 0,
+          "positive_months": 2,
+          "profit_factor": 1.858,
+          "selected": 10,
+          "stress_net_pnl": 3148.65,
+          "trades": 10,
+          "win_rate_pct": 60.0
+        }
+      ],
+      "max_drawdown": 3124.32,
+      "monthly": {
+        "2024-05": -290.89,
+        "2024-07": 808.99,
+        "2024-08": -395.81,
+        "2024-09": -150.18,
+        "2024-10": 182.17,
+        "2024-11": 385.75,
+        "2024-12": 424.55,
+        "2025-04": 1139.66,
+        "2025-05": 2991.16,
+        "2025-06": 940.29,
+        "2025-10": 4.9,
+        "2025-11": 3295.6,
+        "2025-12": -72.45
+      },
+      "net_pnl": 9263.72,
+      "passes": false,
+      "pe_trades": 2,
+      "positive_months": 9,
+      "profit_factor": 2.063,
+      "selected": 29,
+      "stress_net_pnl": 9069.19,
+      "trades": 29,
+      "win_rate_pct": 51.72
+    },
+    {
+      "active_months": 9,
+      "ce_trades": 13,
+      "censored": 0,
+      "coverage": 1.0,
+      "cutoff": 0.64,
+      "daily_loss_overshoots": 0,
+      "folds": [
+        {
+          "active_months": 1,
+          "ce_trades": 0,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q2",
+          "max_drawdown": 290.89,
+          "monthly": {
+            "2024-05": -290.89
+          },
+          "net_pnl": -290.89,
+          "pe_trades": 1,
+          "positive_months": 0,
+          "profit_factor": 0.0,
+          "selected": 1,
+          "stress_net_pnl": -293.63,
+          "trades": 1,
+          "win_rate_pct": 0.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "censored": 0,
+          "coverage": 0.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q3",
+          "max_drawdown": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "selected": 0,
+          "stress_net_pnl": 0.0,
+          "trades": 0,
+          "win_rate_pct": null
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 5,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q4",
+          "max_drawdown": 467.11,
+          "monthly": {
+            "2024-10": 182.17,
+            "2024-11": 385.75,
+            "2024-12": 424.55
+          },
+          "net_pnl": 992.47,
+          "pe_trades": 0,
+          "positive_months": 3,
+          "profit_factor": 2.571,
+          "selected": 5,
+          "stress_net_pnl": 972.57,
+          "trades": 5,
+          "win_rate_pct": 60.0
+        },
+        {
+          "active_months": 3,
+          "ce_trades": 3,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q2",
+          "max_drawdown": 1250.52,
+          "monthly": {
+            "2025-04": 1013.87,
+            "2025-05": 2991.16,
+            "2025-06": -1250.52
+          },
+          "net_pnl": 2754.5,
+          "pe_trades": 0,
+          "positive_months": 2,
+          "profit_factor": 3.203,
+          "selected": 3,
+          "stress_net_pnl": 2722.73,
+          "trades": 3,
+          "win_rate_pct": 66.67
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "censored": 0,
+          "coverage": 0.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q3",
+          "max_drawdown": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "selected": 0,
+          "stress_net_pnl": 0.0,
+          "trades": 0,
+          "win_rate_pct": null
+        },
+        {
+          "active_months": 2,
+          "ce_trades": 5,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q4",
+          "max_drawdown": 1943.5,
+          "monthly": {
+            "2025-10": 1076.0,
+            "2025-11": -284.76
+          },
+          "net_pnl": 791.24,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": 1.407,
+          "selected": 5,
+          "stress_net_pnl": 749.57,
+          "trades": 5,
+          "win_rate_pct": 80.0
+        }
+      ],
+      "max_drawdown": 2118.03,
+      "monthly": {
+        "2024-05": -290.89,
+        "2024-10": 182.17,
+        "2024-11": 385.75,
+        "2024-12": 424.55,
+        "2025-04": 1013.87,
+        "2025-05": 2991.16,
+        "2025-06": -1250.52,
+        "2025-10": 1076.0,
+        "2025-11": -284.76
+      },
+      "net_pnl": 4247.32,
+      "passes": false,
+      "pe_trades": 1,
+      "positive_months": 6,
+      "profit_factor": 2.032,
+      "selected": 14,
+      "stress_net_pnl": 4151.24,
+      "trades": 14,
+      "win_rate_pct": 64.29
+    },
+    {
+      "active_months": 4,
+      "ce_trades": 5,
+      "censored": 0,
+      "coverage": 1.0,
+      "cutoff": 0.68,
+      "daily_loss_overshoots": 0,
+      "folds": [
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "censored": 0,
+          "coverage": 0.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q2",
+          "max_drawdown": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "selected": 0,
+          "stress_net_pnl": 0.0,
+          "trades": 0,
+          "win_rate_pct": null
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "censored": 0,
+          "coverage": 0.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q3",
+          "max_drawdown": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "selected": 0,
+          "stress_net_pnl": 0.0,
+          "trades": 0,
+          "win_rate_pct": null
+        },
+        {
+          "active_months": 1,
+          "ce_trades": 2,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q4",
+          "max_drawdown": 164.76,
+          "monthly": {
+            "2024-11": 385.75
+          },
+          "net_pnl": 385.75,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": 3.341,
+          "selected": 2,
+          "stress_net_pnl": 380.66,
+          "trades": 2,
+          "win_rate_pct": 50.0
+        },
+        {
+          "active_months": 2,
+          "ce_trades": 2,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q2",
+          "max_drawdown": 0.0,
+          "monthly": {
+            "2025-04": 1712.1,
+            "2025-05": 2991.16
+          },
+          "net_pnl": 4703.25,
+          "pe_trades": 0,
+          "positive_months": 2,
+          "profit_factor": null,
+          "selected": 2,
+          "stress_net_pnl": 4681.04,
+          "trades": 2,
+          "win_rate_pct": 100.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "censored": 0,
+          "coverage": 0.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q3",
+          "max_drawdown": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "selected": 0,
+          "stress_net_pnl": 0.0,
+          "trades": 0,
+          "win_rate_pct": null
+        },
+        {
+          "active_months": 1,
+          "ce_trades": 1,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q4",
+          "max_drawdown": 0.0,
+          "monthly": {
+            "2025-11": 1122.81
+          },
+          "net_pnl": 1122.81,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": null,
+          "selected": 1,
+          "stress_net_pnl": 1113.88,
+          "trades": 1,
+          "win_rate_pct": 100.0
+        }
+      ],
+      "max_drawdown": 164.76,
+      "monthly": {
+        "2024-11": 385.75,
+        "2025-04": 1712.1,
+        "2025-05": 2991.16,
+        "2025-11": 1122.81
+      },
+      "net_pnl": 6211.81,
+      "passes": false,
+      "pe_trades": 0,
+      "positive_months": 4,
+      "profit_factor": 38.701,
+      "selected": 5,
+      "stress_net_pnl": 6175.58,
+      "trades": 5,
+      "win_rate_pct": 80.0
+    },
+    {
+      "active_months": 3,
+      "ce_trades": 3,
+      "censored": 0,
+      "coverage": 1.0,
+      "cutoff": 0.72,
+      "daily_loss_overshoots": 0,
+      "folds": [
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "censored": 0,
+          "coverage": 0.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q2",
+          "max_drawdown": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "selected": 0,
+          "stress_net_pnl": 0.0,
+          "trades": 0,
+          "win_rate_pct": null
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "censored": 0,
+          "coverage": 0.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q3",
+          "max_drawdown": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "selected": 0,
+          "stress_net_pnl": 0.0,
+          "trades": 0,
+          "win_rate_pct": null
+        },
+        {
+          "active_months": 1,
+          "ce_trades": 1,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2024-Q4",
+          "max_drawdown": 0.0,
+          "monthly": {
+            "2024-11": 1248.09
+          },
+          "net_pnl": 1248.09,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": null,
+          "selected": 1,
+          "stress_net_pnl": 1242.77,
+          "trades": 1,
+          "win_rate_pct": 100.0
+        },
+        {
+          "active_months": 1,
+          "ce_trades": 1,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q2",
+          "max_drawdown": 0.0,
+          "monthly": {
+            "2025-04": 307.27
+          },
+          "net_pnl": 307.27,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": null,
+          "selected": 1,
+          "stress_net_pnl": 297.57,
+          "trades": 1,
+          "win_rate_pct": 100.0
+        },
+        {
+          "active_months": 0,
+          "ce_trades": 0,
+          "censored": 0,
+          "coverage": 0.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q3",
+          "max_drawdown": 0.0,
+          "monthly": {},
+          "net_pnl": 0.0,
+          "pe_trades": 0,
+          "positive_months": 0,
+          "profit_factor": null,
+          "selected": 0,
+          "stress_net_pnl": 0.0,
+          "trades": 0,
+          "win_rate_pct": null
+        },
+        {
+          "active_months": 1,
+          "ce_trades": 1,
+          "censored": 0,
+          "coverage": 1.0,
+          "daily_loss_overshoots": 0,
+          "fold": "2025-Q4",
+          "max_drawdown": 0.0,
+          "monthly": {
+            "2025-11": 1122.81
+          },
+          "net_pnl": 1122.81,
+          "pe_trades": 0,
+          "positive_months": 1,
+          "profit_factor": null,
+          "selected": 1,
+          "stress_net_pnl": 1113.88,
+          "trades": 1,
+          "win_rate_pct": 100.0
+        }
+      ],
+      "max_drawdown": 0.0,
+      "monthly": {
+        "2024-11": 1248.09,
+        "2025-04": 307.27,
+        "2025-11": 1122.81
+      },
+      "net_pnl": 2678.18,
+      "passes": false,
+      "pe_trades": 0,
+      "positive_months": 3,
+      "profit_factor": null,
+      "selected": 3,
+      "stress_net_pnl": 2654.22,
+      "trades": 3,
+      "win_rate_pct": 100.0
+    }
+  ],
+  "diagnostics": [
+    {
+      "calibration": {
+        "CE": {
+          "enabled": true,
+          "intercept": -0.22698012930135614,
+          "slope": 0.49743366789583543
+        },
+        "PE": {
+          "enabled": true,
+          "intercept": 0.24192087402164425,
+          "slope": 0.9702856385014077
+        }
+      },
+      "fold": "2024-Q2",
+      "samples": {
+        "CE": {
+          "calibration_days": 35,
+          "calibration_rows": 1068,
+          "fit_days": 142,
+          "fit_rows": 3981
+        },
+        "PE": {
+          "calibration_days": 37,
+          "calibration_rows": 966,
+          "fit_days": 145,
+          "fit_rows": 3739
+        }
+      }
+    },
+    {
+      "calibration": {
+        "CE": {
+          "enabled": true,
+          "intercept": -0.2779085640930355,
+          "slope": 0.5928658599277937
+        },
+        "PE": {
+          "enabled": true,
+          "intercept": -0.5625282938828307,
+          "slope": 0.38180904208178723
+        }
+      },
+      "fold": "2024-Q3",
+      "samples": {
+        "CE": {
+          "calibration_days": 37,
+          "calibration_rows": 1133,
+          "fit_days": 177,
+          "fit_rows": 5049
+        },
+        "PE": {
+          "calibration_days": 30,
+          "calibration_rows": 831,
+          "fit_days": 183,
+          "fit_rows": 4712
+        }
+      }
+    },
+    {
+      "calibration": {
+        "CE": {
+          "enabled": true,
+          "intercept": -0.08824518681398616,
+          "slope": 1.100037425424167
+        },
+        "PE": {
+          "enabled": true,
+          "intercept": -0.18064527463555022,
+          "slope": 1.0878781693532276
+        }
+      },
+      "fold": "2024-Q4",
+      "samples": {
+        "CE": {
+          "calibration_days": 40,
+          "calibration_rows": 1275,
+          "fit_days": 215,
+          "fit_rows": 6245
+        },
+        "PE": {
+          "calibration_days": 34,
+          "calibration_rows": 798,
+          "fit_days": 213,
+          "fit_rows": 5543
+        }
+      }
+    },
+    {
+      "calibration": {
+        "CE": {
+          "enabled": true,
+          "intercept": 0.309783772602129,
+          "slope": 1.311658385823841
+        },
+        "PE": {
+          "enabled": true,
+          "intercept": 0.049938080400916476,
+          "slope": 1.1435874635291248
+        }
+      },
+      "fold": "2025-Q2",
+      "samples": {
+        "CE": {
+          "calibration_days": 35,
+          "calibration_rows": 1169,
+          "fit_days": 291,
+          "fit_rows": 8438
+        },
+        "PE": {
+          "calibration_days": 36,
+          "calibration_rows": 1145,
+          "fit_days": 291,
+          "fit_rows": 7844
+        }
+      }
+    },
+    {
+      "calibration": {
+        "CE": {
+          "enabled": true,
+          "intercept": -0.3526218700046859,
+          "slope": 0.9256488600447347
+        },
+        "PE": {
+          "enabled": true,
+          "intercept": -0.1556697964357692,
+          "slope": 1.184798020417249
+        }
+      },
+      "fold": "2025-Q3",
+      "samples": {
+        "CE": {
+          "calibration_days": 35,
+          "calibration_rows": 1007,
+          "fit_days": 327,
+          "fit_rows": 9654
+        },
+        "PE": {
+          "calibration_days": 28,
+          "calibration_rows": 691,
+          "fit_days": 328,
+          "fit_rows": 8995
+        }
+      }
+    },
+    {
+      "calibration": {
+        "CE": {
+          "enabled": true,
+          "intercept": 0.18753114678121038,
+          "slope": 1.2563122797146011
+        },
+        "PE": {
+          "enabled": true,
+          "intercept": -0.1522060519895663,
+          "slope": 0.7013604981618239
+        }
+      },
+      "fold": "2025-Q4",
+      "samples": {
+        "CE": {
+          "calibration_days": 38,
+          "calibration_rows": 874,
+          "fit_days": 363,
+          "fit_rows": 10662
+        },
+        "PE": {
+          "calibration_days": 41,
+          "calibration_rows": 1131,
+          "fit_days": 357,
+          "fit_rows": 9716
+        }
+      }
+    }
+  ],
+  "parameters": {
+    "allow_writing_files": false,
+    "depth": 3,
+    "has_time": true,
+    "iterations": 250,
+    "l2_leaf_reg": 10,
+    "learning_rate": 0.03,
+    "loss_function": "Logloss",
+    "random_seed": 42,
+    "thread_count": 1,
+    "verbose": false
+  },
+  "winner": {
+    "active_months": 18,
+    "ce_trades": 85,
+    "censored": 0,
+    "coverage": 1.0,
+    "cutoff": 0.44,
+    "daily_loss_overshoots": 0,
+    "folds": [
+      {
+        "active_months": 3,
+        "ce_trades": 15,
+        "censored": 0,
+        "coverage": 1.0,
+        "daily_loss_overshoots": 0,
+        "fold": "2024-Q2",
+        "max_drawdown": 2795.38,
+        "monthly": {
+          "2024-04": -995.88,
+          "2024-05": 1399.32,
+          "2024-06": 4256.66
+        },
+        "net_pnl": 4660.1,
+        "pe_trades": 15,
+        "positive_months": 2,
+        "profit_factor": 1.615,
+        "selected": 30,
+        "stress_net_pnl": 4528.71,
+        "trades": 30,
+        "win_rate_pct": 50.0
+      },
+      {
+        "active_months": 3,
+        "ce_trades": 12,
+        "censored": 0,
+        "coverage": 1.0,
+        "daily_loss_overshoots": 0,
+        "fold": "2024-Q3",
+        "max_drawdown": 544.24,
+        "monthly": {
+          "2024-07": 536.6,
+          "2024-08": 67.23,
+          "2024-09": 10.07
+        },
+        "net_pnl": 613.9,
+        "pe_trades": 0,
+        "positive_months": 3,
+        "profit_factor": 1.311,
+        "selected": 12,
+        "stress_net_pnl": 578.78,
+        "trades": 12,
+        "win_rate_pct": 50.0
+      },
+      {
+        "active_months": 3,
+        "ce_trades": 16,
+        "censored": 0,
+        "coverage": 1.0,
+        "daily_loss_overshoots": 0,
+        "fold": "2024-Q4",
+        "max_drawdown": 1975.97,
+        "monthly": {
+          "2024-10": -1040.62,
+          "2024-11": -541.11,
+          "2024-12": 2365.19
+        },
+        "net_pnl": 783.46,
+        "pe_trades": 10,
+        "positive_months": 1,
+        "profit_factor": 1.139,
+        "selected": 26,
+        "stress_net_pnl": 688.66,
+        "trades": 26,
+        "win_rate_pct": 57.69
+      },
+      {
+        "active_months": 3,
+        "ce_trades": 15,
+        "censored": 0,
+        "coverage": 1.0,
+        "daily_loss_overshoots": 0,
+        "fold": "2025-Q2",
+        "max_drawdown": 6266.19,
+        "monthly": {
+          "2025-04": 6747.45,
+          "2025-05": 3048.4,
+          "2025-06": 1337.19
+        },
+        "net_pnl": 11133.04,
+        "pe_trades": 9,
+        "positive_months": 3,
+        "profit_factor": 1.964,
+        "selected": 24,
+        "stress_net_pnl": 10918.93,
+        "trades": 24,
+        "win_rate_pct": 58.33
+      },
+      {
+        "active_months": 3,
+        "ce_trades": 2,
+        "censored": 0,
+        "coverage": 1.0,
+        "daily_loss_overshoots": 0,
+        "fold": "2025-Q3",
+        "max_drawdown": 4306.14,
+        "monthly": {
+          "2025-07": -1237.28,
+          "2025-08": -2436.12,
+          "2025-09": 1745.73
+        },
+        "net_pnl": -1927.67,
+        "pe_trades": 5,
+        "positive_months": 1,
+        "profit_factor": 0.552,
+        "selected": 7,
+        "stress_net_pnl": -1977.46,
+        "trades": 7,
+        "win_rate_pct": 28.57
+      },
+      {
+        "active_months": 3,
+        "ce_trades": 25,
+        "censored": 0,
+        "coverage": 1.0,
+        "daily_loss_overshoots": 0,
+        "fold": "2025-Q4",
+        "max_drawdown": 1868.45,
+        "monthly": {
+          "2025-10": 7559.22,
+          "2025-11": 6424.34,
+          "2025-12": 83.06
+        },
+        "net_pnl": 14066.62,
+        "pe_trades": 7,
+        "positive_months": 3,
+        "profit_factor": 3.119,
+        "selected": 32,
+        "stress_net_pnl": 13811.86,
+        "trades": 32,
+        "win_rate_pct": 62.5
+      }
+    ],
+    "max_drawdown": 6266.19,
+    "monthly": {
+      "2024-04": -995.88,
+      "2024-05": 1399.32,
+      "2024-06": 4256.66,
+      "2024-07": 536.6,
+      "2024-08": 67.23,
+      "2024-09": 10.07,
+      "2024-10": -1040.62,
+      "2024-11": -541.11,
+      "2024-12": 2365.19,
+      "2025-04": 6747.45,
+      "2025-05": 3048.4,
+      "2025-06": 1337.19,
+      "2025-07": -1237.28,
+      "2025-08": -2436.12,
+      "2025-09": 1745.73,
+      "2025-10": 7559.22,
+      "2025-11": 6424.34,
+      "2025-12": 83.06
+    },
+    "net_pnl": 29329.44,
+    "passes": true,
+    "pe_trades": 46,
+    "positive_months": 13,
+    "profit_factor": 1.778,
+    "selected": 131,
+    "stress_net_pnl": 28549.48,
+    "trades": 131,
+    "win_rate_pct": 54.96
+  }
+}

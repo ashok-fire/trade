@@ -1,0 +1,236 @@
+{
+  "activation_eligible": false,
+  "broker_or_model_registry_writes": false,
+  "capital": 100000.0,
+  "capital_ledger": "each validation quarter resets to initial capital; fixed non-compounding budgets; final audit is one continuous ledger; incomplete selected outcome halts ledger",
+  "contract": {
+    "atr_stop": 1,
+    "causal_opportunities": true,
+    "entry_window_ist": "09:35 <= time < 15:10; weekdays",
+    "evaluation_policy": "one first-passing candidate per day; one historical lot; not full runtime portfolio",
+    "excluded_features": [
+      "option_volume_log",
+      "option_oi_log"
+    ],
+    "historical_limits": [
+      "bid_ask_spread",
+      "quote_age",
+      "delta",
+      "actual_stop_touch_option_quote",
+      "signal_close_premium_vs_live_quote_last",
+      "portfolio_risk_and_position_sizing"
+    ],
+    "incomplete_outcomes": "unlabelled; never substitute a later outcome for selected daily entry",
+    "label_protocol": "entry-bar-stops-exact-next-bar-contiguous-path-v2",
+    "label_source": "historical candle proxy, not actual executable fills",
+    "premium_stop_pct": "25",
+    "retain_unlabelled": true,
+    "reward_risk": "1.5",
+    "sampling_policy": "all_eligible_bars",
+    "setup_policy": "first_confirmed",
+    "setup_priority": [
+      "ORB"
+    ],
+    "signal": "closed five-minute bar",
+    "slippage_pct": "0.05",
+    "square_off_ist": "15:20",
+    "strike_policy": "ATM_ITM1",
+    "underlying_anchor": "signal_close",
+    "version": "decision-aligned-v1"
+  },
+  "cutoffs": [
+    0.4,
+    0.44,
+    0.48,
+    0.52,
+    0.56,
+    0.6,
+    0.64,
+    0.68,
+    0.72
+  ],
+  "daily_loss_limit_pct": 5.0,
+  "features": [
+    "spot_vwap_distance",
+    "futures_vwap_distance",
+    "futures_basis_pct",
+    "spot_return_1",
+    "spot_return_3",
+    "spot_return_6",
+    "futures_return_1",
+    "futures_return_3",
+    "futures_atr_pct",
+    "futures_volume_ratio",
+    "ema9_20_distance",
+    "ema20_50_distance",
+    "atr_pct",
+    "rsi",
+    "previous_day_high_distance",
+    "previous_day_low_distance",
+    "previous_day_close_distance",
+    "opening_range_high_distance",
+    "opening_range_low_distance",
+    "gap_pct",
+    "time_sin",
+    "time_cos",
+    "setup_direction",
+    "option_premium_pct",
+    "days_to_expiry",
+    "moneyness_pct",
+    "day_open_distance",
+    "opening_range_width_pct",
+    "trend_atr_strength",
+    "realized_vol_6",
+    "rsi_change_3",
+    "atr_change_3",
+    "basis_change_3",
+    "return_spread_3",
+    "weekday_sin",
+    "weekday_cos",
+    "setup_orb",
+    "setup_pullback",
+    "setup_failed_breakout",
+    "setup_vwap_reclaim"
+  ],
+  "final_fold": [
+    "2026-audit",
+    "2025-10-01",
+    "2025-12-31",
+    "2026-01-08",
+    "2026-10-13"
+  ],
+  "folds": [
+    [
+      "2024-Q2",
+      "2024-01-01",
+      "2024-03-31",
+      "2024-04-01",
+      "2024-06-30"
+    ],
+    [
+      "2024-Q3",
+      "2024-04-01",
+      "2024-06-30",
+      "2024-07-01",
+      "2024-09-30"
+    ],
+    [
+      "2024-Q4",
+      "2024-07-01",
+      "2024-09-30",
+      "2024-10-01",
+      "2024-12-31"
+    ],
+    [
+      "2025-Q2",
+      "2025-01-01",
+      "2025-03-31",
+      "2025-04-01",
+      "2025-06-30"
+    ],
+    [
+      "2025-Q3",
+      "2025-04-01",
+      "2025-06-30",
+      "2025-07-01",
+      "2025-09-30"
+    ],
+    [
+      "2025-Q4",
+      "2025-07-01",
+      "2025-09-30",
+      "2025-10-01",
+      "2025-12-31"
+    ]
+  ],
+  "gates": "100 trades, PF>=1.3, stress positive in >=4/6 folds with >=10 trades each, >=60% positive active months, DD<=10% capital, >=99% known outcomes, no observed daily-limit overshoot; neighbouring cutoffs >=60 trades/PF1.1/stress positive",
+  "grid": [
+    {
+      "allow_writing_files": false,
+      "depth": 2,
+      "has_time": true,
+      "iterations": 250,
+      "l2_leaf_reg": 10,
+      "learning_rate": 0.03,
+      "loss_function": "Logloss",
+      "random_seed": 42,
+      "thread_count": 1,
+      "verbose": false
+    },
+    {
+      "allow_writing_files": false,
+      "depth": 2,
+      "has_time": true,
+      "iterations": 250,
+      "l2_leaf_reg": 30,
+      "learning_rate": 0.03,
+      "loss_function": "Logloss",
+      "random_seed": 42,
+      "thread_count": 1,
+      "verbose": false
+    },
+    {
+      "allow_writing_files": false,
+      "depth": 3,
+      "has_time": true,
+      "iterations": 250,
+      "l2_leaf_reg": 10,
+      "learning_rate": 0.03,
+      "loss_function": "Logloss",
+      "random_seed": 42,
+      "thread_count": 1,
+      "verbose": false
+    },
+    {
+      "allow_writing_files": false,
+      "depth": 3,
+      "has_time": true,
+      "iterations": 250,
+      "l2_leaf_reg": 30,
+      "learning_rate": 0.03,
+      "loss_function": "Logloss",
+      "random_seed": 42,
+      "thread_count": 1,
+      "verbose": false
+    },
+    {
+      "allow_writing_files": false,
+      "depth": 4,
+      "has_time": true,
+      "iterations": 250,
+      "l2_leaf_reg": 10,
+      "learning_rate": 0.03,
+      "loss_function": "Logloss",
+      "random_seed": 42,
+      "thread_count": 1,
+      "verbose": false
+    },
+    {
+      "allow_writing_files": false,
+      "depth": 4,
+      "has_time": true,
+      "iterations": 250,
+      "l2_leaf_reg": 30,
+      "learning_rate": 0.03,
+      "loss_function": "Logloss",
+      "random_seed": 42,
+      "thread_count": 1,
+      "verbose": false
+    }
+  ],
+  "limitations": [
+    "Signal-close premium used for affordability; next-bar-open fill may gap",
+    "Stop risk excludes charges and is not a guaranteed maximum loss",
+    "No historical executable quotes, feature parity or full live portfolio evidence",
+    "Validation data are used for selection, not unbiased performance estimation",
+    "2026 audit is previously inspected history; not fresh validation"
+  ],
+  "reserved_dates_not_used": [
+    "2026-10-14",
+    "2026-10-23"
+  ],
+  "risk_per_trade_pct": 3.0,
+  "schema": "capital-aware-walk-forward-v1",
+  "selection": "6 fixed CatBoost settings x 9 shared thresholds, selection on concatenated forward validation only; positive-slope separate calibration; one observed session purged at each boundary",
+  "sizing": "one historical lot; signal premium plus 0.05% slippage; 25% premium-stop gross risk <=min(trade,daily) budget; premium debit plus estimated charges <=min(initial capital,current equity)"
+}

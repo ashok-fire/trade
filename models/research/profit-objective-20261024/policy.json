@@ -1,0 +1,75 @@
+{
+  "activation_eligible": false,
+  "calibration": {
+    "CE": {
+      "calibration_samples": 1359,
+      "enabled": true,
+      "fit_samples": 9703,
+      "intercept": 0.004808946961539773,
+      "reason": "positive calibration slope",
+      "slope": 1.1482269289417282
+    },
+    "PE": {
+      "calibration_samples": 1358,
+      "enabled": true,
+      "fit_samples": 9081,
+      "intercept": -0.007619907516685363,
+      "reason": "positive calibration slope",
+      "slope": 0.9499633569120737
+    }
+  },
+  "features": [
+    "spot_vwap_distance",
+    "futures_vwap_distance",
+    "futures_basis_pct",
+    "spot_return_1",
+    "spot_return_3",
+    "spot_return_6",
+    "futures_return_1",
+    "futures_return_3",
+    "futures_atr_pct",
+    "futures_volume_ratio",
+    "ema9_20_distance",
+    "ema20_50_distance",
+    "atr_pct",
+    "rsi",
+    "previous_day_high_distance",
+    "previous_day_low_distance",
+    "previous_day_close_distance",
+    "opening_range_high_distance",
+    "opening_range_low_distance",
+    "gap_pct",
+    "time_sin",
+    "time_cos",
+    "setup_direction",
+    "option_premium_pct",
+    "days_to_expiry",
+    "moneyness_pct",
+    "day_open_distance",
+    "opening_range_width_pct",
+    "trend_atr_strength",
+    "realized_vol_6",
+    "rsi_change_3",
+    "atr_change_3",
+    "basis_change_3",
+    "return_spread_3",
+    "weekday_sin",
+    "weekday_cos",
+    "setup_orb",
+    "setup_pullback",
+    "setup_failed_breakout",
+    "setup_vwap_reclaim"
+  ],
+  "margin_thresholds": {
+    "CE": null,
+    "PE": null
+  },
+  "models": {
+    "CE": "ce.cbm",
+    "PE": "pe.cbm"
+  },
+  "research_only": true,
+  "schema": "net-return-research-v1",
+  "score_unit": "expected net return on entry premium, not probability",
+  "specification_hash": "6b3888cd19d1f92ea263409d57efea64354bb050a8e041de5295c15b987edde0"
+}

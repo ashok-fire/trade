@@ -1,0 +1,159 @@
+{
+  "activation_eligible": false,
+  "application_or_registry_changes": false,
+  "code_hash": "db544b57b845c11d4a5dde3106c3339645e04b2d727f9e735df6d32f1d0f6be5",
+  "condition_definitions": {
+    "ALL": "no additional condition",
+    "TREND_ALIGNED": "setup_direction * trend_atr_strength >= 2",
+    "WEAK_TREND": "abs(trend_atr_strength) <= 1"
+  },
+  "conditions": [
+    "ALL",
+    "TREND_ALIGNED",
+    "WEAK_TREND"
+  ],
+  "entry": "frozen causal ORB ATM/ITM1 opportunity; exact next-bar open plus 0.05% slippage; no reselection by outcome",
+  "exit": "filled premium-linked stop/target; known open gap first, otherwise stop before target; time exit at deadline open, capped at 15:20 IST",
+  "folds": [
+    [
+      "2024-Q2",
+      "2024-01-01",
+      "2024-03-31",
+      "2024-04-01",
+      "2024-06-30"
+    ],
+    [
+      "2024-Q3",
+      "2024-04-01",
+      "2024-06-30",
+      "2024-07-01",
+      "2024-09-30"
+    ],
+    [
+      "2024-Q4",
+      "2024-07-01",
+      "2024-09-30",
+      "2024-10-01",
+      "2024-12-31"
+    ],
+    [
+      "2025-Q2",
+      "2025-01-01",
+      "2025-03-31",
+      "2025-04-01",
+      "2025-06-30"
+    ],
+    [
+      "2025-Q3",
+      "2025-04-01",
+      "2025-06-30",
+      "2025-07-01",
+      "2025-09-30"
+    ],
+    [
+      "2025-Q4",
+      "2025-07-01",
+      "2025-09-30",
+      "2025-10-01",
+      "2025-12-31"
+    ]
+  ],
+  "foundation_gates": "100 trades, >=99% known coverage, PF>=1.3, positive net and stress, DD<=10000, no observed daily overshoot, 4/6 stress-positive windows with >=10 trades, >=60% positive active months",
+  "goal": "strictly greater than 70% realised net wins with 100+ complete trades and positive economic gates; foundation passage alone is NOT that goal",
+  "hypothesis": "Premium-native exits and fixed existing trend-strength conditions improve option outcomes before fitting another classifier",
+  "later_audit": [
+    "2026-audit",
+    "2025-10-01",
+    "2025-12-31",
+    "2026-01-08",
+    "2026-10-13"
+  ],
+  "limitations": [
+    "Candle-level stop/target execution is a proxy, not guaranteed executable liquidity",
+    "Historical spreads, quote age, IV/delta and live feature semantics are not reconciled",
+    "Selection performance is biased by strategy/model search; 2026 is previously inspected history",
+    "One-lot, reset-quarter development P&L is not full-account compounded return"
+  ],
+  "limits": "No 2026 relabelling until strategy and model selection frozen; if no foundation, no model fitted; no live activation",
+  "model": "one fixed day-weighted shallow CatBoost per selected strategy, separate positive-slope Platt calibration; same 40 features, no new indicators",
+  "model_parameters": {
+    "allow_writing_files": false,
+    "depth": 3,
+    "has_time": true,
+    "iterations": 250,
+    "l2_leaf_reg": 30,
+    "learning_rate": 0.03,
+    "loss_function": "Logloss",
+    "random_seed": 42,
+    "thread_count": 1,
+    "verbose": false
+  },
+  "model_selection": "foundation gates plus neighbouring cutoffs >=60 trades/PF1.1/stress positive; positive paired lower95 improvement versus unscored strategy required",
+  "previously_inspected_history": true,
+  "reserved_window_not_used": [
+    "2026-10-14",
+    "2026-10-23"
+  ],
+  "risk": "unchanged capital 100000 / gross stop-risk budget 3% / daily gate 5%; one historical lot; conservative signal-close 25% risk reservation for every variant; quarter ledgers reset",
+  "rules": [
+    {
+      "hold_minutes": 30,
+      "stop_pct": 15,
+      "target_pct": 15
+    },
+    {
+      "hold_minutes": 60,
+      "stop_pct": 15,
+      "target_pct": 15
+    },
+    {
+      "hold_minutes": 30,
+      "stop_pct": 15,
+      "target_pct": 25
+    },
+    {
+      "hold_minutes": 60,
+      "stop_pct": 15,
+      "target_pct": 25
+    },
+    {
+      "hold_minutes": 30,
+      "stop_pct": 25,
+      "target_pct": 15
+    },
+    {
+      "hold_minutes": 60,
+      "stop_pct": 25,
+      "target_pct": 15
+    },
+    {
+      "hold_minutes": 30,
+      "stop_pct": 25,
+      "target_pct": 25
+    },
+    {
+      "hold_minutes": 60,
+      "stop_pct": 25,
+      "target_pct": 25
+    }
+  ],
+  "schema": "premium-exit-study-v1",
+  "selection": "48 fixed combinations, select maximum stressed net among foundation passers only; freeze before model fitting; no fallback",
+  "sides": [
+    "CE",
+    "PE"
+  ],
+  "source_report_hash": "bec10187b2b8771965da4a6575354e43fa6f1737f5ac96300b7f3de5007681cd",
+  "stress": "twice slippage per side; re-simulate entry-linked stop/target path; same versioned estimated Groww charges",
+  "thresholds": [
+    0.4,
+    0.45,
+    0.5,
+    0.55,
+    0.6,
+    0.65,
+    0.7,
+    0.75,
+    0.8
+  ]
+}

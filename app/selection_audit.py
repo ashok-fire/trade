@@ -41,17 +41,19 @@ def record_option_selection(
     session, *, provider: str, mode: str, underlying_code: str,
     candle_timestamp: datetime, model_version: str, direction: str,
     spot: Decimal, contracts: list, quotes: dict, selection: Selection,
-    observed_at: datetime, filters: dict,
-) -> None:
-    audit_id = uuid.uuid5(uuid.NAMESPACE_URL, f"{provider}:{mode}:{underlying_code}:{candle_timestamp.isoformat()}:{direction}:{model_version}").hex
-    if session.get(OptionSelectionAudit, audit_id):
-        return
+    observed_at: datetime, filters: dict, scope: str = "",
+) -> OptionSelectionAudit:
+    identity = f"{provider}:{mode}:{underlying_code}:{candle_timestamp.isoformat()}:{direction}:{model_version}"
+    audit_id = uuid.uuid5(uuid.NAMESPACE_URL, identity + (f":{scope}" if scope else "")).hex
+    existing = session.get(OptionSelectionAudit, audit_id)
+    if existing:
+        return existing
     candidates = option_candidates(
         contracts, spot=spot, direction=direction,
         trading_day=observed_at.astimezone(ZoneInfo("Asia/Kolkata")).date(),
     )
     evidence = {
-        "policy": "ATM_ITM1", "spot": str(spot), "direction": direction,
+        "policy": "ATM_ITM1", "spot": str(spot), "direction": direction, "scope": scope,
         "decision_time": observed_at.isoformat(), "filters": filters,
         "selected_instrument": selection.contract.instrument_key if selection.contract else None,
         "selected_moneyness": selection.moneyness, "selection_reason": selection.reason,
@@ -73,8 +75,10 @@ def record_option_selection(
             } if quote else None,
             "rejection_reason": quote_rejection_reason(quote, now=observed_at, **filters) if quote else "quote unavailable",
         })
-    session.add(OptionSelectionAudit(
+    audit = OptionSelectionAudit(
         id=audit_id, provider=provider, mode=mode, underlying_code=underlying_code,
         candle_timestamp=candle_timestamp, observed_at=observed_at,
         model_version=model_version, evidence_json=json.dumps(evidence, default=str),
-    ))
+    )
+    session.add(audit)
+    return audit

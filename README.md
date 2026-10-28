@@ -171,6 +171,172 @@ systemctl list-timers niftypilot-backup.timer
 
 The Settings screen reports backup freshness and verifies that stored broker token files are not readable by other users. `/health` reports database integrity, active-model status, feed age, backup state, secret-file permissions and the current execution state.
 
+## Parallel Shadow evidence
+
+Open `/shadow-research` to compare ORB, PULLBACK, FAILED_BREAKOUT and
+VWAP_RECLAIM independently. While enabled in SHADOW mode, the observer checks
+fresh closed five-minute spot/futures bars during 09:35–15:10 IST on weekdays.
+It only uses market-data APIs: it never sends orders, changes the selected Shadow
+model, or promotes a candidate. Entries paused in the main trading controls do
+not pause this separate research observer; use its own pause button.
+
+The observer freezes one compatible V6 research artifact in
+`parallel_shadow_model_artifact_id`. Scores are diagnostic, not validated win
+probabilities; unsupported providers/indices remain unscored. Every executable
+candidate is simulated, including research-threshold rejections. One-lot trials
+use observed ask/bid with slippage, estimated charges, a 1 ATR underlying stop,
+1.5 ATR target, 25% premium stop, and first-observed square-off from 15:20 IST.
+Tracking polls every 15 seconds and cannot reconstruct unobserved intrabar
+touches. Missing same-day exits are INCOMPLETE, never manufactured labels.
+Keep the service and machine awake for the entire session.
+
+The daily comparison selects the first executable observation per
+family/direction/day *before* considering outcome completeness. Separate groups
+preserve model, provider, index and protocol settings. Overlapping trials are
+counterfactual examples, not a portfolio return. Export all evidence from
+`/shadow-research/export.jsonl`; `label_net_win` is null unless CLOSED. Use future
+chronological, session-grouped research splits; do not randomly split overlapping
+observations or tune repeatedly against a held-out period. Collection does not
+automatically retrain, activate a model, or establish an improved win rate.
+
+## Decision-aligned training
+
+New option-quality training runs use the versioned `decision-aligned-v1`
+contract. They train on every eligible closed-bar opportunity, use the same
+first-confirmed setup priority and ATM→ITM1 policy as runtime, and exclude
+option-volume/OI model features until historical/live meanings are reconciled.
+Quote tradability filters remain unchanged. New runs are single-index only;
+multi-index portfolio equivalence has not been established.
+
+Fitting, probability calibration, threshold tuning and historical evaluation
+use disjoint chronological day groups with boundary purges. Trading days have
+equal total fitting weight. Incomplete exit paths remain unlabelled
+opportunities in evaluation; the first selected missing outcome is never
+replaced by a later known outcome. Current-session eligibility does not depend
+on whether the remainder of that session eventually has complete data.
+Frozen holdout evaluation reads each bundle's own feature list and contract,
+not legacy module defaults, and requires dates after its research date range.
+
+The fixed NIFTY ORB experiment (no estimator/regime search) is reproducible with:
+
+```bash
+.venv/bin/python -m app.aligned_training --output models/research/NEW-UNUSED-RUN/candidate.json
+```
+
+It uses fixed fitting/calibration/tuning/evaluation dates through 13 October
+2026 and does not consume the reserved 14–23 October period. The specification
+is saved before fitting; existing candidate paths are never overwritten. The
+24 October result and its blockers are documented in
+`models/research/decision-aligned-orb-20261024/README.md`. Do not repeatedly
+rerun or tune this experiment against the already inspected evaluation period.
+
+Candidates remain research-only and are never selected or activated by this
+command. Historical labels still use candle-based fill proxies, not real
+bid/ask or the option quote at an underlying stop touch. Forward quote/fill
+evidence and full portfolio/risk validation remain necessary. Runtime refuses
+new aligned bundles whose frozen geometry, provider or index scope no longer
+matches current settings; legacy bundle behaviour is preserved.
+
+If the service is running under the VS Code debugger, restart that debug
+session before using the new training route. Offline experiment commands load
+the updated code directly without restarting or disturbing the running app.
+
+## Capital-aware offline tuning
+
+The configured defaults are ₹100,000 capital, 3% gross stop-risk per trade and
+5% daily loss entry-gate limit, explicitly requested on 25 October 2026.
+The underlying reward/risk target remains 1.5 and the separate premium emergency
+stop remains 25%. A stop-risk budget is not a guaranteed maximum realised loss;
+fees, slippage and gaps can increase it. Saved personal settings are not silently
+overwritten when the application starts. New backtests snapshot the daily limit;
+older saved runs without that field retain their original 0.75% assumption.
+
+The bounded offline search is run with a new, unused output directory:
+
+```bash
+.venv/bin/python -m research.walk_forward_tuning --output models/research/NEW-UNUSED-TUNING-RUN
+```
+
+It compares six fixed shallow CatBoost configurations, six day-grouped forward
+validation windows in 2024–2025, and nine shared CE/PE thresholds. Validation
+is used for selection, not claimed as an unbiased final test. Selected settings
+are frozen before a previously exposed 2026 historical audit. The reserved
+14–23 October window is not read. It retains the existing 40 features, ORB
+strategy, candle simulator and cost assumptions; there are no new live features.
+Capital-aware replay uses one historical lot, not full risk-budget allocation;
+signal-close affordability is only a proxy for the later executable entry quote.
+Each validation quarter resets its cash ledger, so their concatenated P&L is
+not a continuous compounded account return. An incomplete selected exit halts
+the affected ledger rather than inventing a zero P&L.
+
+The 25 October study rejected the selected candidate after its 2026 audit:
+61 trades, 40.98% wins, PF 0.848, net -₹4,161.37. Details are in
+`models/research/walk-forward-capital-20261025/ASSESSMENT.md`. Nothing in this
+command calls order endpoints, writes model-registry state, or activates a model.
+
+The subsequent >70% realised-win study is reproducible with a new output path:
+
+```bash
+.venv/bin/python -m research.precision_tuning --output models/research/NEW-UNUSED-PRECISION-RUN
+```
+
+This uses the fingerprint-verified local dataset cache from the 25 October
+capital-aware study, four stronger-regularisation configurations, and nineteen
+shared thresholds. A win rate strictly above 70% must have at least 100 complete
+selected trades, positive net and stressed P&L, stable windows, acceptable
+drawdown, and supported neighbouring thresholds. A 0.70 prediction score or
+a handful of wins does not satisfy that target. The completed result is in
+`models/research/precision-70-20261025/README.md`: none qualified; the highest
+diagnostic win rate with at least 100 selection-validation trades was 53.6%
+over 125 trades. No extra candidate was tested on 2026 after this rejection.
+Do not repeat the same deterministic search on unchanged evidence.
+
+The next user-authorised strategy study tests eight premium-native stop/target/
+holding-period combinations, CE/PE separately, and three fixed conditions from
+existing trend-strength features. It makes no runtime strategy changes:
+
+```bash
+.venv/bin/python -m research.exit_strategy_study --output models/research/NEW-UNUSED-EXIT-STUDY
+```
+
+Its 48 development combinations produced nine positive after-cost point
+estimates but no strategy passing the frozen drawdown/stability/economic gates.
+Per its preregistered conditional workflow, no classifier was fitted and no
+additional 2026 candidate audit was performed. See
+`models/research/premium-exits-20261025/ASSESSMENT.md`. This is not evidence
+that all further work on the stored data is exhausted, or a win-rate ceiling.
+
+## Ongoing model research
+
+The current experiment ledger, results and next preregistered hypothesis are
+in `research/README.md`. Subsequent tests cover first-decision/day learning,
+pooled calibration, premium-outcome meta-labels, effective-day regularisation,
+causal option-cost inputs and same-contract option-price-path inputs. These are offline research scripts, not new
+runtime trading features. No research bundle was activated.
+
+A provisional CE result above70% on68 development trades failed its frozen
+2026 audit at32.26% on31 trades. Increasing research capital to200000 produced
+71.23% on73 development trades, still insufficient evidence. Neither result is
+a validated >70% trading model. Keep development selection separate from audit
+and genuinely fresh forward evidence; preserve rejected experiments.
+
+The latest50-input option-price-path candidate reached66.37% on113 development
+trades but failed its frozen later2026 audit:42.59% on54trades, PF0.774 and
+net -8397.80. It was not activated; see
+`models/research/option-path-models-20261025/ASSESSMENT.md`.
+
+The fixed monthly-refresh follow-up also failed:38.46% on26trades, PF0.631,
+net -8507.53, identical selected outcomes with44 or50 inputs. No model was
+activated. See `models/research/monthly-refresh-20261025/README.md`.
+Further follow-ups wait for meaningful fresh quote-based Shadow evidence rather
+than expanding rejected searches on the same historical audit.
+
+The Backtests page now includes read-only offline research history from saved
+study reports, with development and later historical results kept separate.
+Research, model, download and backtest histories use 10 items per page; the
+Recent runs panel shows the latest 5 backtests. Pagination never deletes older
+records or changes model selection, trading mode or risk settings.
+
 ## Verification
 
 ```bash

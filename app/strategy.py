@@ -30,11 +30,10 @@ PRICE_FEATURES = [
     "setup_direction",
 ]
 
-# V4 is a trade-quality model.  It keeps the causal spot/futures setup features
-# and adds only option fields that are observable when the signal is made.
-# Bid/ask, IV and delta are intentionally excluded because the historical
-# provider does not populate them consistently; training and live inference
-# therefore see the same feature contract.
+# Legacy V4–V6 fields remain intact for old bundles. Observability alone does
+# not establish identical historical/live definitions: new aligned training
+# excludes option-volume and OI features in training_contract.py until those
+# meanings are reconciled. Historical bid/ask, IV and delta are unavailable.
 OPTION_META_FEATURES = [
     "option_premium_pct",
     "option_volume_log",
@@ -332,6 +331,40 @@ class RegimeModel:
     def requires_option_context(self) -> bool:
         return self.metadata.get("feature_schema") in {FEATURE_SCHEMA_V4, FEATURE_SCHEMA_V5, FEATURE_SCHEMA_V6}
 
+    def quality_probabilities(self, frame: pd.DataFrame) -> np.ndarray:
+        """Batch the runtime scoring formula, using this bundle's feature list.
+
+        Unscorable/disabled rows are NaN, not fabricated zero probabilities.
+        Legacy V5 rank calibration and newer quality-only calibration both work.
+        """
+        result = np.full(len(frame), np.nan)
+        if not self.available or not self.requires_option_context or frame.empty:
+            return result
+        matrix = frame.reindex(columns=self.required_features).to_numpy(dtype=float)
+        valid = np.isfinite(matrix).all(axis=1)
+        direction = np.where(frame.setup_direction.to_numpy() > 0, "CE", "PE")
+        valid &= frame.setup_direction.to_numpy() != 0
+        for side in self.metadata.get("enabled_directions", ["CE", "PE"]):
+            positions = np.flatnonzero(valid & (direction == side))
+            quality_model = self.quality_models.get(side)
+            if not len(positions) or quality_model is None or self.ranker is None:
+                continue
+            values = matrix[positions]
+            quality = quality_model.predict_proba(values)[:, 1]
+            calibration = self.metadata.get("calibration", {}).get(side, {})
+            if calibration.get("method") == "identity":
+                result[positions] = quality
+                continue
+            quality_input = (np.log(np.clip(quality, 1e-6, 1 - 1e-6) / np.clip(1 - quality, 1e-6, 1))
+                             if calibration.get("input") == "logit_quality" else quality)
+            logits = float(calibration.get("intercept", 0)) + float(calibration.get("quality_coefficient", 1)) * quality_input
+            coefficient = float(calibration.get("rank_coefficient", 0))
+            if coefficient:
+                import xgboost as xgb
+                logits += coefficient * self.ranker.predict(xgb.DMatrix(values, feature_names=self.required_features))
+            result[positions] = 1 / (1 + np.exp(-np.clip(logits, -30, 30)))
+        return result
+
     def predict(self, values: dict[str, float]) -> tuple[str, float]:
         if not self.model:
             return "UNCERTAIN", 0.0
@@ -485,7 +518,8 @@ def decide(row: pd.Series, context: dict[str, float | None], model: RegimeModel)
     )
     reason_prefix = f"{family_label} " if multi_family else ""
     if model.requires_option_context and not all(
-        np.isfinite(features[name]) for name in OPTION_META_FEATURES
+        np.isfinite(features.get(name, np.nan)) for name in OPTION_META_FEATURES
+        if name in model.required_features
     ):
         setup = features["setup_direction"]
         direction = "CE" if setup > 0 else ("PE" if setup < 0 else "NO_TRADE")

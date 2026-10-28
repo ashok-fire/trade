@@ -1,0 +1,37 @@
+{% macro page_number(number, pager, parameter, anchor) -%}
+  {% if number == pager.page %}
+    <span class="pager-button pager-number is-current" aria-current="page" aria-label="Page {{ number }}, current page">{{ number }}</span>
+  {% else %}
+    <a class="pager-button pager-number" aria-label="Go to page {{ number }}" href="{{ request.url.include_query_params(**{parameter: number}) }}#{{ anchor }}">{{ number }}</a>
+  {% endif %}
+{%- endmacro %}
+
+{% macro pagination(pager, parameter, anchor) -%}
+<nav class="pagination" aria-label="{{ anchor|replace('-', ' ') }} pagination">
+  <div class="pagination-summary">
+    <span>Showing <strong>{{ pager.first }}–{{ pager.last }}</strong> of <strong>{{ pager.total }}</strong></span>
+    <span class="pagination-size">{{ pager.per_page }} per page</span>
+  </div>
+  <div class="pagination-controls">
+    {% if pager.page > 1 %}
+      <a class="pager-button pager-direction" aria-label="Previous page" rel="prev" href="{{ request.url.include_query_params(**{parameter: pager.page - 1}) }}#{{ anchor }}"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m12 5-5 5 5 5"/></svg><span>Previous</span></a>
+    {% else %}
+      <button class="pager-button pager-direction" type="button" disabled aria-label="Previous page"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m12 5-5 5 5 5"/></svg><span>Previous</span></button>
+    {% endif %}
+    {% if pager.pages <= 7 %}
+      {% for number in range(1, pager.pages + 1) %}{{ page_number(number, pager, parameter, anchor) }}{% endfor %}
+    {% else %}
+      {% set first = [1, pager.page - 1]|max %}
+      {% set last = [pager.pages, pager.page + 1]|min %}
+      {% if first > 1 %}{{ page_number(1, pager, parameter, anchor) }}{% if first > 2 %}<span class="pagination-gap" aria-hidden="true">…</span>{% endif %}{% endif %}
+      {% for number in range(first, last + 1) %}{{ page_number(number, pager, parameter, anchor) }}{% endfor %}
+      {% if last < pager.pages %}{% if last < pager.pages - 1 %}<span class="pagination-gap" aria-hidden="true">…</span>{% endif %}{{ page_number(pager.pages, pager, parameter, anchor) }}{% endif %}
+    {% endif %}
+    {% if pager.page < pager.pages %}
+      <a class="pager-button pager-direction" aria-label="Next page" rel="next" href="{{ request.url.include_query_params(**{parameter: pager.page + 1}) }}#{{ anchor }}"><span>Next</span><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m8 5 5 5-5 5"/></svg></a>
+    {% else %}
+      <button class="pager-button pager-direction" type="button" disabled aria-label="Next page"><span>Next</span><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m8 5 5 5-5 5"/></svg></button>
+    {% endif %}
+  </div>
+</nav>
+{%- endmacro %}

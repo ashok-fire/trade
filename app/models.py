@@ -121,6 +121,48 @@ class OptionSelectionAudit(Base):
     evidence_json: Mapped[str] = mapped_column(Text)
 
 
+class SetupObservation(Base):
+    """Counterfactual research evidence; never a broker order or portfolio trade."""
+    __tablename__ = "setup_observations"
+    __table_args__ = (Index("ix_setup_observation_group", "provider", "setup_family", "signal_time"),)
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    provider: Mapped[str] = mapped_column(String(16))
+    underlying_code: Mapped[str] = mapped_column(String(24))
+    setup_family: Mapped[str] = mapped_column(String(32))
+    direction: Mapped[str] = mapped_column(String(16))
+    signal_time: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    protocol_version: Mapped[str] = mapped_column(String(32), default="parallel-shadow-v1")
+    model_version: Mapped[str | None] = mapped_column(String(80))
+    score_status: Mapped[str] = mapped_column(String(40), default="NOT_SCORED")
+    quality_score: Mapped[float | None] = mapped_column(Float)
+    research_threshold: Mapped[float | None] = mapped_column(Float)
+    quality_passed: Mapped[bool | None] = mapped_column(Boolean)
+    status: Mapped[str] = mapped_column(String(24), default="NO_SETUP", index=True)
+    reason: Mapped[str | None] = mapped_column(Text)
+    features_json: Mapped[str] = mapped_column(Text, default="{}")
+    selection_json: Mapped[str] = mapped_column(Text, default="{}")
+    protocol_json: Mapped[str] = mapped_column(Text, default="{}")
+    instrument_key: Mapped[str | None] = mapped_column(String(100))
+    trading_symbol: Mapped[str | None] = mapped_column(String(100))
+    exchange: Mapped[str | None] = mapped_column(String(16))
+    quantity: Mapped[int | None] = mapped_column(Integer)
+    tick_size: Mapped[Decimal | None] = mapped_column(Numeric(10, 4))
+    entry_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    entry_price: Mapped[Decimal | None] = mapped_column(Numeric(14, 4))
+    premium_stop: Mapped[Decimal | None] = mapped_column(Numeric(14, 4))
+    underlying_stop: Mapped[Decimal | None] = mapped_column(Numeric(14, 4))
+    underlying_target: Mapped[Decimal | None] = mapped_column(Numeric(14, 4))
+    exit_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    exit_price: Mapped[Decimal | None] = mapped_column(Numeric(14, 4))
+    exit_reason: Mapped[str | None] = mapped_column(String(40))
+    exit_evidence_json: Mapped[str | None] = mapped_column(Text)
+    gross_pnl: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
+    charges: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
+    net_pnl: Mapped[Decimal | None] = mapped_column(Numeric(16, 2))
+
+
 class Order(Base):
     __tablename__ = "orders"
     __table_args__ = (

@@ -1,0 +1,24 @@
+{
+  "activation_eligible": false,
+  "capital": 100000.0,
+  "cutoff": 0.48,
+  "daily_loss_limit_pct": 5.0,
+  "dataset_hash": "c5990b991eda9eb286e7aaf9aa700418eb2a752b12c4aae579c578a817191c26",
+  "parameters": {
+    "allow_writing_files": false,
+    "depth": 4,
+    "has_time": true,
+    "iterations": 250,
+    "l2_leaf_reg": 10,
+    "learning_rate": 0.03,
+    "loss_function": "Logloss",
+    "random_seed": 42,
+    "thread_count": 1,
+    "verbose": false
+  },
+  "risk_per_trade_pct": 3.0,
+  "schema": "capital-aware-walk-forward-v1",
+  "selected_candidate": 4,
+  "specification_hash": "e6950b8eafbb8a213bada5b9cfd473d12381f26400f723faac19463005e1ccbd",
+  "status": "SELECTED_FOR_HISTORICAL_AUDIT"
+}

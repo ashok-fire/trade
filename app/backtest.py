@@ -209,7 +209,8 @@ def run_backtest_job(db_url: str, run_id: int, model_path: str) -> None:
             events.sort(key=lambda item: item["time"])
             capital = Decimal(str(config["capital"]))
             daily_trade_limit = int(model.metadata.get("daily_trade_limit", 5)) if model else 5
-            limits = RiskLimits(capital, Decimal(str(config["risk_pct"])), Decimal("0.75"), daily_trade_limit, 2, 1, 1, Decimal("25"), Decimal("1.5"))
+            # Old runs retain their original daily limit; new submissions snapshot it.
+            limits = RiskLimits(capital, Decimal(str(config["risk_pct"])), Decimal(str(config.get("daily_loss_limit_pct", "0.75"))), daily_trade_limit, 2, 1, 1, Decimal("25"), Decimal("1.5"))
             recorded: list[dict] = []
             position_until: datetime | None = None
             daily: dict[date, dict[str, int | Decimal]] = {}

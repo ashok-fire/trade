@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/pagination.html" import pagination with context %}
 {% block title %}Backtests · NiftyPilot{% endblock %}
 {% block heading %}<h1>Historical backtests</h1><p>Follow three simple steps: download data, train the model, then replay option trades</p>{% endblock %}
 {% block content %}
@@ -81,13 +82,15 @@
   </section>
 </div>
 
-<details class="card disclosure-card" {% if research_runs and research_runs[0].status in ['QUEUED','RUNNING'] %}open{% endif %}>
-  <summary><span><b>Download activity</b><small>Progress and recently completed research downloads</small></span><em>{{ research_runs|length }} recent</em></summary>
-  <div class="disclosure-content"><div class="run-list">{% for run in research_runs %}{% include "partials/research_status.html" %}{% else %}<div class="empty-state compact">No downloads submitted.</div>{% endfor %}</div></div>
+{% include "partials/offline_research.html" %}
+
+<details id="download-history" class="card disclosure-card" {% if 'downloads_page' in request.query_params or (research_runs and research_runs[0].status in ['QUEUED','RUNNING']) %}open{% endif %}>
+  <summary><span><b>Download activity</b><small>Progress and completed research downloads</small></span><em>{{ downloads_pagination.total }} downloads</em></summary>
+  <div class="disclosure-content"><div class="run-list">{% for run in research_runs %}{% include "partials/research_status.html" %}{% else %}<div class="empty-state compact">No downloads submitted.</div>{% endfor %}</div>{{ pagination(downloads_pagination, 'downloads_page', 'download-history') }}</div>
 </details>
 
-<details class="card disclosure-card">
-  <summary><span><b>Model history and diagnostics</b><small>Candidate quality, activation and technical details</small></span><em>{{ model_artifacts|length }} models</em></summary>
+<details id="model-history" class="card disclosure-card" {% if 'models_page' in request.query_params %}open{% endif %}>
+  <summary><span><b>Model history and diagnostics</b><small>Candidate quality, activation and technical details</small></span><em>{{ models_pagination.total }} models</em></summary>
   <div class="disclosure-content table-wrap">
     <table>
       <thead><tr><th>Model</th><th>Training period</th><th>Samples</th><th>Locked validation</th><th>Qualified predictions</th><th>Status</th><th></th></tr></thead>
@@ -124,6 +127,7 @@
       {% endfor %}
       </tbody>
     </table>
+    {{ pagination(models_pagination, 'models_page', 'model-history') }}
   </div>
 </details>
 
@@ -136,12 +140,12 @@
         <label>Backtest from<input type="date" name="start_date" required></label><label>Backtest to<input type="date" name="end_date" required></label>
         <label>Strategy<select name="strategy_mode"><option value="MODEL">Active validated model</option><option value="RULE_ONLY">Rule-only comparison</option></select></label>
         <label>Strike selection<select name="strike_policy"><option value="ATM_ITM1">ATM, then ITM1 fallback</option><option value="ATM_ONLY">ATM only</option></select></label>
-        <label>Starting capital<input type="number" name="capital" value="500000" min="10000" step="1000"></label>
+        <label>Starting capital<input type="number" name="capital" value="100000" min="10000" step="1000"></label>
       </div>
       <details class="advanced-settings"><summary>Advanced backtest settings</summary><div class="form-grid advanced-grid">
         <input type="hidden" name="historical_provider" value="{{ active_broker }}">
         {% if active_broker == 'UPSTOX' %}<label>Upstox charge calculation<select name="cost_model"><option value="UPSTOX">Upstox Basic</option><option value="UPSTOX_PLUS">Upstox Plus</option></select></label>{% else %}<input type="hidden" name="cost_model" value="GROWW">{% endif %}
-        <label>Risk per trade %<input type="number" name="risk_pct" value="0.25" min="0.01" max="2" step="0.01"></label>
+        <label>Risk per trade %<input type="number" name="risk_pct" value="3" min="0.01" max="3" step="0.01"></label>
         <label>Slippage per side %<input type="number" name="slippage_pct" value="0.05" min="0" step="0.01"></label>
         <label>Entry delay (bars)<input type="number" name="entry_delay_bars" value="1" min="1" max="6"></label>
         <label>Minimum option volume<input type="number" name="minimum_option_volume" value="1" min="0"></label>
@@ -151,8 +155,15 @@
       <button class="button primary">Run backtest</button>
     </form>
   </section>
-  <section class="card"><div class="card-head"><h2>Recent runs</h2><span>One at a time</span></div><div class="run-list">{% for run in runs %}<a href="/backtests?run_id={{ run.id }}#backtest-result" class="run-item {{ 'active' if selected and selected.id == run.id }}"><div><b>#{{ run.id }} · {{ run.start_date }} to {{ run.end_date }}</b><small>{{ run_details[run.id].get('historical_provider', 'UPSTOX') }} data · {{ run_details[run.id].get('cost_model', 'UPSTOX') }} costs</small></div><span class="status {{ 'green' if run.status == 'COMPLETE' else ('red' if run.status == 'FAILED' else 'amber') }}">{{ run.status }}</span></a>{% else %}<div class="empty-state compact"><p>No backtests have been submitted.</p></div>{% endfor %}</div></section>
+  <section class="card" id="latest-backtest-runs"><div class="card-head"><h2>Recent runs</h2><span>Latest 5</span></div><div class="run-list">{% for run in recent_runs %}<a href="{{ request.url.include_query_params(run_id=run.id) }}#backtest-result" class="run-item {{ 'active' if selected and selected.id == run.id }}"><div><b>#{{ run.id }} · {{ run.start_date }} to {{ run.end_date }}</b><small>{{ run_details[run.id].get('historical_provider', 'UPSTOX') }} data · {{ run_details[run.id].get('cost_model', 'UPSTOX') }} costs</small></div><span class="status {{ 'green' if run.status == 'COMPLETE' else ('red' if run.status == 'FAILED' else 'amber') }}">{{ run.status }}</span></a>{% else %}<div class="empty-state compact"><p>No backtests have been submitted.</p></div>{% endfor %}</div><a class="button small secondary" href="{{ request.url.include_query_params(runs_page=1) }}#backtest-history">View all runs</a></section>
 </div>
+
+<details id="backtest-history" class="card disclosure-card" {% if 'runs_page' in request.query_params %}open{% endif %}>
+  <summary><span><b>Backtest run history</b><small>All submitted runs, 10 per page</small></span><em>{{ runs_pagination.total }} runs</em></summary>
+  <div class="disclosure-content"><div class="run-list">
+    {% for run in runs %}<a class="run-item {{ 'active' if selected and selected.id == run.id }}" href="{{ request.url.include_query_params(run_id=run.id) }}#backtest-result"><div><b>#{{ run.id }} · {{ run.start_date }} to {{ run.end_date }}</b><small>{{ run.created_at|ist_datetime }} · {{ run_details[run.id].get('historical_provider', 'UPSTOX') }} data</small></div><span class="status {{ 'green' if run.status == 'COMPLETE' else ('red' if run.status == 'FAILED' else 'amber') }}">{{ run.status }}</span></a>{% else %}<p class="empty-state compact">No backtests have been submitted.</p>{% endfor %}
+  </div>{{ pagination(runs_pagination, 'runs_page', 'backtest-history') }}</div>
+</details>
 
 {% if edge_study %}
 {% set research_candidate = edge_study.get('selected_on_tuning') or {} %}

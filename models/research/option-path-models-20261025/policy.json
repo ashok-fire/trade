@@ -1,0 +1,12 @@
+{
+  "activation_eligible": false,
+  "cutoff": 0.45,
+  "dataset_hash": "c5990b991eda9eb286e7aaf9aa700418eb2a752b12c4aae579c578a817191c26",
+  "profile": {
+    "capital": 200000,
+    "half_life": 252,
+    "option_path": true
+  },
+  "scope": "CE",
+  "specification_hash": "a29e739a7196da1292fff43a24758e209bcf124c6cbc425504abc9f3ef0fae81"
+}

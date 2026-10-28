@@ -85,3 +85,5 @@ def test_dashboard_profit_risk_and_breakdowns(session):
     assert context["option_breakdown"]["CE"]["pnl"] == Decimal("1000")
     assert context["moneyness_breakdown"]["ITM1"]["pnl"] == Decimal("-400")
     assert context["per_index"]["NIFTY"]["win_rate"] == 100
+    assert context["daily_loss_budget"] == Decimal("5000")
+    assert context["capital_return"] == 0.6

@@ -25,7 +25,7 @@ async def test_paper_entry_and_exit_never_place_broker_order(session):
     assert trade.status == "OPEN" and trade.mode == "PAPER"
     assert trade.entry_bid == Decimal("89")
     assert trade.entry_ask == Decimal("90")
-    assert trade.risk_budget == Decimal("1250")
+    assert trade.risk_budget == Decimal("3000")
     assert "breakout" in session.get(Signal, trade.signal_id).decision_json
     exit_quote = Quote(contract.instrument_key, datetime.now(UTC), Decimal("110"), Decimal("111"), Decimal("110.5"), 1000, 5000, .55, 14)
     await service.exit(session, trade, exit_quote, "TEST_EXIT")

@@ -1,0 +1,9 @@
+{
+  "activation_eligible": false,
+  "cutoff": null,
+  "dataset_hash": "c5990b991eda9eb286e7aaf9aa700418eb2a752b12c4aae579c578a817191c26",
+  "development_target_passed": false,
+  "schema": "premium-meta-research-v1",
+  "selected": null,
+  "specification_hash": "becaa84512ebe1ddfaeeac05a95ee507c075bca83de146eb912d71412f032c46"
+}

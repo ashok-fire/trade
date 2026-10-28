@@ -1,0 +1,61 @@
+{
+  "activation_eligible": false,
+  "amount_diagnostics": "Frozen score/cutoff, one historical lot, capitals100000/200000/500000/1000000, CE and BOTH; development diagnostics ONLY. Do not choose the audit capital from those results",
+  "app_or_registry_changes": false,
+  "capital": 100000,
+  "code_hash": "66461f378f3c1b3141e648acf44ec4e26f75ba9a0555cd7942abdaa995ad3e1d",
+  "condition": "ALL",
+  "cutoff": 0.55,
+  "daily_loss_limit_pct": 5,
+  "expected_development": {
+    "active_months": 15,
+    "ce_trades": 68,
+    "censored": 0,
+    "coverage": 1.0,
+    "daily_loss_overshoots": 0,
+    "max_drawdown": 4165.27,
+    "monthly": {
+      "2024-07": -958.27,
+      "2024-08": 316.52,
+      "2024-09": 1376.26,
+      "2024-10": -59.2,
+      "2024-11": 222.94,
+      "2024-12": 1625.05,
+      "2025-04": -1042.3,
+      "2025-05": -1752.77,
+      "2025-06": 1791.94,
+      "2025-07": 2514.09,
+      "2025-08": -194.6,
+      "2025-09": 1007.02,
+      "2025-10": 6768.53,
+      "2025-11": 3476.94,
+      "2025-12": -92.2
+    },
+    "net_pnl": 14999.95,
+    "pe_trades": 0,
+    "positive_months": 9,
+    "profit_factor": 1.831,
+    "selected": 68,
+    "stress_net_pnl": 14731.49,
+    "trades": 68,
+    "win_rate_pct": 70.59
+  },
+  "final_gates": "100+ completed audit trades, net wins strictly>70%, coverage99%, PF1.3, positive net/double-slippage, DD<=10000, no daily overshoot, >=60% positive active months, positive lower95 mean expectancy and paired improvement over unscored CE baseline",
+  "fresh_forward_evidence_required": true,
+  "learner": "HIST_GRADIENT",
+  "previous_report_hash": "fe5218fee1f4162955b1a81791444083c90dc3ef3126bf2e58479cec7cc47c41",
+  "primary_audit": "Fixed CE branch, fixed100000 capital, one lot, same six-month calibration, no retraining hyperparameter search; 2026 audit previously inspected",
+  "purpose": "Investigate the existing >70% CE-only lead despite insufficient development count. This is evidence gathering, NOT acceptance or relaxing final gates",
+  "reserved_dates_excluded": [
+    "2026-10-14",
+    "2026-10-23"
+  ],
+  "risk_per_trade_pct": 3,
+  "rule": {
+    "hold_minutes": 60,
+    "stop_pct": 25,
+    "target_pct": 15
+  },
+  "schema": "frozen-provisional-meta-v1",
+  "scope": "CE"
+}

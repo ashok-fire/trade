@@ -14,6 +14,8 @@ from .data_quality import research_readiness
 from .models import BacktestRun, Candle, Instrument, ModelArtifact, NotificationOutbox, OptionSelectionAudit, Order, ResearchSyncRun, RuntimeSetting, Signal, SystemEvent, Trade
 from .strategy import SUPPORTED_FEATURE_SCHEMAS
 from .training import load_model_metadata
+from .pagination import LATEST_LIMIT, database_page
+from .research_history import research_history
 
 
 def _today_start() -> datetime:
@@ -92,9 +94,9 @@ def dashboard_context(session: Session, runtime_service=None) -> dict:
         )
     ) or 0
     required_paper_sessions = int(settings.get("required_paper_sessions", "20"))
-    capital = Decimal(settings.get("paper_capital", "500000"))
+    capital = Decimal(settings.get("paper_capital", "100000"))
     capital_return = float(month_pnl / capital * 100) if capital else 0.0
-    daily_loss_budget = capital * Decimal(settings.get("daily_loss_limit_pct", "0.75")) / Decimal("100")
+    daily_loss_budget = capital * Decimal(settings.get("daily_loss_limit_pct", "5")) / Decimal("100")
     open_risk = (open_trade.risk_budget or Decimal("0")) if open_trade else Decimal("0")
     realized_loss_today = max(Decimal("0"), -today_pnl)
     risk_used_amount = realized_loss_today + open_risk
@@ -190,14 +192,15 @@ def orders_context(session: Session) -> dict:
     }
 
 
-def backtests_context(session: Session, selected_id: int | None = None) -> dict:
-    runs = session.scalars(select(BacktestRun).order_by(BacktestRun.created_at.desc()).limit(30)).all()
-    selected = session.get(BacktestRun, selected_id) if selected_id else (runs[0] if runs else None)
+def backtests_context(session: Session, selected_id: int | None = None, *, runs_page=1, models_page=1, downloads_page=1, research_page=1) -> dict:
+    runs, runs_pagination = database_page(session, BacktestRun, runs_page)
+    recent_runs = session.scalars(select(BacktestRun).order_by(BacktestRun.created_at.desc(), BacktestRun.id.desc()).limit(LATEST_LIMIT)).all()
+    selected = session.get(BacktestRun, selected_id) if selected_id else (recent_runs[0] if recent_runs else None)
     summary = json.loads(selected.summary_json) if selected and selected.summary_json else None
     warnings = json.loads(selected.warnings_json) if selected and selected.warnings_json else []
     model_metadata = load_model_metadata(config.model_path)
     run_details = {}
-    for run in runs:
+    for run in [*runs, *recent_runs]:
         try:
             run_details[run.id] = json.loads(run.configuration_json)
         except (TypeError, ValueError):
@@ -218,20 +221,21 @@ def backtests_context(session: Session, selected_id: int | None = None) -> dict:
             "futures": session.scalar(select(func.count()).select_from(Candle).where(Candle.provider == provider, Candle.data_role == "FUTURE", Candle.source_verified.is_(True))) or 0,
             "options": session.scalar(select(func.count()).select_from(Candle).where(Candle.provider == provider, Candle.data_role == "OPTION", Candle.source_verified.is_(True))) or 0,
         }
-    research_runs = session.scalars(
-        select(ResearchSyncRun).order_by(ResearchSyncRun.created_at.desc()).limit(10)
-    ).all()
-    model_artifacts = session.scalars(
-        select(ModelArtifact).order_by(ModelArtifact.created_at.desc()).limit(10)
-    ).all()
+    research_runs, downloads_pagination = database_page(session, ResearchSyncRun, downloads_page)
+    model_artifacts, models_pagination = database_page(session, ModelArtifact, models_page)
     model_details = {}
     for artifact in model_artifacts:
         try:
             model_details[artifact.id] = json.loads(artifact.metadata_json)
         except (TypeError, ValueError):
             model_details[artifact.id] = {}
-    shadow_artifact = next((item for item in model_artifacts if item.status == "SHADOW"), None)
-    shadow_model_metadata = model_details.get(shadow_artifact.id, {}) if shadow_artifact else {}
+    # The selected model is independent of which history page is visible.
+    shadow_artifact = session.scalar(select(ModelArtifact).where(ModelArtifact.status=="SHADOW")
+                                     .order_by(ModelArtifact.created_at.desc(), ModelArtifact.id.desc()).limit(1))
+    try:
+        shadow_model_metadata = json.loads(shadow_artifact.metadata_json) if shadow_artifact else {}
+    except (TypeError, ValueError):
+        shadow_model_metadata = {}
     try:
         reports = [path for path in (config.root / "models/research").glob("selection-aligned-edge-study-*.json") if not path.name.endswith(".spec.json")]
         latest_report = max(reports, key=lambda path: path.stat().st_mtime) if reports else None
@@ -240,6 +244,11 @@ def backtests_context(session: Session, selected_id: int | None = None) -> dict:
         edge_study = {}
     return {
         "runs": runs,
+        "recent_runs": recent_runs,
+        "runs_pagination": runs_pagination,
+        "models_pagination": models_pagination,
+        "downloads_pagination": downloads_pagination,
+        "offline_research": research_history(config.root / "models/research", research_page),
         "selected": selected,
         "summary": summary,
         "warnings": warnings,

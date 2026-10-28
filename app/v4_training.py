@@ -25,6 +25,8 @@ from .strategy import (
     QUALITY_FEATURES,
     SETUP_FAMILIES,
     feature_values,
+    regular_session,
+    selected_setup,
     setup_direction,
     with_futures_features,
 )
@@ -114,7 +116,9 @@ def _simulate_event(
     reward_risk: Decimal = REWARD_RISK,
     premium_stop_pct: Decimal = PREMIUM_STOP_PCT,
     rejection_counts: Counter | None = None,
+    required_features: list[str] | None = None,
 ) -> dict | None:
+    required_features = QUALITY_FEATURES if required_features is None else required_features
     def reject(reason: str):
         if rejection_counts is not None:
             rejection_counts[reason] += 1
@@ -226,10 +230,10 @@ def _simulate_event(
         {**context, "setup_family": event.get("setup_family", "ORB")},
     )
     values["setup_direction"] = 1.0 if direction == "CE" else -1.0
-    if not np.isfinite(np.array([values[name] for name in QUALITY_FEATURES], dtype=float)).all():
+    if not np.isfinite(np.array([values[name] for name in required_features], dtype=float)).all():
         return reject("missing_required_features")
     return {
-        **{name: values[name] for name in QUALITY_FEATURES},
+        **{name: values[name] for name in required_features},
         "timestamp": signal_time,
         "trading_day": event["day"],
         "direction": direction,
@@ -242,6 +246,8 @@ def _simulate_event(
         "instrument_key": instrument.instrument_key if hasattr(instrument, "instrument_key") else "",
         "moneyness": event.get("moneyness", "ATM"),
         "underlying_risk_pct": float(risk / spot),
+        "label_status": "COMPLETE",
+        "exit_timestamp": bar_time if bar_time == cutoff else bar_time + pd.Timedelta(minutes=5),
     }
 
 
@@ -258,11 +264,22 @@ def build_option_quality_samples(
     sampling_policy: str = "first_per_day",
     last_entry_time: time = time(15, 10),
     strike_policy: str = "ATM_ONLY",
+    setup_policy: str = "independent",
+    causal_opportunities: bool = False,
+    retain_unlabelled: bool = False,
+    required_features: list[str] | None = None,
+    include_decision_context: bool = False,
 ) -> tuple[pd.DataFrame, dict]:
     if sampling_policy not in {"first_per_day", "all_eligible_bars"}:
         raise ValueError("Unsupported sampling policy")
+    if setup_policy not in {"independent", "first_confirmed"}:
+        raise ValueError("Unsupported setup policy")
+    required_features = QUALITY_FEATURES if required_features is None else required_features
     start = datetime.combine(start_date, time.min, tzinfo=UTC)
     end = datetime.combine(end_date, time.max, tzinfo=UTC)
+    if causal_opportunities:
+        start = datetime.combine(start_date, time.min, tzinfo=ZoneInfo("Asia/Kolkata")).astimezone(UTC)
+        end = datetime.combine(end_date, time.max, tzinfo=ZoneInfo("Asia/Kolkata")).astimezone(UTC)
     spot_rows = list(
         session.scalars(
             select(Candle)
@@ -316,8 +333,14 @@ def build_option_quality_samples(
         ]
     )
     futures = front_future_frame(future_rows, future_instruments)
-    spot, dropped_spot = _complete_regular_days(raw_spot)
-    futures, dropped_futures = _complete_regular_days(futures)
+    if causal_opportunities:
+        # Do not decide a morning entry using whether the remainder of that
+        # session eventually has a complete candle path.
+        spot, futures = regular_session(raw_spot), regular_session(futures)
+        dropped_spot = dropped_futures = 0
+    else:
+        spot, dropped_spot = _complete_regular_days(raw_spot)
+        futures, dropped_futures = _complete_regular_days(futures)
     if len(spot) < 100 or len(futures) < 100:
         return pd.DataFrame(), {
             "spot_candles": len(spot_rows),
@@ -351,7 +374,15 @@ def build_option_quality_samples(
         entry_clock = (local_stamp + pd.Timedelta(minutes=5)).time()
         if local_stamp.weekday() >= 5 or not time(9, 35) <= entry_clock < last_entry_time:
             continue
-        for setup_family in setup_families:
+        if causal_opportunities:
+            from .training_contract import entry_window_open
+            if not entry_window_open((stamp + pd.Timedelta(minutes=5)).to_pydatetime()):
+                continue
+        families = setup_families
+        if setup_policy == "first_confirmed":
+            family, direction = selected_setup(row, setup_families)
+            families = (family,) if direction else ()
+        for setup_family in families:
             family = setup_family.upper()
             direction = _setup_direction(row, family)
             if direction is None:
@@ -407,20 +438,42 @@ def build_option_quality_samples(
             continue
         instrument, moneyness = chosen
         event = {**event, "instrument": instrument, "moneyness": moneyness}
+        # Optional research-only sizing inputs known at the signal close.
+        # Keep the default columns unchanged for frozen dataset fingerprints.
+        context = ({"decision_premium": float(signal_candles[instrument.instrument_key, event["time"]].close),
+                    "lot_size": int(instrument.lot_size)} if include_decision_context else {})
         result = _simulate_event(
             event, by_key_day.get((instrument.instrument_key, event["day"]), []),
             underlying_by_time, provider, reward_risk=reward_risk,
             premium_stop_pct=premium_stop_pct, rejection_counts=rejection_counts,
+            required_features=required_features,
         )
         if result is not None:
-            records.append(result)
+            records.append({**result, **context})
             moneyness_counts[moneyness] += 1
+        elif retain_unlabelled:
+            # Features exist at the decision clock even when an exit path is
+            # missing. Keep the opportunity so evaluation cannot jump over it
+            # and choose a later winner from the same session.
+            signal = signal_candles[instrument.instrument_key, event["time"]]
+            values = feature_values(event["row"], {"setup_family": event["setup_family"],
+                **option_quality_context(premium=float(signal.close), volume=signal.volume,
+                    open_interest=signal.open_interest, expiry=instrument.expiry, strike=instrument.strike,
+                    spot=float(event["row"].close), trading_day=event["day"])})
+            if np.isfinite(np.array([values[name] for name in required_features], dtype=float)).all():
+                records.append({**{name: values[name] for name in required_features},
+                    "timestamp": event["time"], "trading_day": event["day"], "direction": event["direction"],
+                    "setup_family": event["setup_family"], "instrument_key": instrument.instrument_key,
+                    "moneyness": moneyness, "label_status": "CENSORED", "label": None,
+                    "net_pnl": None, "stress_net_pnl": None, "net_return": None,
+                    "exit_reason": "INCOMPLETE_PATH", "exit_timestamp": None, **context})
     diagnostics = {
         "spot_candles": len(spot_rows),
         "futures_candles": len(futures),
         "option_contracts": len(option_instruments),
         "candidate_setups": len(events),
-        "usable_option_outcomes": len(records),
+        "usable_option_outcomes": sum(item.get("label_status") == "COMPLETE" for item in records),
+        "unlabelled_opportunities": sum(item.get("label_status") == "CENSORED" for item in records),
         "dropped_spot_days": dropped_spot,
         "dropped_future_days": dropped_futures,
         "reward_risk": str(reward_risk),
@@ -428,6 +481,8 @@ def build_option_quality_samples(
         "setup_families": [item.upper() for item in setup_families],
         "sampling_policy": sampling_policy,
         "strike_policy": strike_policy,
+        "setup_policy": setup_policy, "causal_opportunities": causal_opportunities,
+        "required_features": list(required_features),
         "moneyness_counts": dict(moneyness_counts),
         "unreplayed_runtime_filters": ["bid_ask_spread", "quote_age", "delta", "live_volume_and_oi_semantics"],
         "entry_cutoff_ist": last_entry_time.isoformat(),
@@ -464,14 +519,15 @@ def _rank_labels(frame: pd.DataFrame) -> np.ndarray:
     ).round().to_numpy(dtype=float)
 
 
-def _fit_ranker(frame: pd.DataFrame, rounds: int = 180):
+def _fit_ranker(frame: pd.DataFrame, rounds: int = 180, *, features: list[str] | None = None):
     import xgboost as xgb
 
     ordered = frame.sort_values(["trading_day", "timestamp"]).reset_index(drop=True)
+    features = QUALITY_FEATURES if features is None else features
     matrix = xgb.DMatrix(
-        ordered[QUALITY_FEATURES].to_numpy(dtype=float),
+        ordered[features].to_numpy(dtype=float),
         label=_rank_labels(ordered),
-        feature_names=QUALITY_FEATURES,
+        feature_names=features,
     )
     matrix.set_group(ordered.groupby("trading_day", sort=False).size().tolist())
     model = xgb.train(
@@ -833,6 +889,15 @@ def _walk_forward_validation(dataset: pd.DataFrame) -> list[dict]:
 
 
 def train_option_quality_model(
+    db_url: str, model_path: Path, indices: list[str], start_date: date,
+    end_date: date, provider: str = "GROWW",
+) -> dict:
+    """New standard runs use the versioned, four-period aligned contract."""
+    from .aligned_training import train_aligned_model
+    return train_aligned_model(db_url, model_path, indices, start_date, end_date, provider)
+
+
+def train_legacy_option_quality_model(
     db_url: str,
     model_path: Path,
     indices: list[str],
@@ -840,7 +905,7 @@ def train_option_quality_model(
     end_date: date,
     provider: str = "GROWW",
 ) -> dict:
-    """Train a cost-aware, direction-specific option trade-quality ensemble."""
+    """Legacy research protocol; the application uses train_option_quality_model."""
     if start_date >= end_date:
         raise ValueError("Training end date must be after the start date")
     engine = create_engine(
@@ -1060,20 +1125,20 @@ def evaluate_option_quality_holdout(
     provider: str = "GROWW",
 ) -> dict:
     """Evaluate a frozen cost-aware bundle without fitting or selecting anything."""
-    from catboost import CatBoostClassifier
-    import xgboost as xgb
+    from .strategy import RegimeModel
 
     metadata = json.loads(model_metadata_path(model_path).read_text())
     if metadata.get("feature_schema") not in {FEATURE_SCHEMA_V4, FEATURE_SCHEMA_V5, FEATURE_SCHEMA_V6}:
         raise ValueError("Holdout evaluation requires a cost-aware option model bundle")
-    manifest = json.loads(model_path.read_text())
-    quality_models: dict[str, object] = {}
-    for direction in ("CE", "PE"):
-        model = CatBoostClassifier()
-        model.load_model(str(model_path.parent / manifest["quality_models"][direction]))
-        quality_models[direction] = model
-    ranker = xgb.Booster()
-    ranker.load_model(model_path.parent / manifest["ranker"])
+    if start_date <= date.fromisoformat(metadata["training_end"]) or start_date > end_date:
+        raise ValueError("Holdout must follow the candidate's complete research date range")
+    model = RegimeModel(model_path)
+    if not model.available:
+        raise ValueError("Frozen candidate cannot be loaded")
+    contract = metadata.get("training_contract", {})
+    if contract and (provider not in metadata.get("compatible_live_providers", [])
+            or not set(indices).issubset(metadata.get("indices", []))):
+        raise ValueError("Holdout provider/index is outside the frozen training scope")
 
     engine = create_engine(
         db_url,
@@ -1092,6 +1157,13 @@ def evaluate_option_quality_holdout(
                     code=code,
                     start_date=start_date,
                     end_date=end_date,
+                    setup_families=tuple(metadata.get("setup_families", ("ORB",))),
+                    sampling_policy=contract.get("sampling_policy", "first_per_day"),
+                    strike_policy=contract.get("strike_policy", "ATM_ONLY"),
+                    setup_policy=contract.get("setup_policy", "independent"),
+                    causal_opportunities=contract.get("causal_opportunities", False),
+                    retain_unlabelled=contract.get("retain_unlabelled", False),
+                    required_features=model.required_features,
                 )
                 coverage[code] = diagnostics
                 if not frame.empty:
@@ -1102,14 +1174,16 @@ def evaluate_option_quality_holdout(
     if not samples:
         raise RuntimeError("No usable option outcomes were found in the holdout period")
     dataset = pd.concat(samples, ignore_index=True).sort_values("timestamp").reset_index(drop=True)
-    probabilities = _apply_calibration(
-        quality_models, ranker, dataset, metadata["calibration"]
-    )
+    probabilities = model.quality_probabilities(dataset)
     thresholds = metadata.get("setup_thresholds") or {
         key: float(value)
         for key, value in metadata["direction_thresholds"].items()
     }
-    metrics = _performance(dataset, probabilities, thresholds)
+    if contract:
+        from .aligned_training import daily_metrics
+        metrics = daily_metrics(dataset, probabilities, metadata["direction_thresholds"])
+    else:
+        metrics = _performance(dataset, probabilities, thresholds)
     metrics.update(
         {
             "samples": len(dataset),
@@ -1119,6 +1193,7 @@ def evaluate_option_quality_holdout(
             "coverage": coverage,
             "evaluated_at": datetime.now(UTC).isoformat(),
             "frozen_model_version": metadata["version"],
+            "training_contract": contract,
         }
     )
     return metrics

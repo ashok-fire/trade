@@ -1,0 +1,370 @@
+{
+  "LOW_volatility": "fit-only median ATR/close on first eligible daily candidates; fixed throughout each calibration/validation block",
+  "activation_eligible": false,
+  "application_or_registry_changes": false,
+  "audit": "frozen chosen candidate only on previously inspected 2026; paired comparison with unscored same-clock first-decision strategy",
+  "calibration": "separate-day regularised Platt C1; positive slope required; min100 fit and20 calibration first decisions; no class balancing or random temporal splits",
+  "capital": 100000,
+  "clocks_ist_minutes": {
+    "EARLY": [
+      575,
+      660
+    ],
+    "LATE": [
+      780,
+      910
+    ],
+    "MID": [
+      660,
+      780
+    ]
+  },
+  "code_hash": "e0c6bc1bf8f28dcf249526fd9a63f2764e574c64850a85c6e550af818b27701e",
+  "cutoffs": [
+    0.4,
+    0.45,
+    0.5,
+    0.55,
+    0.6,
+    0.65,
+    0.7,
+    0.75,
+    0.8
+  ],
+  "daily_loss_limit_pct": 5,
+  "estimators": {
+    "CATBOOST": "300 iterations, depth2, lr.03, L2=30, has_time=True; seed42",
+    "HIST_GRADIENT": "100 iterations, 7 leaves, lr.05, L2=10, min_leaf20, early_stopping=False",
+    "LOGISTIC": "fit-only StandardScaler + L2 C=.05, max_iter2000"
+  },
+  "features": [
+    "spot_vwap_distance",
+    "futures_vwap_distance",
+    "futures_basis_pct",
+    "spot_return_1",
+    "spot_return_3",
+    "spot_return_6",
+    "futures_return_1",
+    "futures_return_3",
+    "futures_atr_pct",
+    "futures_volume_ratio",
+    "ema9_20_distance",
+    "ema20_50_distance",
+    "atr_pct",
+    "rsi",
+    "previous_day_high_distance",
+    "previous_day_low_distance",
+    "previous_day_close_distance",
+    "opening_range_high_distance",
+    "opening_range_low_distance",
+    "gap_pct",
+    "time_sin",
+    "time_cos",
+    "setup_direction",
+    "option_premium_pct",
+    "days_to_expiry",
+    "moneyness_pct",
+    "day_open_distance",
+    "opening_range_width_pct",
+    "trend_atr_strength",
+    "realized_vol_6",
+    "rsi_change_3",
+    "atr_change_3",
+    "basis_change_3",
+    "return_spread_3",
+    "weekday_sin",
+    "weekday_cos",
+    "setup_orb",
+    "setup_pullback",
+    "setup_failed_breakout",
+    "setup_vwap_reclaim"
+  ],
+  "final_audit": [
+    "2026-audit",
+    "2025-10-01",
+    "2025-12-31",
+    "2026-01-08",
+    "2026-10-13"
+  ],
+  "first_decision": "first risk-eligible opportunity per day in the chosen boundary-clock interval; a low model score means skip that entire day, not choose a later outcome",
+  "folds": [
+    [
+      "2024-Q2",
+      "2024-01-01",
+      "2024-03-31",
+      "2024-04-01",
+      "2024-06-30"
+    ],
+    [
+      "2024-Q3",
+      "2024-04-01",
+      "2024-06-30",
+      "2024-07-01",
+      "2024-09-30"
+    ],
+    [
+      "2024-Q4",
+      "2024-07-01",
+      "2024-09-30",
+      "2024-10-01",
+      "2024-12-31"
+    ],
+    [
+      "2025-Q2",
+      "2025-01-01",
+      "2025-03-31",
+      "2025-04-01",
+      "2025-06-30"
+    ],
+    [
+      "2025-Q3",
+      "2025-04-01",
+      "2025-06-30",
+      "2025-07-01",
+      "2025-09-30"
+    ],
+    [
+      "2025-Q4",
+      "2025-07-01",
+      "2025-09-30",
+      "2025-10-01",
+      "2025-12-31"
+    ]
+  ],
+  "goal_gates": "strictly >70% realised net wins, >=100 trades, coverage>=99%, PF>=1.3, positive net/stress, DD<=10000, no daily overshoot, >=4/6 stressed-positive windows with10 trades, >=60% positive months; supported neighbours",
+  "hypothesis": "One predetermined daily decision and clock/volatility-specific models improve sample independence and selective net win prediction over overlapping intraday training",
+  "labels": "existing frozen underlying-ATR exits; no relabelling or new data",
+  "limitations": [
+    "Many-profile development selection is biased and not fresh performance evidence",
+    "Different first-decision contract is not compatible with current all-bars runtime",
+    "Existing candle fills/costs and historical feature semantics require fresh quote-based validation",
+    "Quarter ledgers reset; one historical lot per trade, not full compounded account sizing"
+  ],
+  "partial_improvement_track": "separate >=60% win economic candidate with same profitability/risk/stability gates; NEVER counts as >70%. Select at most one final candidate, prioritising goal passage then stressed net",
+  "previously_inspected_history": true,
+  "profiles": [
+    {
+      "clock": "EARLY",
+      "learner": "LOGISTIC",
+      "side": "CE",
+      "volatility": "ALL"
+    },
+    {
+      "clock": "EARLY",
+      "learner": "HIST_GRADIENT",
+      "side": "CE",
+      "volatility": "ALL"
+    },
+    {
+      "clock": "EARLY",
+      "learner": "CATBOOST",
+      "side": "CE",
+      "volatility": "ALL"
+    },
+    {
+      "clock": "EARLY",
+      "learner": "LOGISTIC",
+      "side": "CE",
+      "volatility": "LOW"
+    },
+    {
+      "clock": "EARLY",
+      "learner": "HIST_GRADIENT",
+      "side": "CE",
+      "volatility": "LOW"
+    },
+    {
+      "clock": "EARLY",
+      "learner": "CATBOOST",
+      "side": "CE",
+      "volatility": "LOW"
+    },
+    {
+      "clock": "MID",
+      "learner": "LOGISTIC",
+      "side": "CE",
+      "volatility": "ALL"
+    },
+    {
+      "clock": "MID",
+      "learner": "HIST_GRADIENT",
+      "side": "CE",
+      "volatility": "ALL"
+    },
+    {
+      "clock": "MID",
+      "learner": "CATBOOST",
+      "side": "CE",
+      "volatility": "ALL"
+    },
+    {
+      "clock": "MID",
+      "learner": "LOGISTIC",
+      "side": "CE",
+      "volatility": "LOW"
+    },
+    {
+      "clock": "MID",
+      "learner": "HIST_GRADIENT",
+      "side": "CE",
+      "volatility": "LOW"
+    },
+    {
+      "clock": "MID",
+      "learner": "CATBOOST",
+      "side": "CE",
+      "volatility": "LOW"
+    },
+    {
+      "clock": "LATE",
+      "learner": "LOGISTIC",
+      "side": "CE",
+      "volatility": "ALL"
+    },
+    {
+      "clock": "LATE",
+      "learner": "HIST_GRADIENT",
+      "side": "CE",
+      "volatility": "ALL"
+    },
+    {
+      "clock": "LATE",
+      "learner": "CATBOOST",
+      "side": "CE",
+      "volatility": "ALL"
+    },
+    {
+      "clock": "LATE",
+      "learner": "LOGISTIC",
+      "side": "CE",
+      "volatility": "LOW"
+    },
+    {
+      "clock": "LATE",
+      "learner": "HIST_GRADIENT",
+      "side": "CE",
+      "volatility": "LOW"
+    },
+    {
+      "clock": "LATE",
+      "learner": "CATBOOST",
+      "side": "CE",
+      "volatility": "LOW"
+    },
+    {
+      "clock": "EARLY",
+      "learner": "LOGISTIC",
+      "side": "PE",
+      "volatility": "ALL"
+    },
+    {
+      "clock": "EARLY",
+      "learner": "HIST_GRADIENT",
+      "side": "PE",
+      "volatility": "ALL"
+    },
+    {
+      "clock": "EARLY",
+      "learner": "CATBOOST",
+      "side": "PE",
+      "volatility": "ALL"
+    },
+    {
+      "clock": "EARLY",
+      "learner": "LOGISTIC",
+      "side": "PE",
+      "volatility": "LOW"
+    },
+    {
+      "clock": "EARLY",
+      "learner": "HIST_GRADIENT",
+      "side": "PE",
+      "volatility": "LOW"
+    },
+    {
+      "clock": "EARLY",
+      "learner": "CATBOOST",
+      "side": "PE",
+      "volatility": "LOW"
+    },
+    {
+      "clock": "MID",
+      "learner": "LOGISTIC",
+      "side": "PE",
+      "volatility": "ALL"
+    },
+    {
+      "clock": "MID",
+      "learner": "HIST_GRADIENT",
+      "side": "PE",
+      "volatility": "ALL"
+    },
+    {
+      "clock": "MID",
+      "learner": "CATBOOST",
+      "side": "PE",
+      "volatility": "ALL"
+    },
+    {
+      "clock": "MID",
+      "learner": "LOGISTIC",
+      "side": "PE",
+      "volatility": "LOW"
+    },
+    {
+      "clock": "MID",
+      "learner": "HIST_GRADIENT",
+      "side": "PE",
+      "volatility": "LOW"
+    },
+    {
+      "clock": "MID",
+      "learner": "CATBOOST",
+      "side": "PE",
+      "volatility": "LOW"
+    },
+    {
+      "clock": "LATE",
+      "learner": "LOGISTIC",
+      "side": "PE",
+      "volatility": "ALL"
+    },
+    {
+      "clock": "LATE",
+      "learner": "HIST_GRADIENT",
+      "side": "PE",
+      "volatility": "ALL"
+    },
+    {
+      "clock": "LATE",
+      "learner": "CATBOOST",
+      "side": "PE",
+      "volatility": "ALL"
+    },
+    {
+      "clock": "LATE",
+      "learner": "LOGISTIC",
+      "side": "PE",
+      "volatility": "LOW"
+    },
+    {
+      "clock": "LATE",
+      "learner": "HIST_GRADIENT",
+      "side": "PE",
+      "volatility": "LOW"
+    },
+    {
+      "clock": "LATE",
+      "learner": "CATBOOST",
+      "side": "PE",
+      "volatility": "LOW"
+    }
+  ],
+  "reserved_window_excluded": [
+    "2026-10-14",
+    "2026-10-23"
+  ],
+  "risk_per_trade_pct": 3,
+  "schema": "first-decision-specialists-v1",
+  "source_report_hash": "bec10187b2b8771965da4a6575354e43fa6f1737f5ac96300b7f3de5007681cd"
+}

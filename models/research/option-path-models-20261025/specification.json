@@ -1,0 +1,199 @@
+{
+  "acceptance": "100trades/>70% net wins/PF1.3/positive net and stress/coverage.99/DD<=10% capital/no daily overshoot/>=60% positive active months/4of6 stress-positive windows with10trades; adjacent cutoffs >=60trades/PF1.1/positive stress/win>=65",
+  "activation_eligible": false,
+  "app_or_registry_changes": false,
+  "audit": [
+    "2026-audit",
+    "2025-07-01",
+    "2025-12-31",
+    "2026-01-08",
+    "2026-10-13"
+  ],
+  "calibration": "separate CE/PE positive-slope Platt C1; >=40days/100rows;6 preceding calendar months; unit per day",
+  "code_hash": "181b41976cd0065f57a65397fab9ea0c14dc8572dcdfff27759f655ef5799ed3",
+  "control_features": [
+    "spot_vwap_distance",
+    "futures_vwap_distance",
+    "futures_basis_pct",
+    "spot_return_1",
+    "spot_return_3",
+    "spot_return_6",
+    "futures_return_1",
+    "futures_return_3",
+    "futures_atr_pct",
+    "futures_volume_ratio",
+    "ema9_20_distance",
+    "ema20_50_distance",
+    "atr_pct",
+    "rsi",
+    "previous_day_high_distance",
+    "previous_day_low_distance",
+    "previous_day_close_distance",
+    "opening_range_high_distance",
+    "opening_range_low_distance",
+    "gap_pct",
+    "time_sin",
+    "time_cos",
+    "setup_direction",
+    "option_premium_pct",
+    "days_to_expiry",
+    "moneyness_pct",
+    "day_open_distance",
+    "opening_range_width_pct",
+    "trend_atr_strength",
+    "realized_vol_6",
+    "rsi_change_3",
+    "atr_change_3",
+    "basis_change_3",
+    "return_spread_3",
+    "weekday_sin",
+    "weekday_cos",
+    "setup_orb",
+    "setup_pullback",
+    "setup_failed_breakout",
+    "setup_vwap_reclaim",
+    "decision_premium",
+    "lot_size",
+    "estimated_cost_pct",
+    "risk_utilization"
+  ],
+  "cutoffs": [
+    0.4,
+    0.45,
+    0.5,
+    0.55,
+    0.6,
+    0.65,
+    0.7,
+    0.75,
+    0.8
+  ],
+  "dependency_code_hashes": {
+    "research/decision_day_specialists.py": "e0c6bc1bf8f28dcf249526fd9a63f2764e574c64850a85c6e550af818b27701e",
+    "research/effective_day_models.py": "208a59cdab24f96cce9ecbcc1c5ba0c903c85ab16cbfaa7ebfb9ed53dc0c0893",
+    "research/exit_strategy_study.py": "db544b57b845c11d4a5dde3106c3339645e04b2d727f9e735df6d32f1d0f6be5",
+    "research/pooled_day_models.py": "084b533034f9bdafe1ce92d70b5d2a46462ac336915839e1175d11b18a59b1e3",
+    "research/walk_forward_tuning.py": "b5e41b379c505db8d3971e592130b6ab78cc44bab98fa8fca815b27242e1a2f0"
+  },
+  "feature_definitions": "fractional close returns over1/3bars; population std of3 contiguous log returns; (high-low)/close; (close-open)/open; (close-low)/(high-low), .5 if flat; require positive finite valid OHLC; exact same key/day; no bars after signal; missing stays NaN",
+  "folds": [
+    [
+      "2024-Q2",
+      "2023-10-01",
+      "2024-03-31",
+      "2024-04-01",
+      "2024-06-30"
+    ],
+    [
+      "2024-Q3",
+      "2024-01-01",
+      "2024-06-30",
+      "2024-07-01",
+      "2024-09-30"
+    ],
+    [
+      "2024-Q4",
+      "2024-04-01",
+      "2024-09-30",
+      "2024-10-01",
+      "2024-12-31"
+    ],
+    [
+      "2025-Q2",
+      "2024-10-01",
+      "2025-03-31",
+      "2025-04-01",
+      "2025-06-30"
+    ],
+    [
+      "2025-Q3",
+      "2025-01-01",
+      "2025-06-30",
+      "2025-07-01",
+      "2025-09-30"
+    ],
+    [
+      "2025-Q4",
+      "2025-04-01",
+      "2025-09-30",
+      "2025-10-01",
+      "2025-12-31"
+    ]
+  ],
+  "freeze": "at most one candidate before later audit, priority target then stressed net; audit also positive lower95 mean and paired unscored improvement; enriched candidate also needs positive lower95 improvement over matched44input control at same frozen cutoff",
+  "hypothesis": "Same-contract causal option momentum, volatility and candle shape add information beyond static cost inputs",
+  "label_cache_hash": "62822d585cd94c3d8800bdf2bf85a929ed363c343157ca6853917bbff521bb74",
+  "label_report_hash": "fe5218fee1f4162955b1a81791444083c90dc3ef3126bf2e58479cec7cc47c41",
+  "labels": {
+    "hold_minutes": 60,
+    "stop_pct": 25,
+    "target_pct": 15
+  },
+  "limits": "quarter-reset development ledgers; one lot not full allocation; all history repeatedly inspected; selection-biased results; candle fill proxies not executable quotes",
+  "missing_inputs": "native partial-NaN routing; exclude entirely missing columns using fit data alone, record actual model schema; no imputation or future backfill",
+  "model": "fixed HGB100iterations/7leaves/lr.05/minleaf20/L2=10/no early stopping/seed42",
+  "option_features": [
+    "option_return_1bar",
+    "option_return_3bars",
+    "option_log_vol_3bars",
+    "option_range_fraction",
+    "option_body_fraction",
+    "option_close_location"
+  ],
+  "partial_track": "separately labelled >=60% win economic track; same gates except neighbours>=55%; never counts as70% success",
+  "previously_inspected_history": true,
+  "profiles": [
+    {
+      "capital": 100000,
+      "half_life": null,
+      "option_path": false
+    },
+    {
+      "capital": 100000,
+      "half_life": null,
+      "option_path": true
+    },
+    {
+      "capital": 100000,
+      "half_life": 252,
+      "option_path": false
+    },
+    {
+      "capital": 100000,
+      "half_life": 252,
+      "option_path": true
+    },
+    {
+      "capital": 200000,
+      "half_life": null,
+      "option_path": false
+    },
+    {
+      "capital": 200000,
+      "half_life": null,
+      "option_path": true
+    },
+    {
+      "capital": 200000,
+      "half_life": 252,
+      "option_path": false
+    },
+    {
+      "capital": 200000,
+      "half_life": 252,
+      "option_path": true
+    }
+  ],
+  "reserved_window_excluded": [
+    "2026-10-14",
+    "2026-10-23"
+  ],
+  "risk": "whole historical lot; 3% per trade/5% daily; cash and reserve fees; 25% premium stop budget; one first passing/day; retain unknown outcomes",
+  "schema": "option-path-research-v1",
+  "scopes": [
+    "BOTH",
+    "CE"
+  ],
+  "source_report_hash": "bec10187b2b8771965da4a6575354e43fa6f1737f5ac96300b7f3de5007681cd",
+  "weights": "one aggregate unit per observed day, optional252-observed-day half-life; no candle-count rescaling"
+}

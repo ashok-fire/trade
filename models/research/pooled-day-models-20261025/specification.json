@@ -1,0 +1,128 @@
+{
+  "activation_eligible": false,
+  "app_or_registry_writes": false,
+  "audit": [
+    "2026-audit",
+    "2025-07-01",
+    "2025-12-31",
+    "2026-01-08",
+    "2026-10-13"
+  ],
+  "audit_gates": "100+ trades, >70% net wins for goal; positive net/double-slip, PF1.3, DD<=10000, coverage99%, >=60% positive months, no daily overshoot, positive lower95 mean expectancy and paired daily improvement versus unscored same-scope policy",
+  "calibration": "six preceding complete calendar months, positive-slope Platt; chronological day purges; min100 fit/40 calibration rows; same regularised estimators as decision-day study",
+  "capital": 100000,
+  "code_hash": "084b533034f9bdafe1ce92d70b5d2a46462ac336915839e1175d11b18a59b1e3",
+  "consensus": "equal average when at least two positively calibrated models available; no fitted ensemble weights",
+  "daily_loss_limit_pct": 5,
+  "features": [
+    "spot_vwap_distance",
+    "futures_vwap_distance",
+    "futures_basis_pct",
+    "spot_return_1",
+    "spot_return_3",
+    "spot_return_6",
+    "futures_return_1",
+    "futures_return_3",
+    "futures_atr_pct",
+    "futures_volume_ratio",
+    "ema9_20_distance",
+    "ema20_50_distance",
+    "atr_pct",
+    "rsi",
+    "previous_day_high_distance",
+    "previous_day_low_distance",
+    "previous_day_close_distance",
+    "opening_range_high_distance",
+    "opening_range_low_distance",
+    "gap_pct",
+    "time_sin",
+    "time_cos",
+    "setup_direction",
+    "option_premium_pct",
+    "days_to_expiry",
+    "moneyness_pct",
+    "day_open_distance",
+    "opening_range_width_pct",
+    "trend_atr_strength",
+    "realized_vol_6",
+    "rsi_change_3",
+    "atr_change_3",
+    "basis_change_3",
+    "return_spread_3",
+    "weekday_sin",
+    "weekday_cos",
+    "setup_orb",
+    "setup_pullback",
+    "setup_failed_breakout",
+    "setup_vwap_reclaim"
+  ],
+  "folds": [
+    [
+      "2024-Q2",
+      "2023-10-01",
+      "2024-03-31",
+      "2024-04-01",
+      "2024-06-30"
+    ],
+    [
+      "2024-Q3",
+      "2024-01-01",
+      "2024-06-30",
+      "2024-07-01",
+      "2024-09-30"
+    ],
+    [
+      "2024-Q4",
+      "2024-04-01",
+      "2024-09-30",
+      "2024-10-01",
+      "2024-12-31"
+    ],
+    [
+      "2025-Q2",
+      "2024-10-01",
+      "2025-03-31",
+      "2025-04-01",
+      "2025-06-30"
+    ],
+    [
+      "2025-Q3",
+      "2025-01-01",
+      "2025-06-30",
+      "2025-07-01",
+      "2025-09-30"
+    ],
+    [
+      "2025-Q4",
+      "2025-04-01",
+      "2025-09-30",
+      "2025-10-01",
+      "2025-12-31"
+    ]
+  ],
+  "hypothesis": "Pooling first CE/PE opportunities and six-month calibration reduces sparse-specialist instability; cross-model consensus may reduce estimator-specific noise",
+  "labels": "unchanged frozen ATR-exit net wins; no new data or exit selection",
+  "learners": [
+    "LOGISTIC",
+    "HIST_GRADIENT",
+    "CATBOOST",
+    "CONSENSUS"
+  ],
+  "learning_unit": "first risk-eligible observation per day per direction, then remove unknown fit/cal labels; equal total day weight; at most two fitting rows/day, not assumed independent",
+  "previously_inspected_history": true,
+  "reserved_window_excluded": [
+    "2026-10-14",
+    "2026-10-23"
+  ],
+  "risk_per_trade_pct": 3,
+  "runtime_compatible": false,
+  "schema": "pooled-day-research-v1",
+  "scopes": [
+    "BOTH",
+    "CE",
+    "PE"
+  ],
+  "selection": "12 fixed learner/scope profiles, nine cutoffs .40-.80 step .05; >70% target track, separately labelled >=60% partial economic track; same risk/profit/stability/neighbour support gates as decision-day study",
+  "source_report_hash": "bec10187b2b8771965da4a6575354e43fa6f1737f5ac96300b7f3de5007681cd",
+  "trading": "at most one accepted trade/day; each side contributes only its first predetermined opportunity; no later same-side retries after a low score"
+}

@@ -1,0 +1,144 @@
+{
+  "2026": "Only selected exit gets 2026 relabelling after policy frozen; previously inspected period, NOT fresh evidence",
+  "activation_eligible": false,
+  "app_or_registry_writes": false,
+  "audit": [
+    "2026-audit",
+    "2025-07-01",
+    "2025-12-31",
+    "2026-01-08",
+    "2026-10-13"
+  ],
+  "calibration": "separate six-month day-grouped Platt, positive slope, fit>=500 rows/100 days and cal>=200 rows/40 days; whole-day boundary purges",
+  "capital": 100000,
+  "code_hash": "927ac184fd4fbb3257c8d4d76662bb812b1c240751b7e8f84bad501d7e0c7eda",
+  "condition_definition": "ALIGNED means setup_direction * trend_atr_strength >=2; evaluation-only fixed condition, not fitted on future outcomes",
+  "conditions": [
+    "ALL",
+    "ALIGNED"
+  ],
+  "daily_loss_limit_pct": 5,
+  "exits": "existing tested native premium simulator, gap-aware, stop-first ambiguous candles, horizon/square-off open; double-slip path re-simulated",
+  "features": [
+    "spot_vwap_distance",
+    "futures_vwap_distance",
+    "futures_basis_pct",
+    "spot_return_1",
+    "spot_return_3",
+    "spot_return_6",
+    "futures_return_1",
+    "futures_return_3",
+    "futures_atr_pct",
+    "futures_volume_ratio",
+    "ema9_20_distance",
+    "ema20_50_distance",
+    "atr_pct",
+    "rsi",
+    "previous_day_high_distance",
+    "previous_day_low_distance",
+    "previous_day_close_distance",
+    "opening_range_high_distance",
+    "opening_range_low_distance",
+    "gap_pct",
+    "time_sin",
+    "time_cos",
+    "setup_direction",
+    "option_premium_pct",
+    "days_to_expiry",
+    "moneyness_pct",
+    "day_open_distance",
+    "opening_range_width_pct",
+    "trend_atr_strength",
+    "realized_vol_6",
+    "rsi_change_3",
+    "atr_change_3",
+    "basis_change_3",
+    "return_spread_3",
+    "weekday_sin",
+    "weekday_cos",
+    "setup_orb",
+    "setup_pullback",
+    "setup_failed_breakout",
+    "setup_vwap_reclaim"
+  ],
+  "folds": [
+    [
+      "2024-Q2",
+      "2023-10-01",
+      "2024-03-31",
+      "2024-04-01",
+      "2024-06-30"
+    ],
+    [
+      "2024-Q3",
+      "2024-01-01",
+      "2024-06-30",
+      "2024-07-01",
+      "2024-09-30"
+    ],
+    [
+      "2024-Q4",
+      "2024-04-01",
+      "2024-09-30",
+      "2024-10-01",
+      "2024-12-31"
+    ],
+    [
+      "2025-Q2",
+      "2024-10-01",
+      "2025-03-31",
+      "2025-04-01",
+      "2025-06-30"
+    ],
+    [
+      "2025-Q3",
+      "2025-01-01",
+      "2025-06-30",
+      "2025-07-01",
+      "2025-09-30"
+    ],
+    [
+      "2025-Q4",
+      "2025-04-01",
+      "2025-09-30",
+      "2025-10-01",
+      "2025-12-31"
+    ]
+  ],
+  "goal": "strictly >70% realised net wins,100+ complete trades,PF1.3,positive net and double-slip,DD<=10000,coverage99%,4/6 stress-positive windows with>=10 trades,60% positive months; neighbour support",
+  "hypothesis": "Economic option-exit labels are more learnable than underlying-touch proxy labels; train a skip/enter meta-model despite unfiltered strategy weakness",
+  "limitations": [
+    "Candidate selection reuses development history and is biased by repeated research",
+    "Native stops/targets differ from runtime; research models are not compatible with active execution",
+    "Candle fills, historical feature meanings and estimated charges need genuine forward quote-based validation",
+    "One-lot, reset-quarter P&L is not a full-account compounded return"
+  ],
+  "models": "same fixed regularised logistic, shallow histogram boosting and shallow CatBoost as decision-day study; fixed equal consensus of >=2 enabled models",
+  "partial_track": "separately labelled >=60% economically robust candidate, never >70%; same fixed select_policy and risk/profit gates; audit at most one selected policy",
+  "reserved_dates_excluded": [
+    "2026-10-14",
+    "2026-10-23"
+  ],
+  "risk_per_trade_pct": 3,
+  "rules": [
+    {
+      "hold_minutes": 30,
+      "stop_pct": 15,
+      "target_pct": 15
+    },
+    {
+      "hold_minutes": 60,
+      "stop_pct": 25,
+      "target_pct": 15
+    }
+  ],
+  "schema": "premium-meta-research-v1",
+  "scopes": [
+    "BOTH",
+    "CE",
+    "PE"
+  ],
+  "selection": "48 learner/exit/side/condition profiles, nine cutoffs .40-.80; first score-passing eligible bar/day; unknown selected exits never replaced",
+  "source_report_hash": "bec10187b2b8771965da4a6575354e43fa6f1737f5ac96300b7f3de5007681cd",
+  "training": "all labelled causal bar opportunities pooled CE/PE, equal total day weight; overlapping rows are NOT independent trades"
+}

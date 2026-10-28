@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Shadow research · NiftyPilot{% endblock %}
+{% block heading %}<h1>Parallel Shadow research</h1><p>Independent ORB, pullback, failed-breakout and VWAP-reclaim observations · all times IST</p>{% endblock %}
+{% block content %}
+<section class="card">
+  <h2>{{ 'Enabled' if settings.parallel_shadow_enabled == 'true' else 'Paused' }} · mode {{ runtime.execution_mode }}</h2>
+  <p>{{ observer.waiting_reason }}. New observations require SHADOW mode and fresh closed five-minute spot/futures bars, weekdays 09:35–15:10 IST. Pausing new observations does not stop tracking open simulations.</p>
+  <p>Frozen research reference: {{ observer.model_version or 'No compatible model — outcomes still collected' }} (artifact {{ observer.artifact_id or 'none' }}). This reference is unapproved; scores and thresholds are diagnostic, not validated win probabilities. The selected trading/Shadow model is unchanged.</p>
+  <p>Last observation: {{ observer.last_observation|ist_datetime }} · last monitor: {{ observer.last_monitor|ist_datetime }} · checks saved: {{ total }}</p>
+  {% if observer.error %}<p class="negative">Observer error: {{ observer.error }}</p>{% endif %}
+  {% if observer.model_error %}<p class="negative">Research scoring unavailable: {{ observer.model_error }}. Outcome collection can continue.</p>{% endif %}
+  {% if not observer.loop_enabled %}<p class="negative">Background loops are disabled in the service configuration; no collection is running.</p>{% endif %}
+  <form method="post" action="/shadow-research/enabled">
+    <input type="hidden" name="enabled" value="{{ 'false' if settings.parallel_shadow_enabled == 'true' else 'true' }}">
+    <button class="button" type="submit">{{ 'Pause new observations' if settings.parallel_shadow_enabled == 'true' else 'Enable observations' }}</button>
+    <a class="button secondary" href="/shadow-research">Refresh</a>
+    <a class="button secondary" href="/shadow-research/export.jsonl">Export evidence (JSONL)</a>
+  </form>
+</section>
+<section class="card">
+  <h2>Setup comparison</h2>
+  <p>Each candidate uses one lot at observed ask/bid plus frozen slippage, a 1 ATR underlying stop, 1.5 ATR target, 25% premium stop and 15:20 exit. Quotes are polled every 15 seconds; intrabar touches can be missed. Costs are estimates. Overlapping observations are not portfolio returns.</p>
+  <p>Daily metrics select the first executable observation per family/direction/day before checking its outcome. “Quality daily” separately selects the first research-threshold pass. Pending/incomplete first observations are not replaced with later winners. Groups with different providers, indices, models or fill/filter settings remain separate.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Group / setup</th><th>Checks / candidates</th><th>Executable / closed / incomplete</th><th>Quote / quality rejects</th><th>First daily: closed / selected</th><th>Win / PF</th><th>Net / costs / max drawdown</th><th>Quality daily: closed / selected · win · net</th></tr></thead>
+    <tbody>{% for item in comparisons %}<tr>
+      <td title="{{ item.settings }}">{{ item.provider }} · {{ item.code }}<br>{{ item.family }} {{ item.direction }}<br><small>{{ item.model }} · {{ item.protocol }}</small></td>
+      <td>{{ item.checks }} / {{ item.candidates }}</td>
+      <td>{{ item.executable }} / {{ item.closed }} / {{ item.incomplete }}</td>
+      <td>{{ item.quote_rejected }} / {{ item.quality_rejected }}</td>
+      <td>{{ item.all_daily.closed }} / {{ item.all_daily.selected }}</td>
+      <td>{{ (item.all_daily.win_rate|string + '%') if item.all_daily.win_rate is not none else '—' }} / {{ item.all_daily.pf }}</td>
+      <td>{{ item.all_daily.net|money }} / {{ item.all_daily.charges|money }} / {{ item.all_daily.drawdown|money }}</td>
+      <td>{{ item.quality_daily.closed }} / {{ item.quality_daily.selected }} · {{ (item.quality_daily.win_rate|string + '%') if item.quality_daily.win_rate is not none else '—' }} · {{ item.quality_daily.net|money }}</td>
+    </tr>{% else %}<tr><td colspan="8">No observations yet. Collection starts during an eligible market session with fresh data; historical quotes are not invented.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+<section class="card"><h2>Quote rejection / incomplete reasons</h2>
+  {% for reason, count in reasons %}<p>{{ count }} · {{ reason }}</p>{% else %}<p>No rejection evidence yet.</p>{% endfor %}
+</section>
+<section class="card"><h2>Latest 100 checks</h2><div class="table-wrap"><table>
+  <thead><tr><th>Observed IST / signal bar</th><th>Index / setup</th><th>Research score / threshold</th><th>Status / outcome</th><th>Reason</th></tr></thead>
+  <tbody>{% for item in recent %}<tr>
+    <td>{{ item.observed_at|ist_datetime }}<br>{{ item.signal_time|ist_datetime }}</td>
+    <td>{{ item.provider }} {{ item.underlying_code }}<br>{{ item.setup_family }} {{ item.direction }}</td>
+    <td>{{ ('%.1f'|format(item.quality_score * 100) + '%') if item.quality_score is not none else '—' }} / {{ ('%.1f'|format(item.research_threshold * 100) + '%') if item.research_threshold is not none else 'disabled/unavailable' }}<br>{{ item.score_status }}</td>
+    <td>{{ item.status }}<br>{{ item.net_pnl|money if item.net_pnl is not none else 'Unlabelled' }} {{ item.exit_reason or '' }}</td>
+    <td>{{ item.reason }}</td>
+  </tr>{% else %}<tr><td colspan="5">Waiting for observations.</td></tr>{% endfor %}</tbody>
+</table></div></section>
+{% endblock %}

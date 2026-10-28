@@ -1,0 +1,13 @@
+{
+  "days": 707,
+  "missing_fraction": {
+    "option_body_fraction": 0.0,
+    "option_close_location": 0.0,
+    "option_log_vol_3bars": 0.00032282797304386426,
+    "option_range_fraction": 0.0,
+    "option_return_1bar": 0.0001210604898914491,
+    "option_return_3bars": 0.00032282797304386426
+  },
+  "rows": 24781,
+  "snapshot_hash": "cff079b312f5f01301c91b373376743138e493637ee56980f753465c731e4056"
+}

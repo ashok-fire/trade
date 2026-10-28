@@ -1,0 +1,165 @@
+{
+  "acceptance": {
+    "active_months": 6,
+    "complete_trades": 100,
+    "coverage": 0.99,
+    "drawdown_no_greater_than_classifier_control": true,
+    "observed_sessions": 60,
+    "pf": 1.3,
+    "positive_lower_95pct_expectancy": true,
+    "positive_lower_95pct_paired_improvement_vs_both_controls": true,
+    "positive_month_fraction": 0.6,
+    "stress_net_positive": true,
+    "win_rate_pct": 55
+  },
+  "activation_eligible": false,
+  "attempt_budget": "one objective/configuration; no hyperparameter, exit, regime or family search",
+  "calibration": "positive-slope weighted ordinary least squares on separate calibration days; otherwise disable",
+  "contract": {
+    "atr_stop": 1,
+    "causal_opportunities": true,
+    "entry_window_ist": "09:35 <= time < 15:10; weekdays",
+    "evaluation_policy": "one first-passing candidate per day; one historical lot; not full runtime portfolio",
+    "excluded_features": [
+      "option_volume_log",
+      "option_oi_log"
+    ],
+    "historical_limits": [
+      "bid_ask_spread",
+      "quote_age",
+      "delta",
+      "actual_stop_touch_option_quote",
+      "signal_close_premium_vs_live_quote_last",
+      "portfolio_risk_and_position_sizing"
+    ],
+    "incomplete_outcomes": "unlabelled; never substitute a later outcome for selected daily entry",
+    "label_protocol": "entry-bar-stops-exact-next-bar-contiguous-path-v2",
+    "label_source": "historical candle proxy, not actual executable fills",
+    "premium_stop_pct": "25",
+    "retain_unlabelled": true,
+    "reward_risk": "1.5",
+    "sampling_policy": "all_eligible_bars",
+    "setup_policy": "first_confirmed",
+    "setup_priority": [
+      "ORB"
+    ],
+    "signal": "closed five-minute bar",
+    "slippage_pct": "0.05",
+    "square_off_ist": "15:20",
+    "strike_policy": "ATM_ITM1",
+    "underlying_anchor": "signal_close",
+    "version": "decision-aligned-v1"
+  },
+  "control_hashes": {
+    "models/research/decision-aligned-orb-20261024/candidate.ce.cbm": "51d718aef8e147a7f8030eedc6875a0767bbbd14a6fdd4394413dd0219afb6cc",
+    "models/research/decision-aligned-orb-20261024/candidate.json": "47dc5069b507c5ce67512d807b7392f99e8249dd92e72fe078ab52391dd8d018",
+    "models/research/decision-aligned-orb-20261024/candidate.metadata.json": "4a237f4754354a493d87d8a8e38f07cfdfe12971a018bf3f278261be17569dac",
+    "models/research/decision-aligned-orb-20261024/candidate.pe.cbm": "5b962aaf5f887dcf82da9d9ada4544e9fbfa66da0f5ca23f1e50b0946e9d93e0",
+    "models/research/decision-aligned-orb-20261024/candidate.ranker.json": "a7cc47fb1a416206fd12c19998da82bec878cfe77be3ca2ea8a17889e96391db"
+  },
+  "estimator": "existing shallow CatBoost, regression objective instead of Logloss",
+  "evaluation": "first passing observation per day; retain censored first selections; one historical lot",
+  "expected_dataset_hash": "8961a01b2377b882f670f376a9e0c3fc193a047cb27ebccbc0ae01f816418cd7",
+  "features": [
+    "spot_vwap_distance",
+    "futures_vwap_distance",
+    "futures_basis_pct",
+    "spot_return_1",
+    "spot_return_3",
+    "spot_return_6",
+    "futures_return_1",
+    "futures_return_3",
+    "futures_atr_pct",
+    "futures_volume_ratio",
+    "ema9_20_distance",
+    "ema20_50_distance",
+    "atr_pct",
+    "rsi",
+    "previous_day_high_distance",
+    "previous_day_low_distance",
+    "previous_day_close_distance",
+    "opening_range_high_distance",
+    "opening_range_low_distance",
+    "gap_pct",
+    "time_sin",
+    "time_cos",
+    "setup_direction",
+    "option_premium_pct",
+    "days_to_expiry",
+    "moneyness_pct",
+    "day_open_distance",
+    "opening_range_width_pct",
+    "trend_atr_strength",
+    "realized_vol_6",
+    "rsi_change_3",
+    "atr_change_3",
+    "basis_change_3",
+    "return_spread_3",
+    "weekday_sin",
+    "weekday_cos",
+    "setup_orb",
+    "setup_pullback",
+    "setup_failed_breakout",
+    "setup_vwap_reclaim"
+  ],
+  "historical_evaluation_previously_exposed": true,
+  "hypothesis": "Learning the size of net option returns improves economic entry selection over win/loss classification",
+  "margin_grid_net_premium_return": [
+    0.0025,
+    0.005,
+    0.0075,
+    0.01,
+    0.015,
+    0.02,
+    0.025,
+    0.03
+  ],
+  "parameters": {
+    "allow_writing_files": false,
+    "depth": 3,
+    "has_time": true,
+    "iterations": 250,
+    "l2_leaf_reg": 10,
+    "learning_rate": 0.03,
+    "loss_function": "RMSE",
+    "random_seed": 42,
+    "thread_count": 1,
+    "verbose": false
+  },
+  "periods": {
+    "calibration": [
+      "2025-04-07",
+      "2025-08-18"
+    ],
+    "evaluation": [
+      "2026-01-08",
+      "2026-10-13"
+    ],
+    "fit": [
+      "2023-01-01",
+      "2025-04-03"
+    ],
+    "tuning": [
+      "2025-08-20",
+      "2026-01-06"
+    ]
+  },
+  "reserved_dates_not_used": [
+    "2026-10-14",
+    "2026-10-23"
+  ],
+  "schema": "net-return-research-v1",
+  "selection": "tuning only; min 30 trades, >=99% coverage, >=55% wins, PF>=1.30, both halves >=10 stressed-profitable trades, supported neighbours; maximise stressed net total",
+  "target": "net_return = option P&L after estimated fees/slippage / (entry premium * one lot)",
+  "target_processing": "no winsorising, class weights, target clipping or evaluation-driven changes",
+  "unchanged": [
+    "NIFTY",
+    "ORB CE/PE",
+    "data",
+    "feature inputs",
+    "exits",
+    "strike selection",
+    "cost assumptions",
+    "chronological partitions"
+  ]
+}

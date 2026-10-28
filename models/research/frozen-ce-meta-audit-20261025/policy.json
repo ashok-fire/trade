@@ -1,0 +1,14 @@
+{
+  "activation_eligible": false,
+  "capital": 100000,
+  "cutoff": 0.55,
+  "learner": "HIST_GRADIENT",
+  "rule": {
+    "hold_minutes": 60,
+    "stop_pct": 25,
+    "target_pct": 15
+  },
+  "schema": "frozen-provisional-meta-v1",
+  "scope": "CE",
+  "specification_hash": "479ffb94fba89cceae6eb22e85a0124d8e7ca609b6356c09ad99b847e22d705c"
+}

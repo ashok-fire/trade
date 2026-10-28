@@ -39,9 +39,9 @@ def _sqlite_pragmas(connection, _record) -> None:
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 DEFAULTS = {
-    "paper_capital": "500000",
-    "risk_per_trade_pct": "0.25",
-    "daily_loss_limit_pct": "0.75",
+    "paper_capital": "100000",
+    "risk_per_trade_pct": "3",
+    "daily_loss_limit_pct": "5",
     "max_trades_per_day": "5",
     "max_consecutive_losses": "2",
     "max_open_positions": "1",
@@ -56,6 +56,8 @@ DEFAULTS = {
     "square_off_time": "15:20",
     "enabled_indices": "NIFTY,BANK_NIFTY,SENSEX",
     "active_broker": "UPSTOX",
+    "parallel_shadow_enabled": "true",
+    "parallel_shadow_model_artifact_id": "",
     "default_historical_provider": "UPSTOX",
     "telegram_enabled": "false",
     "telegram_group_chat_id": "",

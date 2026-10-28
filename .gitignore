@@ -9,3 +9,5 @@ data/*.db-wal
 data/backups/
 data/secrets/
 models/*.json
+models/research/**/*.pkl
+models/research/**/*.joblib

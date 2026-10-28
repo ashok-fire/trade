@@ -1,0 +1,26 @@
+{% macro research_metrics(result) -%}
+  {% if result is not none %}
+    {% if result.trades %}<b>{{ result.win_rate_pct if result.win_rate_pct is not none else '—' }}% wins</b>{% else %}<b>No selected trades</b>{% endif %}
+    <small>{{ result.trades if result.trades is not none else '—' }} trades · PF {{ result.profit_factor if result.profit_factor is not none else '—' }}</small>
+    <small>Net {{ result.net_pnl|money if result.net_pnl is not none else '—' }}<br>Stress {{ result.stress_net_pnl|money if result.stress_net_pnl is not none else '—' }}</small>
+  {% else %}<span class="hint">Not available / not run</span>{% endif %}
+{%- endmacro %}
+<section class="card" id="research-history">
+  <div class="card-head"><div><h2>Offline research history</h2><span>Saved experiments, including rejected attempts · newest first · all times IST</span></div><span class="status amber">READ ONLY</span></div>
+  <p class="hint">Development results are selection-biased. Later historical checks are already-inspected history, not fresh forward validation. These experiments are not activated models; opening a report never changes trading or risk settings.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Study / report updated</th><th>Development</th><th>Later historical check</th><th>Result / rejection reasons</th><th>Report</th></tr></thead>
+    <tbody>{% for item in offline_research['items'] %}<tr data-research-study="{{ item.id }}">
+      <td><b>{{ item.title }}</b><small>{{ item.id }}</small><small>{{ item.modified|ist_datetime }}</small></td>
+      <td>{{ research_metrics(item.development) }}{% if item.development is not none %}<small>{{ item.development_label }}</small>{% endif %}</td>
+      <td>{{ research_metrics(item.evaluation) }}</td>
+      <td><span class="status {{ 'red' if item.rejected else 'amber' }}">{{ 'Rejected' if item.rejected else ('Report unavailable' if item.read_error else 'Research only') }}</span>
+        <details class="research-result-detail"><summary>Recorded outcome</summary><small>{{ item.status|replace('_', ' ') }}</small>
+          {% if item.rejections %}<ul>{% for reason in item.rejections %}<li>{{ reason|replace('_', ' ') }}</li>{% endfor %}</ul>{% endif %}
+        </details>
+      </td>
+      <td>{% if not item.read_error %}<a class="button small secondary" href="/backtests/research-reports/{{ item.id }}" target="_blank" rel="noopener">View JSON</a>{% else %}—{% endif %}</td>
+    </tr>{% else %}<tr><td colspan="5" class="empty-row">No offline study reports saved yet.</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {{ pagination(offline_research.pagination, 'research_page', 'research-history') }}
+</section>

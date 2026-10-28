@@ -1,0 +1,1599 @@
+{
+  "baseline_attribution": {
+    "created_at": "2026-10-24T17:20:02.886527+00:00",
+    "coverage": {
+      "spot_candles": 74169,
+      "futures_candles": 70641,
+      "option_contracts": 2514,
+      "candidate_setups": 39180,
+      "usable_option_outcomes": 38381,
+      "dropped_spot_days": 5,
+      "dropped_future_days": 4,
+      "reward_risk": "1.5",
+      "premium_stop_pct": "25",
+      "setup_families": [
+        "ORB",
+        "PULLBACK",
+        "FAILED_BREAKOUT",
+        "VWAP_RECLAIM"
+      ],
+      "sampling_policy": "all_eligible_bars",
+      "strike_policy": "ATM_ITM1",
+      "moneyness_counts": {
+        "ATM": 38351,
+        "ITM1": 30
+      },
+      "unreplayed_runtime_filters": [
+        "bid_ask_spread",
+        "quote_age",
+        "delta",
+        "live_volume_and_oi_semantics"
+      ],
+      "entry_cutoff_ist": "15:10:00",
+      "rejections": {
+        "missing_required_features": 753,
+        "gap_in_option_exit_path": 27,
+        "missing_next_bar_entry": 8,
+        "no_signal_time_liquid_option": 11
+      },
+      "simulator_revision": "entry-bar-stops-exact-next-bar-contiguous-path-v2",
+      "futures_alignment_gap_days": [
+        "2024-05-18",
+        "2025-10-21"
+      ]
+    },
+    "samples": 38381,
+    "days": 924,
+    "scope": "Fixed-rule baselines, not model-filtered strategy; one first usable outcome per family/direction/day",
+    "limits": [
+      "Previously exposed research history, not untouched test",
+      "No historical bid/ask, quote age or delta replay",
+      "Five-minute OHLC cannot establish exact intrabar execution or separate theta/IV effects",
+      "First usable outcome selection conditions on continuous exit evidence; excluded events reported in coverage",
+      "Index-only payoff is a directional reference in ATR units, not an executable return"
+    ],
+    "groups": [
+      {
+        "setup": "ORB:CE",
+        "development": {
+          "trades": 444,
+          "days": 444,
+          "raw_option": {
+            "n": 444,
+            "wins_pct": 43.69,
+            "pf": 1.066,
+            "total": 13078.25,
+            "mean": 29.4555
+          },
+          "after_slippage": {
+            "n": 444,
+            "wins_pct": 43.69,
+            "pf": 1.05,
+            "total": 10012.2,
+            "mean": 22.55
+          },
+          "net_option": {
+            "n": 444,
+            "wins_pct": 42.79,
+            "pf": 0.92,
+            "total": -17110.73,
+            "mean": -38.5377
+          },
+          "charges": 27122.93,
+          "slippage_drag": 3066.05,
+          "gross_winners_to_net_losses": 4,
+          "spot_favourable_at_option_exit_pct": 43.92,
+          "spot_favourable_option_raw_loss": 7,
+          "index_only_reference": {
+            "n": 444,
+            "wins_pct": 43.47,
+            "pf": 1.146,
+            "total": 36.68,
+            "mean": 0.0826
+          },
+          "index_ambiguous_bars": 0,
+          "exit_reasons": {
+            "UNDERLYING_TARGET": 193,
+            "PREMIUM_STOP": 27,
+            "UNDERLYING_STOP": 223,
+            "TIME_EXIT": 1
+          },
+          "fixed_15min": {
+            "spot_points": {
+              "n": 444,
+              "wins_pct": 51.58,
+              "pf": 1.075,
+              "total": 283.85,
+              "mean": 0.6393
+            },
+            "option_raw": {
+              "n": 444,
+              "wins_pct": 48.87,
+              "pf": 1.09,
+              "total": 10740,
+              "mean": 24.1892
+            },
+            "option_net": {
+              "n": 444,
+              "wins_pct": 42.57,
+              "pf": 0.857,
+              "total": -19444.52,
+              "mean": -43.794
+            },
+            "spot_favourable_option_raw_loss": 26
+          },
+          "fixed_30min": {
+            "spot_points": {
+              "n": 434,
+              "wins_pct": 52.76,
+              "pf": 1.032,
+              "total": 164.15,
+              "mean": 0.3782
+            },
+            "option_raw": {
+              "n": 434,
+              "wins_pct": 47.47,
+              "pf": 0.958,
+              "total": -7156,
+              "mean": -16.4885
+            },
+            "option_net": {
+              "n": 434,
+              "wins_pct": 41.94,
+              "pf": 0.805,
+              "total": -36651.38,
+              "mean": -84.4502
+            },
+            "spot_favourable_option_raw_loss": 37
+          }
+        },
+        "later_evaluation": {
+          "trades": 111,
+          "days": 111,
+          "raw_option": {
+            "n": 111,
+            "wins_pct": 37.84,
+            "pf": 1.042,
+            "total": 2881.32,
+            "mean": 25.9578
+          },
+          "after_slippage": {
+            "n": 111,
+            "wins_pct": 37.84,
+            "pf": 1.023,
+            "total": 1613.15,
+            "mean": 14.5329
+          },
+          "net_option": {
+            "n": 111,
+            "wins_pct": 36.94,
+            "pf": 0.913,
+            "total": -6473.44,
+            "mean": -58.3192
+          },
+          "charges": 8086.59,
+          "slippage_drag": 1268.16,
+          "gross_winners_to_net_losses": 1,
+          "spot_favourable_at_option_exit_pct": 39.64,
+          "spot_favourable_option_raw_loss": 2,
+          "index_only_reference": {
+            "n": 111,
+            "wins_pct": 37.84,
+            "pf": 0.892,
+            "total": -7.54,
+            "mean": -0.068
+          },
+          "index_ambiguous_bars": 0,
+          "exit_reasons": {
+            "PREMIUM_STOP": 5,
+            "UNDERLYING_STOP": 64,
+            "UNDERLYING_TARGET": 42
+          },
+          "fixed_15min": {
+            "spot_points": {
+              "n": 111,
+              "wins_pct": 45.05,
+              "pf": 0.942,
+              "total": -69.7,
+              "mean": -0.6279
+            },
+            "option_raw": {
+              "n": 111,
+              "wins_pct": 45.95,
+              "pf": 1.008,
+              "total": 377,
+              "mean": 3.3964
+            },
+            "option_net": {
+              "n": 111,
+              "wins_pct": 39.64,
+              "pf": 0.825,
+              "total": -8974.81,
+              "mean": -80.8542
+            },
+            "spot_favourable_option_raw_loss": 4
+          },
+          "fixed_30min": {
+            "spot_points": {
+              "n": 110,
+              "wins_pct": 51.82,
+              "pf": 0.98,
+              "total": -34.55,
+              "mean": -0.3141
+            },
+            "option_raw": {
+              "n": 110,
+              "wins_pct": 43.64,
+              "pf": 0.961,
+              "total": -2590.25,
+              "mean": -23.5477
+            },
+            "option_net": {
+              "n": 110,
+              "wins_pct": 41.82,
+              "pf": 0.835,
+              "total": -11842.56,
+              "mean": -107.6596
+            },
+            "spot_favourable_option_raw_loss": 9
+          }
+        }
+      },
+      {
+        "setup": "ORB:PE",
+        "development": {
+          "trades": 433,
+          "days": 433,
+          "raw_option": {
+            "n": 433,
+            "wins_pct": 42.26,
+            "pf": 0.877,
+            "total": -23569.91,
+            "mean": -54.434
+          },
+          "after_slippage": {
+            "n": 433,
+            "wins_pct": 42.26,
+            "pf": 0.864,
+            "total": -26200.5,
+            "mean": -60.5092
+          },
+          "net_option": {
+            "n": 433,
+            "wins_pct": 40.88,
+            "pf": 0.75,
+            "total": -51941.72,
+            "mean": -119.9578
+          },
+          "charges": 25741.22,
+          "slippage_drag": 2630.59,
+          "gross_winners_to_net_losses": 6,
+          "spot_favourable_at_option_exit_pct": 42.49,
+          "spot_favourable_option_raw_loss": 5,
+          "index_only_reference": {
+            "n": 433,
+            "wins_pct": 42.73,
+            "pf": 1.102,
+            "total": 25.49,
+            "mean": 0.0589
+          },
+          "index_ambiguous_bars": 0,
+          "exit_reasons": {
+            "UNDERLYING_TARGET": 183,
+            "UNDERLYING_STOP": 218,
+            "PREMIUM_STOP": 31,
+            "TIME_EXIT": 1
+          },
+          "fixed_15min": {
+            "spot_points": {
+              "n": 433,
+              "wins_pct": 52.66,
+              "pf": 1.209,
+              "total": 873.2,
+              "mean": 2.0166
+            },
+            "option_raw": {
+              "n": 433,
+              "wins_pct": 49.42,
+              "pf": 1.091,
+              "total": 11480.75,
+              "mean": 26.5144
+            },
+            "option_net": {
+              "n": 433,
+              "wins_pct": 42.26,
+              "pf": 0.88,
+              "total": -16961.38,
+              "mean": -39.1718
+            },
+            "spot_favourable_option_raw_loss": 24
+          },
+          "fixed_30min": {
+            "spot_points": {
+              "n": 428,
+              "wins_pct": 50.93,
+              "pf": 1.109,
+              "total": 612.6,
+              "mean": 1.4313
+            },
+            "option_raw": {
+              "n": 428,
+              "wins_pct": 45.56,
+              "pf": 0.907,
+              "total": -16832,
+              "mean": -39.3271
+            },
+            "option_net": {
+              "n": 428,
+              "wins_pct": 42.76,
+              "pf": 0.771,
+              "total": -44918.02,
+              "mean": -104.9486
+            },
+            "spot_favourable_option_raw_loss": 35
+          }
+        },
+        "later_evaluation": {
+          "trades": 119,
+          "days": 119,
+          "raw_option": {
+            "n": 119,
+            "wins_pct": 45.38,
+            "pf": 1.004,
+            "total": 298.08,
+            "mean": 2.5049
+          },
+          "after_slippage": {
+            "n": 119,
+            "wins_pct": 45.38,
+            "pf": 0.987,
+            "total": -986.21,
+            "mean": -8.2875
+          },
+          "net_option": {
+            "n": 119,
+            "wins_pct": 45.38,
+            "pf": 0.884,
+            "total": -9439.73,
+            "mean": -79.3255
+          },
+          "charges": 8453.52,
+          "slippage_drag": 1284.29,
+          "gross_winners_to_net_losses": 0,
+          "spot_favourable_at_option_exit_pct": 44.54,
+          "spot_favourable_option_raw_loss": 0,
+          "index_only_reference": {
+            "n": 119,
+            "wins_pct": 43.7,
+            "pf": 1.208,
+            "total": 13.62,
+            "mean": 0.1145
+          },
+          "index_ambiguous_bars": 0,
+          "exit_reasons": {
+            "UNDERLYING_TARGET": 52,
+            "UNDERLYING_STOP": 63,
+            "PREMIUM_STOP": 4
+          },
+          "fixed_15min": {
+            "spot_points": {
+              "n": 119,
+              "wins_pct": 46.22,
+              "pf": 0.936,
+              "total": -88.55,
+              "mean": -0.7441
+            },
+            "option_raw": {
+              "n": 119,
+              "wins_pct": 41.18,
+              "pf": 0.941,
+              "total": -3084.25,
+              "mean": -25.9181
+            },
+            "option_net": {
+              "n": 119,
+              "wins_pct": 38.66,
+              "pf": 0.779,
+              "total": -12814.51,
+              "mean": -107.6849
+            },
+            "spot_favourable_option_raw_loss": 6
+          },
+          "fixed_30min": {
+            "spot_points": {
+              "n": 118,
+              "wins_pct": 55.08,
+              "pf": 0.845,
+              "total": -347.55,
+              "mean": -2.9453
+            },
+            "option_raw": {
+              "n": 118,
+              "wins_pct": 49.15,
+              "pf": 0.806,
+              "total": -15814.5,
+              "mean": -134.0212
+            },
+            "option_net": {
+              "n": 118,
+              "wins_pct": 48.31,
+              "pf": 0.706,
+              "total": -25439.27,
+              "mean": -215.587
+            },
+            "spot_favourable_option_raw_loss": 8
+          }
+        }
+      },
+      {
+        "setup": "PULLBACK:CE",
+        "development": {
+          "trades": 501,
+          "days": 501,
+          "raw_option": {
+            "n": 501,
+            "wins_pct": 41.72,
+            "pf": 0.878,
+            "total": -25894.21,
+            "mean": -51.6851
+          },
+          "after_slippage": {
+            "n": 501,
+            "wins_pct": 41.72,
+            "pf": 0.863,
+            "total": -29245.82,
+            "mean": -58.3749
+          },
+          "net_option": {
+            "n": 501,
+            "wins_pct": 40.72,
+            "pf": 0.743,
+            "total": -59633.44,
+            "mean": -119.0288
+          },
+          "charges": 30387.62,
+          "slippage_drag": 3351.6,
+          "gross_winners_to_net_losses": 5,
+          "spot_favourable_at_option_exit_pct": 42.32,
+          "spot_favourable_option_raw_loss": 8,
+          "index_only_reference": {
+            "n": 501,
+            "wins_pct": 41.72,
+            "pf": 1.072,
+            "total": 20.67,
+            "mean": 0.0413
+          },
+          "index_ambiguous_bars": 0,
+          "exit_reasons": {
+            "UNDERLYING_STOP": 265,
+            "UNDERLYING_TARGET": 204,
+            "PREMIUM_STOP": 25,
+            "TIME_EXIT": 7
+          },
+          "fixed_15min": {
+            "spot_points": {
+              "n": 501,
+              "wins_pct": 52.1,
+              "pf": 0.935,
+              "total": -266.8,
+              "mean": -0.5325
+            },
+            "option_raw": {
+              "n": 501,
+              "wins_pct": 49.7,
+              "pf": 0.936,
+              "total": -7847,
+              "mean": -15.6627
+            },
+            "option_net": {
+              "n": 501,
+              "wins_pct": 42.32,
+              "pf": 0.705,
+              "total": -41621.53,
+              "mean": -83.0769
+            },
+            "spot_favourable_option_raw_loss": 28
+          },
+          "fixed_30min": {
+            "spot_points": {
+              "n": 485,
+              "wins_pct": 52.37,
+              "pf": 1.059,
+              "total": 295.25,
+              "mean": 0.6088
+            },
+            "option_raw": {
+              "n": 485,
+              "wins_pct": 48.66,
+              "pf": 0.906,
+              "total": -15296.75,
+              "mean": -31.5397
+            },
+            "option_net": {
+              "n": 485,
+              "wins_pct": 42.68,
+              "pf": 0.735,
+              "total": -48009.8,
+              "mean": -98.9893
+            },
+            "spot_favourable_option_raw_loss": 31
+          }
+        },
+        "later_evaluation": {
+          "trades": 115,
+          "days": 115,
+          "raw_option": {
+            "n": 115,
+            "wins_pct": 32.17,
+            "pf": 0.623,
+            "total": -29866.23,
+            "mean": -259.7063
+          },
+          "after_slippage": {
+            "n": 115,
+            "wins_pct": 32.17,
+            "pf": 0.611,
+            "total": -31160.31,
+            "mean": -270.9592
+          },
+          "net_option": {
+            "n": 115,
+            "wins_pct": 32.17,
+            "pf": 0.538,
+            "total": -39478.67,
+            "mean": -343.2928
+          },
+          "charges": 8318.36,
+          "slippage_drag": 1294.08,
+          "gross_winners_to_net_losses": 0,
+          "spot_favourable_at_option_exit_pct": 33.04,
+          "spot_favourable_option_raw_loss": 1,
+          "index_only_reference": {
+            "n": 115,
+            "wins_pct": 32.17,
+            "pf": 0.705,
+            "total": -23.19,
+            "mean": -0.2017
+          },
+          "index_ambiguous_bars": 0,
+          "exit_reasons": {
+            "PREMIUM_STOP": 3,
+            "UNDERLYING_STOP": 74,
+            "UNDERLYING_TARGET": 37,
+            "TIME_EXIT": 1
+          },
+          "fixed_15min": {
+            "spot_points": {
+              "n": 115,
+              "wins_pct": 56.52,
+              "pf": 0.889,
+              "total": -125.8,
+              "mean": -1.0939
+            },
+            "option_raw": {
+              "n": 115,
+              "wins_pct": 48.7,
+              "pf": 0.702,
+              "total": -13159.25,
+              "mean": -114.4283
+            },
+            "option_net": {
+              "n": 115,
+              "wins_pct": 44.35,
+              "pf": 0.536,
+              "total": -22806.15,
+              "mean": -198.3144
+            },
+            "spot_favourable_option_raw_loss": 11
+          },
+          "fixed_30min": {
+            "spot_points": {
+              "n": 113,
+              "wins_pct": 46.02,
+              "pf": 0.744,
+              "total": -470.9,
+              "mean": -4.1673
+            },
+            "option_raw": {
+              "n": 113,
+              "wins_pct": 42.48,
+              "pf": 0.621,
+              "total": -26188.5,
+              "mean": -231.7566
+            },
+            "option_net": {
+              "n": 113,
+              "wins_pct": 38.94,
+              "pf": 0.521,
+              "total": -35701,
+              "mean": -315.9381
+            },
+            "spot_favourable_option_raw_loss": 4
+          }
+        }
+      },
+      {
+        "setup": "PULLBACK:PE",
+        "development": {
+          "trades": 434,
+          "days": 434,
+          "raw_option": {
+            "n": 434,
+            "wins_pct": 41.47,
+            "pf": 0.813,
+            "total": -37891.02,
+            "mean": -87.3065
+          },
+          "after_slippage": {
+            "n": 434,
+            "wins_pct": 41.24,
+            "pf": 0.801,
+            "total": -40545.76,
+            "mean": -93.4234
+          },
+          "net_option": {
+            "n": 434,
+            "wins_pct": 40.55,
+            "pf": 0.697,
+            "total": -66356.02,
+            "mean": -152.8941
+          },
+          "charges": 25810.26,
+          "slippage_drag": 2654.74,
+          "gross_winners_to_net_losses": 4,
+          "spot_favourable_at_option_exit_pct": 43.55,
+          "spot_favourable_option_raw_loss": 10,
+          "index_only_reference": {
+            "n": 434,
+            "wins_pct": 42.63,
+            "pf": 1.1,
+            "total": 24.59,
+            "mean": 0.0566
+          },
+          "index_ambiguous_bars": 0,
+          "exit_reasons": {
+            "UNDERLYING_STOP": 218,
+            "UNDERLYING_TARGET": 179,
+            "PREMIUM_STOP": 27,
+            "TIME_EXIT": 10
+          },
+          "fixed_15min": {
+            "spot_points": {
+              "n": 434,
+              "wins_pct": 49.08,
+              "pf": 0.959,
+              "total": -174.4,
+              "mean": -0.4018
+            },
+            "option_raw": {
+              "n": 434,
+              "wins_pct": 43.09,
+              "pf": 0.841,
+              "total": -20291.75,
+              "mean": -46.7552
+            },
+            "option_net": {
+              "n": 434,
+              "wins_pct": 37.56,
+              "pf": 0.663,
+              "total": -48790.62,
+              "mean": -112.4208
+            },
+            "spot_favourable_option_raw_loss": 35
+          },
+          "fixed_30min": {
+            "spot_points": {
+              "n": 421,
+              "wins_pct": 49.41,
+              "pf": 1.017,
+              "total": 98.4,
+              "mean": 0.2337
+            },
+            "option_raw": {
+              "n": 421,
+              "wins_pct": 42.04,
+              "pf": 0.879,
+              "total": -22057,
+              "mean": -52.3919
+            },
+            "option_net": {
+              "n": 421,
+              "wins_pct": 39.67,
+              "pf": 0.75,
+              "total": -49705.57,
+              "mean": -118.0655
+            },
+            "spot_favourable_option_raw_loss": 39
+          }
+        },
+        "later_evaluation": {
+          "trades": 123,
+          "days": 123,
+          "raw_option": {
+            "n": 123,
+            "wins_pct": 38.21,
+            "pf": 0.747,
+            "total": -17364.75,
+            "mean": -141.1768
+          },
+          "after_slippage": {
+            "n": 123,
+            "wins_pct": 38.21,
+            "pf": 0.732,
+            "total": -18629.8,
+            "mean": -151.4618
+          },
+          "net_option": {
+            "n": 123,
+            "wins_pct": 37.4,
+            "pf": 0.635,
+            "total": -27201.92,
+            "mean": -221.1538
+          },
+          "charges": 8572.12,
+          "slippage_drag": 1265.05,
+          "gross_winners_to_net_losses": 1,
+          "spot_favourable_at_option_exit_pct": 39.84,
+          "spot_favourable_option_raw_loss": 2,
+          "index_only_reference": {
+            "n": 123,
+            "wins_pct": 37.4,
+            "pf": 0.926,
+            "total": -5.46,
+            "mean": -0.0444
+          },
+          "index_ambiguous_bars": 0,
+          "exit_reasons": {
+            "UNDERLYING_TARGET": 45,
+            "UNDERLYING_STOP": 75,
+            "TIME_EXIT": 2,
+            "PREMIUM_STOP": 1
+          },
+          "fixed_15min": {
+            "spot_points": {
+              "n": 123,
+              "wins_pct": 56.1,
+              "pf": 1.023,
+              "total": 28.25,
+              "mean": 0.2297
+            },
+            "option_raw": {
+              "n": 123,
+              "wins_pct": 51.22,
+              "pf": 0.888,
+              "total": -4780.75,
+              "mean": -38.8679
+            },
+            "option_net": {
+              "n": 123,
+              "wins_pct": 45.53,
+              "pf": 0.691,
+              "total": -14644.54,
+              "mean": -119.0613
+            },
+            "spot_favourable_option_raw_loss": 9
+          },
+          "fixed_30min": {
+            "spot_points": {
+              "n": 118,
+              "wins_pct": 47.46,
+              "pf": 1.12,
+              "total": 198.6,
+              "mean": 1.6831
+            },
+            "option_raw": {
+              "n": 118,
+              "wins_pct": 42.37,
+              "pf": 1.001,
+              "total": 61.75,
+              "mean": 0.5233
+            },
+            "option_net": {
+              "n": 118,
+              "wins_pct": 37.29,
+              "pf": 0.853,
+              "total": -9371.28,
+              "mean": -79.4176
+            },
+            "spot_favourable_option_raw_loss": 8
+          }
+        }
+      },
+      {
+        "setup": "FAILED_BREAKOUT:CE",
+        "development": {
+          "trades": 177,
+          "days": 177,
+          "raw_option": {
+            "n": 177,
+            "wins_pct": 36.72,
+            "pf": 0.84,
+            "total": -13143.78,
+            "mean": -74.2586
+          },
+          "after_slippage": {
+            "n": 177,
+            "wins_pct": 36.72,
+            "pf": 0.827,
+            "total": -14362.38,
+            "mean": -81.1434
+          },
+          "net_option": {
+            "n": 177,
+            "wins_pct": 36.16,
+            "pf": 0.72,
+            "total": -25168.85,
+            "mean": -142.1969
+          },
+          "charges": 10806.47,
+          "slippage_drag": 1218.6,
+          "gross_winners_to_net_losses": 1,
+          "spot_favourable_at_option_exit_pct": 37.85,
+          "spot_favourable_option_raw_loss": 3,
+          "index_only_reference": {
+            "n": 177,
+            "wins_pct": 37.85,
+            "pf": 0.909,
+            "total": -9.95,
+            "mean": -0.0562
+          },
+          "index_ambiguous_bars": 0,
+          "exit_reasons": {
+            "UNDERLYING_STOP": 98,
+            "UNDERLYING_TARGET": 65,
+            "PREMIUM_STOP": 11,
+            "TIME_EXIT": 3
+          },
+          "fixed_15min": {
+            "spot_points": {
+              "n": 177,
+              "wins_pct": 40.68,
+              "pf": 0.754,
+              "total": -562.3,
+              "mean": -3.1768
+            },
+            "option_raw": {
+              "n": 177,
+              "wins_pct": 41.24,
+              "pf": 0.835,
+              "total": -10452.5,
+              "mean": -59.0537
+            },
+            "option_net": {
+              "n": 177,
+              "wins_pct": 34.46,
+              "pf": 0.682,
+              "total": -22481.52,
+              "mean": -127.0142
+            },
+            "spot_favourable_option_raw_loss": 9
+          },
+          "fixed_30min": {
+            "spot_points": {
+              "n": 171,
+              "wins_pct": 41.52,
+              "pf": 0.822,
+              "total": -521.05,
+              "mean": -3.0471
+            },
+            "option_raw": {
+              "n": 171,
+              "wins_pct": 38.6,
+              "pf": 0.84,
+              "total": -13602.5,
+              "mean": -79.5468
+            },
+            "option_net": {
+              "n": 171,
+              "wins_pct": 36.84,
+              "pf": 0.726,
+              "total": -25207.62,
+              "mean": -147.413
+            },
+            "spot_favourable_option_raw_loss": 8
+          }
+        },
+        "later_evaluation": {
+          "trades": 34,
+          "days": 34,
+          "raw_option": {
+            "n": 34,
+            "wins_pct": 29.41,
+            "pf": 0.773,
+            "total": -4904.25,
+            "mean": -144.2426
+          },
+          "after_slippage": {
+            "n": 34,
+            "wins_pct": 29.41,
+            "pf": 0.759,
+            "total": -5281.79,
+            "mean": -155.3469
+          },
+          "net_option": {
+            "n": 34,
+            "wins_pct": 29.41,
+            "pf": 0.673,
+            "total": -7707.31,
+            "mean": -226.6857
+          },
+          "charges": 2425.52,
+          "slippage_drag": 377.54,
+          "gross_winners_to_net_losses": 0,
+          "spot_favourable_at_option_exit_pct": 32.35,
+          "spot_favourable_option_raw_loss": 1,
+          "index_only_reference": {
+            "n": 34,
+            "wins_pct": 32.35,
+            "pf": 0.667,
+            "total": -7.92,
+            "mean": -0.2331
+          },
+          "index_ambiguous_bars": 0,
+          "exit_reasons": {
+            "UNDERLYING_TARGET": 10,
+            "UNDERLYING_STOP": 22,
+            "TIME_EXIT": 1,
+            "PREMIUM_STOP": 1
+          },
+          "fixed_15min": {
+            "spot_points": {
+              "n": 34,
+              "wins_pct": 41.18,
+              "pf": 0.944,
+              "total": -26.85,
+              "mean": -0.7897
+            },
+            "option_raw": {
+              "n": 34,
+              "wins_pct": 44.12,
+              "pf": 0.964,
+              "total": -604.5,
+              "mean": -17.7794
+            },
+            "option_net": {
+              "n": 34,
+              "wins_pct": 44.12,
+              "pf": 0.813,
+              "total": -3417.97,
+              "mean": -100.5287
+            },
+            "spot_favourable_option_raw_loss": 1
+          },
+          "fixed_30min": {
+            "spot_points": {
+              "n": 33,
+              "wins_pct": 36.36,
+              "pf": 0.783,
+              "total": -191.65,
+              "mean": -5.8076
+            },
+            "option_raw": {
+              "n": 33,
+              "wins_pct": 30.3,
+              "pf": 1.088,
+              "total": 2294.5,
+              "mean": 69.5303
+            },
+            "option_net": {
+              "n": 33,
+              "wins_pct": 27.27,
+              "pf": 0.984,
+              "total": -452.42,
+              "mean": -13.7096
+            },
+            "spot_favourable_option_raw_loss": 3
+          }
+        }
+      },
+      {
+        "setup": "FAILED_BREAKOUT:PE",
+        "development": {
+          "trades": 143,
+          "days": 143,
+          "raw_option": {
+            "n": 143,
+            "wins_pct": 41.96,
+            "pf": 0.869,
+            "total": -7341.99,
+            "mean": -51.3426
+          },
+          "after_slippage": {
+            "n": 143,
+            "wins_pct": 41.96,
+            "pf": 0.855,
+            "total": -8162.37,
+            "mean": -57.0795
+          },
+          "net_option": {
+            "n": 143,
+            "wins_pct": 40.56,
+            "pf": 0.73,
+            "total": -16559.15,
+            "mean": -115.7982
+          },
+          "charges": 8396.78,
+          "slippage_drag": 820.37,
+          "gross_winners_to_net_losses": 2,
+          "spot_favourable_at_option_exit_pct": 42.66,
+          "spot_favourable_option_raw_loss": 2,
+          "index_only_reference": {
+            "n": 143,
+            "wins_pct": 41.26,
+            "pf": 1.015,
+            "total": 1.29,
+            "mean": 0.009
+          },
+          "index_ambiguous_bars": 0,
+          "exit_reasons": {
+            "UNDERLYING_TARGET": 56,
+            "PREMIUM_STOP": 16,
+            "UNDERLYING_STOP": 68,
+            "TIME_EXIT": 3
+          },
+          "fixed_15min": {
+            "spot_points": {
+              "n": 143,
+              "wins_pct": 46.85,
+              "pf": 1.055,
+              "total": 92.8,
+              "mean": 0.649
+            },
+            "option_raw": {
+              "n": 143,
+              "wins_pct": 47.55,
+              "pf": 1.057,
+              "total": 2341.25,
+              "mean": 16.3724
+            },
+            "option_net": {
+              "n": 143,
+              "wins_pct": 43.36,
+              "pf": 0.85,
+              "total": -6896.95,
+              "mean": -48.2304
+            },
+            "spot_favourable_option_raw_loss": 3
+          },
+          "fixed_30min": {
+            "spot_points": {
+              "n": 135,
+              "wins_pct": 47.41,
+              "pf": 1.078,
+              "total": 150.45,
+              "mean": 1.1144
+            },
+            "option_raw": {
+              "n": 135,
+              "wins_pct": 48.89,
+              "pf": 1.014,
+              "total": 735,
+              "mean": 5.4444
+            },
+            "option_net": {
+              "n": 135,
+              "wins_pct": 45.19,
+              "pf": 0.861,
+              "total": -8049.51,
+              "mean": -59.626
+            },
+            "spot_favourable_option_raw_loss": 4
+          }
+        },
+        "later_evaluation": {
+          "trades": 37,
+          "days": 37,
+          "raw_option": {
+            "n": 37,
+            "wins_pct": 51.35,
+            "pf": 1.624,
+            "total": 10182.25,
+            "mean": 275.1959
+          },
+          "after_slippage": {
+            "n": 37,
+            "wins_pct": 51.35,
+            "pf": 1.596,
+            "total": 9815.82,
+            "mean": 265.2925
+          },
+          "net_option": {
+            "n": 37,
+            "wins_pct": 48.65,
+            "pf": 1.408,
+            "total": 7235.01,
+            "mean": 195.5409
+          },
+          "charges": 2580.81,
+          "slippage_drag": 366.43,
+          "gross_winners_to_net_losses": 1,
+          "spot_favourable_at_option_exit_pct": 51.35,
+          "spot_favourable_option_raw_loss": 1,
+          "index_only_reference": {
+            "n": 37,
+            "wins_pct": 48.65,
+            "pf": 1.463,
+            "total": 8.62,
+            "mean": 0.233
+          },
+          "index_ambiguous_bars": 0,
+          "exit_reasons": {
+            "UNDERLYING_TARGET": 18,
+            "UNDERLYING_STOP": 18,
+            "PREMIUM_STOP": 1
+          },
+          "fixed_15min": {
+            "spot_points": {
+              "n": 37,
+              "wins_pct": 54.05,
+              "pf": 2.055,
+              "total": 321.2,
+              "mean": 8.6811
+            },
+            "option_raw": {
+              "n": 37,
+              "wins_pct": 54.05,
+              "pf": 1.899,
+              "total": 10123.75,
+              "mean": 273.6149
+            },
+            "option_net": {
+              "n": 37,
+              "wins_pct": 51.35,
+              "pf": 1.565,
+              "total": 7176.64,
+              "mean": 193.9633
+            },
+            "spot_favourable_option_raw_loss": 1
+          },
+          "fixed_30min": {
+            "spot_points": {
+              "n": 36,
+              "wins_pct": 55.56,
+              "pf": 2.126,
+              "total": 419.05,
+              "mean": 11.6403
+            },
+            "option_raw": {
+              "n": 36,
+              "wins_pct": 55.56,
+              "pf": 1.873,
+              "total": 11797.5,
+              "mean": 327.7083
+            },
+            "option_net": {
+              "n": 36,
+              "wins_pct": 55.56,
+              "pf": 1.61,
+              "total": 8985.93,
+              "mean": 249.609
+            },
+            "spot_favourable_option_raw_loss": 1
+          }
+        }
+      },
+      {
+        "setup": "VWAP_RECLAIM:CE",
+        "development": {
+          "trades": 376,
+          "days": 376,
+          "raw_option": {
+            "n": 376,
+            "wins_pct": 41.76,
+            "pf": 0.907,
+            "total": -14409.09,
+            "mean": -38.322
+          },
+          "after_slippage": {
+            "n": 376,
+            "wins_pct": 41.76,
+            "pf": 0.892,
+            "total": -16881.89,
+            "mean": -44.8987
+          },
+          "net_option": {
+            "n": 376,
+            "wins_pct": 41.76,
+            "pf": 0.767,
+            "total": -39604.63,
+            "mean": -105.3315
+          },
+          "charges": 22722.74,
+          "slippage_drag": 2472.81,
+          "gross_winners_to_net_losses": 0,
+          "spot_favourable_at_option_exit_pct": 42.29,
+          "spot_favourable_option_raw_loss": 6,
+          "index_only_reference": {
+            "n": 376,
+            "wins_pct": 41.22,
+            "pf": 1.032,
+            "total": 6.94,
+            "mean": 0.0185
+          },
+          "index_ambiguous_bars": 1,
+          "exit_reasons": {
+            "PREMIUM_STOP": 17,
+            "UNDERLYING_STOP": 201,
+            "UNDERLYING_TARGET": 151,
+            "TIME_EXIT": 7
+          },
+          "fixed_15min": {
+            "spot_points": {
+              "n": 376,
+              "wins_pct": 51.33,
+              "pf": 0.948,
+              "total": -172.25,
+              "mean": -0.4581
+            },
+            "option_raw": {
+              "n": 376,
+              "wins_pct": 48.94,
+              "pf": 0.862,
+              "total": -13997,
+              "mean": -37.2261
+            },
+            "option_net": {
+              "n": 376,
+              "wins_pct": 40.16,
+              "pf": 0.66,
+              "total": -39192.18,
+              "mean": -104.2345
+            },
+            "spot_favourable_option_raw_loss": 25
+          },
+          "fixed_30min": {
+            "spot_points": {
+              "n": 367,
+              "wins_pct": 51.23,
+              "pf": 0.966,
+              "total": -157.35,
+              "mean": -0.4287
+            },
+            "option_raw": {
+              "n": 367,
+              "wins_pct": 47.68,
+              "pf": 0.834,
+              "total": -24139.25,
+              "mean": -65.7745
+            },
+            "option_net": {
+              "n": 367,
+              "wins_pct": 43.87,
+              "pf": 0.692,
+              "total": -48702,
+              "mean": -132.703
+            },
+            "spot_favourable_option_raw_loss": 25
+          }
+        },
+        "later_evaluation": {
+          "trades": 85,
+          "days": 85,
+          "raw_option": {
+            "n": 85,
+            "wins_pct": 40,
+            "pf": 0.716,
+            "total": -16506.75,
+            "mean": -194.1971
+          },
+          "after_slippage": {
+            "n": 85,
+            "wins_pct": 40,
+            "pf": 0.703,
+            "total": -17414.86,
+            "mean": -204.8807
+          },
+          "net_option": {
+            "n": 85,
+            "wins_pct": 40,
+            "pf": 0.623,
+            "total": -23421.54,
+            "mean": -275.5475
+          },
+          "charges": 6006.68,
+          "slippage_drag": 908.11,
+          "gross_winners_to_net_losses": 0,
+          "spot_favourable_at_option_exit_pct": 40,
+          "spot_favourable_option_raw_loss": 0,
+          "index_only_reference": {
+            "n": 85,
+            "wins_pct": 36.47,
+            "pf": 0.828,
+            "total": -9.48,
+            "mean": -0.1115
+          },
+          "index_ambiguous_bars": 0,
+          "exit_reasons": {
+            "UNDERLYING_STOP": 52,
+            "UNDERLYING_TARGET": 30,
+            "PREMIUM_STOP": 2,
+            "TIME_EXIT": 1
+          },
+          "fixed_15min": {
+            "spot_points": {
+              "n": 85,
+              "wins_pct": 52.94,
+              "pf": 0.921,
+              "total": -74.65,
+              "mean": -0.8782
+            },
+            "option_raw": {
+              "n": 85,
+              "wins_pct": 50.59,
+              "pf": 0.889,
+              "total": -3497,
+              "mean": -41.1412
+            },
+            "option_net": {
+              "n": 85,
+              "wins_pct": 45.88,
+              "pf": 0.699,
+              "total": -10442.72,
+              "mean": -122.8555
+            },
+            "spot_favourable_option_raw_loss": 3
+          },
+          "fixed_30min": {
+            "spot_points": {
+              "n": 81,
+              "wins_pct": 44.44,
+              "pf": 0.813,
+              "total": -243.5,
+              "mean": -3.0062
+            },
+            "option_raw": {
+              "n": 81,
+              "wins_pct": 38.27,
+              "pf": 0.756,
+              "total": -11102,
+              "mean": -137.0617
+            },
+            "option_net": {
+              "n": 81,
+              "wins_pct": 38.27,
+              "pf": 0.641,
+              "total": -17735.67,
+              "mean": -218.9589
+            },
+            "spot_favourable_option_raw_loss": 6
+          }
+        }
+      },
+      {
+        "setup": "VWAP_RECLAIM:PE",
+        "development": {
+          "trades": 356,
+          "days": 356,
+          "raw_option": {
+            "n": 356,
+            "wins_pct": 39.89,
+            "pf": 0.845,
+            "total": -22621.12,
+            "mean": -63.5425
+          },
+          "after_slippage": {
+            "n": 356,
+            "wins_pct": 39.61,
+            "pf": 0.832,
+            "total": -24677.87,
+            "mean": -69.3199
+          },
+          "net_option": {
+            "n": 356,
+            "wins_pct": 38.2,
+            "pf": 0.714,
+            "total": -45624.04,
+            "mean": -128.1574
+          },
+          "charges": 20946.17,
+          "slippage_drag": 2056.75,
+          "gross_winners_to_net_losses": 6,
+          "spot_favourable_at_option_exit_pct": 39.89,
+          "spot_favourable_option_raw_loss": 5,
+          "index_only_reference": {
+            "n": 356,
+            "wins_pct": 39.61,
+            "pf": 0.972,
+            "total": -5.94,
+            "mean": -0.0167
+          },
+          "index_ambiguous_bars": 0,
+          "exit_reasons": {
+            "UNDERLYING_TARGET": 135,
+            "PREMIUM_STOP": 22,
+            "UNDERLYING_STOP": 189,
+            "TIME_EXIT": 10
+          },
+          "fixed_15min": {
+            "spot_points": {
+              "n": 356,
+              "wins_pct": 46.35,
+              "pf": 0.88,
+              "total": -489.25,
+              "mean": -1.3743
+            },
+            "option_raw": {
+              "n": 356,
+              "wins_pct": 43.54,
+              "pf": 0.907,
+              "total": -9786.5,
+              "mean": -27.4902
+            },
+            "option_net": {
+              "n": 356,
+              "wins_pct": 39.61,
+              "pf": 0.724,
+              "total": -32815.33,
+              "mean": -92.1779
+            },
+            "spot_favourable_option_raw_loss": 22
+          },
+          "fixed_30min": {
+            "spot_points": {
+              "n": 344,
+              "wins_pct": 48.84,
+              "pf": 1.022,
+              "total": 111.15,
+              "mean": 0.3231
+            },
+            "option_raw": {
+              "n": 344,
+              "wins_pct": 45.06,
+              "pf": 1.049,
+              "total": 6597,
+              "mean": 19.1773
+            },
+            "option_net": {
+              "n": 344,
+              "wins_pct": 40.99,
+              "pf": 0.893,
+              "total": -15731.34,
+              "mean": -45.7306
+            },
+            "spot_favourable_option_raw_loss": 22
+          }
+        },
+        "later_evaluation": {
+          "trades": 99,
+          "days": 99,
+          "raw_option": {
+            "n": 99,
+            "wins_pct": 34.34,
+            "pf": 0.625,
+            "total": -22821.5,
+            "mean": -230.5202
+          },
+          "after_slippage": {
+            "n": 99,
+            "wins_pct": 34.34,
+            "pf": 0.612,
+            "total": -23835.94,
+            "mean": -240.767
+          },
+          "net_option": {
+            "n": 99,
+            "wins_pct": 32.32,
+            "pf": 0.534,
+            "total": -30726.21,
+            "mean": -310.3657
+          },
+          "charges": 6890.27,
+          "slippage_drag": 1014.44,
+          "gross_winners_to_net_losses": 2,
+          "spot_favourable_at_option_exit_pct": 33.33,
+          "spot_favourable_option_raw_loss": 1,
+          "index_only_reference": {
+            "n": 99,
+            "wins_pct": 34.34,
+            "pf": 0.801,
+            "total": -12.47,
+            "mean": -0.1259
+          },
+          "index_ambiguous_bars": 0,
+          "exit_reasons": {
+            "UNDERLYING_TARGET": 33,
+            "UNDERLYING_STOP": 63,
+            "TIME_EXIT": 2,
+            "PREMIUM_STOP": 1
+          },
+          "fixed_15min": {
+            "spot_points": {
+              "n": 99,
+              "wins_pct": 49.49,
+              "pf": 0.869,
+              "total": -126.35,
+              "mean": -1.2763
+            },
+            "option_raw": {
+              "n": 99,
+              "wins_pct": 44.44,
+              "pf": 0.658,
+              "total": -12454,
+              "mean": -125.798
+            },
+            "option_net": {
+              "n": 99,
+              "wins_pct": 40.4,
+              "pf": 0.503,
+              "total": -20381.64,
+              "mean": -205.8751
+            },
+            "spot_favourable_option_raw_loss": 7
+          },
+          "fixed_30min": {
+            "spot_points": {
+              "n": 97,
+              "wins_pct": 48.45,
+              "pf": 1.037,
+              "total": 50.05,
+              "mean": 0.516
+            },
+            "option_raw": {
+              "n": 97,
+              "wins_pct": 43.3,
+              "pf": 0.909,
+              "total": -4862,
+              "mean": -50.1237
+            },
+            "option_net": {
+              "n": 97,
+              "wins_pct": 39.18,
+              "pf": 0.782,
+              "total": -12578.46,
+              "mean": -129.6749
+            },
+            "spot_favourable_option_raw_loss": 8
+          }
+        }
+      }
+    ]
+  },
+  "selected_model_replay": {
+    "artifact_id": 9,
+    "version": "quality-v5-20261022T153945Z",
+    "scope": "Previously exposed 8 Jan–13 Oct 2026 research replay, updated causal option selector and existing simulator; not reproduction of legacy 29-trade validation or live portfolio",
+    "rows_scored": 5973,
+    "trades": 112,
+    "direction_counts": {
+      "CE": 58,
+      "PE": 54
+    },
+    "thresholds": {
+      "CE": 0.52,
+      "PE": 0.56
+    },
+    "raw_pnl": 11327.93,
+    "after_slippage_pnl": 10238.22,
+    "charges": 7764.87,
+    "net_pnl": 2473.35,
+    "net_win_rate_pct": 45.54,
+    "net_pf": 1.045,
+    "monthly": {
+      "2026-01": 611.29,
+      "2026-02": 755.53,
+      "2026-03": 5013.76,
+      "2026-04": -2666.75,
+      "2026-05": 7395.98,
+      "2026-06": -4102.4,
+      "2026-07": -1157.02,
+      "2026-08": -292.74,
+      "2026-09": -1716.11,
+      "2026-10": -1368.18
+    },
+    "exit_reasons": {
+      "UNDERLYING_STOP": 57,
+      "UNDERLYING_TARGET": 52,
+      "PREMIUM_STOP": 3
+    },
+    "weighted_auc_all_scored": 0.5004,
+    "brier_all_scored": 0.2542,
+    "selected_average_score_pct": 55.41,
+    "gross_pf": 1.226,
+    "mean_net_per_trade": 22.08,
+    "mean_net_95pct_block_bootstrap_interval": [
+      -183.16,
+      249
+    ],
+    "uncertainty_method": "10,000 circular moving-block resamples, blocks of 5 observed ORB-signal trading days, fixed seed 42; previously exposed history, not a deployment gate"
+  }
+}

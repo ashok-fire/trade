@@ -1,0 +1,7 @@
+{
+  "quality_models": {
+    "CE": "candidate.ce.cbm",
+    "PE": "candidate.pe.cbm"
+  },
+  "ranker": "candidate.ranker.json"
+}

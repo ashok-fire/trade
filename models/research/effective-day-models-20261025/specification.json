@@ -1,0 +1,147 @@
+{
+  "activation_eligible": false,
+  "app_or_registry_changes": false,
+  "audit": [
+    "2026-audit",
+    "2025-07-01",
+    "2025-12-31",
+    "2026-01-08",
+    "2026-10-13"
+  ],
+  "audit_gates": "100 trades/>70% net wins/PF1.3/positive net and stress/DD<=10000/coverage99%/60% positive months/no daily overshoot/positive lower95 mean expectancy and paired improvement",
+  "calibration": "separate CE/PE positive-slope regularised Platt on prior6 complete months, each calibrated day total weight1, >=40 days/100 rows per side",
+  "code_hash": "208a59cdab24f96cce9ecbcc1c5ba0c903c85ab16cbfaa7ebfb9ed53dc0c0893",
+  "cost_inputs": "signal premium, historical contract lot size, estimated round-trip charges at unchanged signal premium as percent notional, and25% premium-stop risk /3000 budget; no future entry/exit prices",
+  "features": [
+    "spot_vwap_distance",
+    "futures_vwap_distance",
+    "futures_basis_pct",
+    "spot_return_1",
+    "spot_return_3",
+    "spot_return_6",
+    "futures_return_1",
+    "futures_return_3",
+    "futures_atr_pct",
+    "futures_volume_ratio",
+    "ema9_20_distance",
+    "ema20_50_distance",
+    "atr_pct",
+    "rsi",
+    "previous_day_high_distance",
+    "previous_day_low_distance",
+    "previous_day_close_distance",
+    "opening_range_high_distance",
+    "opening_range_low_distance",
+    "gap_pct",
+    "time_sin",
+    "time_cos",
+    "setup_direction",
+    "option_premium_pct",
+    "days_to_expiry",
+    "moneyness_pct",
+    "day_open_distance",
+    "opening_range_width_pct",
+    "trend_atr_strength",
+    "realized_vol_6",
+    "rsi_change_3",
+    "atr_change_3",
+    "basis_change_3",
+    "return_spread_3",
+    "weekday_sin",
+    "weekday_cos",
+    "setup_orb",
+    "setup_pullback",
+    "setup_failed_breakout",
+    "setup_vwap_reclaim"
+  ],
+  "folds": [
+    [
+      "2024-Q2",
+      "2023-10-01",
+      "2024-03-31",
+      "2024-04-01",
+      "2024-06-30"
+    ],
+    [
+      "2024-Q3",
+      "2024-01-01",
+      "2024-06-30",
+      "2024-07-01",
+      "2024-09-30"
+    ],
+    [
+      "2024-Q4",
+      "2024-04-01",
+      "2024-09-30",
+      "2024-10-01",
+      "2024-12-31"
+    ],
+    [
+      "2025-Q2",
+      "2024-10-01",
+      "2025-03-31",
+      "2025-04-01",
+      "2025-06-30"
+    ],
+    [
+      "2025-Q3",
+      "2025-01-01",
+      "2025-06-30",
+      "2025-07-01",
+      "2025-09-30"
+    ],
+    [
+      "2025-Q4",
+      "2025-04-01",
+      "2025-09-30",
+      "2025-10-01",
+      "2025-12-31"
+    ]
+  ],
+  "hypothesis": "Correct effective-day regularisation, risk-parity sampling and causal cost/lot inputs reduce calibration drift under changed option-contract economics",
+  "label_source_report_hash": "fe5218fee1f4162955b1a81791444083c90dc3ef3126bf2e58479cec7cc47c41",
+  "model": "fixed histogram boosting100 iterations/7leaves/lr.05/min_leaf20/L2=10/no random early-stopping; seed42",
+  "optional_inputs": [
+    "decision_premium",
+    "lot_size",
+    "estimated_cost_pct",
+    "risk_utilization"
+  ],
+  "previously_inspected_history": true,
+  "reserved_dates_excluded": [
+    "2026-10-14",
+    "2026-10-23"
+  ],
+  "risk_filter": "same causal whole-lot100000 capital/3% risk/5% daily eligibility in fit, calibration and validation; unknown validation outcomes retained",
+  "rule": {
+    "hold_minutes": 60,
+    "stop_pct": 25,
+    "target_pct": 15
+  },
+  "schema": "effective-day-research-v1",
+  "selection": "4 variants x CE/BOTH x9 cutoffs; unchanged target>70%/100trades and economic>=60% partial gates; freeze at most one candidate before audit",
+  "source_report_hash": "bec10187b2b8771965da4a6575354e43fa6f1737f5ac96300b7f3de5007681cd",
+  "variants": [
+    [
+      "day_risk",
+      false,
+      null
+    ],
+    [
+      "day_risk_cost",
+      true,
+      null
+    ],
+    [
+      "day_risk_cost_h126",
+      true,
+      126
+    ],
+    [
+      "day_risk_cost_h252",
+      true,
+      252
+    ]
+  ],
+  "weights": "each day sums to1 before optional126/252 observed-day half-life decay; never rescale to candle-row count"
+}
