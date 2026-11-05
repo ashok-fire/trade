@@ -41,10 +41,11 @@ def record_option_selection(
     session, *, provider: str, mode: str, underlying_code: str,
     candle_timestamp: datetime, model_version: str, direction: str,
     spot: Decimal, contracts: list, quotes: dict, selection: Selection,
-    observed_at: datetime, filters: dict, scope: str = "",
+    observed_at: datetime, filters: dict, scope: str = "", protocol_version: str = "",
 ) -> OptionSelectionAudit:
     identity = f"{provider}:{mode}:{underlying_code}:{candle_timestamp.isoformat()}:{direction}:{model_version}"
-    audit_id = uuid.uuid5(uuid.NAMESPACE_URL, identity + (f":{scope}" if scope else "")).hex
+    audit_id = uuid.uuid5(uuid.NAMESPACE_URL, identity + (f":{scope}" if scope else "")
+                         + (f":{protocol_version}" if protocol_version else "")).hex
     existing = session.get(OptionSelectionAudit, audit_id)
     if existing:
         return existing
@@ -59,6 +60,8 @@ def record_option_selection(
         "selected_moneyness": selection.moneyness, "selection_reason": selection.reason,
         "candidates": [],
     }
+    if protocol_version:
+        evidence["protocol_version"] = protocol_version
     for contract, moneyness in candidates:
         quote = quotes.get(contract.instrument_key)
         evidence["candidates"].append({

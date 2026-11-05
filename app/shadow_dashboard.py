@@ -7,18 +7,21 @@ from sqlalchemy import select
 from .models import RuntimeSetting, SetupObservation
 from .database import settings_dict
 from .parallel_shadow import IST, utc
+from .research_protocol import PROTOCOL, recorded_eligible
 
 
-def daily_metrics(rows, quality_only=False):
+def daily_metrics(rows, quality_only=False, eligible_only=False):
     # Choose before looking at outcome: an unfinished first trial cannot be
     # replaced by a later winner. All rows here belong to one comparison group.
     first = {}
     for row in sorted(rows, key=lambda row: (utc(row.observed_at), row.id)):
-        if row.entry_time is None or (quality_only and row.quality_passed is not True):
+        if (row.entry_time is None or (quality_only and row.quality_passed is not True)
+                or (eligible_only and recorded_eligible(row) is False)):
             continue
         day = utc(row.entry_time).astimezone(IST).date()
         first.setdefault(day, row)
-    closed = sorted((row for row in first.values() if row.status == "CLOSED" and row.net_pnl is not None),
+    closed = sorted((row for row in first.values() if row.status == "CLOSED" and row.net_pnl is not None
+                     and (not eligible_only or recorded_eligible(row) is True)),
                     key=lambda row: (utc(row.exit_time), row.id))
     values = [float(row.net_pnl) for row in closed]
     wins, losses = sum(max(value, 0) for value in values), -sum(min(value, 0) for value in values)
@@ -43,6 +46,7 @@ def shadow_context(session, service):
     comparisons = []
     for key, observations in sorted(groups.items()):
         provider, code, model, protocol, _, family, direction = key
+        eligible_only = protocol == PROTOCOL
         comparisons.append({"provider": provider, "code": code, "model": model, "protocol": protocol,
             "settings": key[4], "family": family, "direction": direction, "checks": len(observations),
             "candidates": sum(row.direction != "NONE" for row in observations),
@@ -51,7 +55,11 @@ def shadow_context(session, service):
             "incomplete": sum(row.status == "INCOMPLETE" for row in observations),
             "quote_rejected": sum(row.status == "QUOTE_REJECTED" for row in observations),
             "quality_rejected": sum(row.quality_passed is False for row in observations),
-            "all_daily": daily_metrics(observations), "quality_daily": daily_metrics(observations, True)})
+            "eligible_only": eligible_only,
+            "eligible_entered": sum(row.entry_time is not None and recorded_eligible(row) is True for row in observations),
+            "eligibility_unknown": sum(row.entry_time is not None and recorded_eligible(row) is None for row in observations),
+            "all_daily": daily_metrics(observations, eligible_only=eligible_only),
+            "quality_daily": daily_metrics(observations, True, eligible_only=eligible_only)})
     reasons = Counter(row.reason for row in rows if row.status in {"QUOTE_REJECTED", "INCOMPLETE"})
     return {"settings": settings_dict(session), "runtime": session.get(RuntimeSetting, 1),
             "observer": service.health(), "comparisons": comparisons, "recent": rows[:100],

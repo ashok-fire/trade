@@ -1,0 +1,504 @@
+{
+  "configuration": {
+    "kind": "two-session-nifty-backfill-v1",
+    "provider": "GROWW",
+    "indices": [
+      "NIFTY"
+    ],
+    "start_date": "2026-10-29",
+    "end_date": "2026-10-30",
+    "include_options": true,
+    "include_one_minute": false,
+    "refresh_existing": false,
+    "option_scope": "union of ATM and ITM1 CE/PE at every stored five-minute spot close, nearest unexpired expiry; coverage only, no historical selection claim",
+    "session_coverage_ist": "09:15 <= bar-start < 15:30; covers current strategy exits, not extended exchange session",
+    "live_orders": false,
+    "recreate_shadow": false
+  },
+  "backup": "/home/ashok/Ashok/trade/data/backups/niftypilot-20261102T072617Z-before-two-session-backfill.db",
+  "protected_hashes": {
+    "settings": "561528aa0a059f320f9589b196adbb1a3ac41db3878f7615389031bf8f157b3e",
+    "runtime": "8f7abd2b3a73beb7365cdc4f05e97a42d22a076f6dd63af68b35633bf2fefee9",
+    "models": "5e2d6fb847681b0cbdad6ab0208a98ceb7f78cc3bbdb4e83336121a69907c67d",
+    "old_observations": "1a5e2e70acdbaf6d82e7958456218ac62b60a06f7640a3f5d02c550e88f674bd",
+    "old_signals": "25e6c7a7a651d88cdd08fb9588b36a56b46b9c7d9401f6fbe2bc6a6923fd0df2",
+    "old_orders": "2c74e199d76b98b99d49281b9cb34611d7916e721206a0706ad6d47825a46ee4",
+    "old_trades": "25e6280afa82544c93ff2a21564bbe3fbab3a6517672f90a13c3371b4d922e2c"
+  },
+  "targets": [
+    {
+      "key": "NSE-NIFTY",
+      "day": "2026-10-29",
+      "role": "SPOT",
+      "contract": null
+    },
+    {
+      "key": "NSE-NIFTY-23Nov26-FUT",
+      "day": "2026-10-29",
+      "role": "FUTURE",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-23Nov26-FUT",
+        "trading_symbol": "NSE-NIFTY-23Nov26-FUT",
+        "exchange": "NSE",
+        "underlying_code": "NIFTY",
+        "expiry": "2026-11-23",
+        "strike": "0",
+        "option_type": "FUT",
+        "lot_size": 0,
+        "tick_size": "0.05",
+        "provider": "GROWW",
+        "segment": "FNO",
+        "exchange_token": null,
+        "metadata_verified": false,
+        "metadata_source": "GROWW_HISTORICAL_SYMBOL"
+      }
+    },
+    {
+      "key": "NSE-NIFTY-03Nov26-22150-CE",
+      "day": "2026-10-29",
+      "role": "OPTION",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-03Nov26-22150-CE",
+        "trading_symbol": "NIFTY26N0322150CE",
+        "exchange": "NSE",
+        "underlying_code": "NIFTY",
+        "expiry": "2026-11-03",
+        "strike": "22150",
+        "option_type": "CE",
+        "lot_size": 65,
+        "tick_size": "0.05",
+        "provider": "GROWW",
+        "segment": "FNO",
+        "exchange_token": "53577",
+        "metadata_verified": true,
+        "metadata_source": "GROWW_INSTRUMENT_MASTER"
+      }
+    },
+    {
+      "key": "NSE-NIFTY-03Nov26-22700-PE",
+      "day": "2026-10-29",
+      "role": "OPTION",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-03Nov26-22700-PE",
+        "trading_symbol": "NIFTY26N0322700PE",
+        "exchange": "NSE",
+        "underlying_code": "NIFTY",
+        "expiry": "2026-11-03",
+        "strike": "22700",
+        "option_type": "PE",
+        "lot_size": 65,
+        "tick_size": "0.05",
+        "provider": "GROWW",
+        "segment": "FNO",
+        "exchange_token": "53791",
+        "metadata_verified": true,
+        "metadata_source": "GROWW_INSTRUMENT_MASTER"
+      }
+    },
+    {
+      "key": "NSE-NIFTY-03Nov26-22750-CE",
+      "day": "2026-10-29",
+      "role": "OPTION",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-03Nov26-22750-CE",
+        "trading_symbol": "NIFTY26N0322750CE",
+        "exchange": "NSE",
+        "underlying_code": "NIFTY",
+        "expiry": "2026-11-03",
+        "strike": "22750",
+        "option_type": "CE",
+        "lot_size": 65,
+        "tick_size": "0.05",
+        "provider": "GROWW",
+        "segment": "FNO",
+        "exchange_token": "53792",
+        "metadata_verified": true,
+        "metadata_source": "GROWW_INSTRUMENT_MASTER"
+      }
+    },
+    {
+      "key": "NSE-NIFTY-03Nov26-22750-PE",
+      "day": "2026-10-29",
+      "role": "OPTION",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-03Nov26-22750-PE",
+        "trading_symbol": "NIFTY26N0322750PE",
+        "exchange": "NSE",
+        "underlying_code": "NIFTY",
+        "expiry": "2026-11-03",
+        "strike": "22750",
+        "option_type": "PE",
+        "lot_size": 65,
+        "tick_size": "0.05",
+        "provider": "GROWW",
+        "segment": "FNO",
+        "exchange_token": "53793",
+        "metadata_verified": true,
+        "metadata_source": "GROWW_INSTRUMENT_MASTER"
+      }
+    },
+    {
+      "key": "NSE-NIFTY-03Nov26-22800-CE",
+      "day": "2026-10-29",
+      "role": "OPTION",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-03Nov26-22800-CE",
+        "trading_symbol": "NIFTY26N0322800CE",
+        "exchange": "NSE",
+        "underlying_code": "NIFTY",
+        "expiry": "2026-11-03",
+        "strike": "22800",
+        "option_type": "CE",
+        "lot_size": 65,
+        "tick_size": "0.05",
+        "provider": "GROWW",
+        "segment": "FNO",
+        "exchange_token": "53794",
+        "metadata_verified": true,
+        "metadata_source": "GROWW_INSTRUMENT_MASTER"
+      }
+    },
+    {
+      "key": "NSE-NIFTY-03Nov26-22850-CE",
+      "day": "2026-10-29",
+      "role": "OPTION",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-03Nov26-22850-CE",
+        "trading_symbol": "NIFTY26N0322850CE",
+        "exchange": "NSE",
+        "underlying_code": "NIFTY",
+        "expiry": "2026-11-03",
+        "strike": "22850",
+        "option_type": "CE",
+        "lot_size": 65,
+        "tick_size": "0.05",
+        "provider": "GROWW",
+        "segment": "FNO",
+        "exchange_token": "53796",
+        "metadata_verified": true,
+        "metadata_source": "GROWW_INSTRUMENT_MASTER"
+      }
+    },
+    {
+      "key": "NSE-NIFTY-03Nov26-22900-CE",
+      "day": "2026-10-29",
+      "role": "OPTION",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-03Nov26-22900-CE",
+        "trading_symbol": "NIFTY26N0322900CE",
+        "exchange": "NSE",
+        "underlying_code": "NIFTY",
+        "expiry": "2026-11-03",
+        "strike": "22900",
+        "option_type": "CE",
+        "lot_size": 65,
+        "tick_size": "0.05",
+        "provider": "GROWW",
+        "segment": "FNO",
+        "exchange_token": "53836",
+        "metadata_verified": true,
+        "metadata_source": "GROWW_INSTRUMENT_MASTER"
+      }
+    },
+    {
+      "key": "NSE-NIFTY-03Nov26-22900-PE",
+      "day": "2026-10-29",
+      "role": "OPTION",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-03Nov26-22900-PE",
+        "trading_symbol": "NIFTY26N0322900PE",
+        "exchange": "NSE",
+        "underlying_code": "NIFTY",
+        "expiry": "2026-11-03",
+        "strike": "22900",
+        "option_type": "PE",
+        "lot_size": 65,
+        "tick_size": "0.05",
+        "provider": "GROWW",
+        "segment": "FNO",
+        "exchange_token": "53859",
+        "metadata_verified": true,
+        "metadata_source": "GROWW_INSTRUMENT_MASTER"
+      }
+    },
+    {
+      "key": "NSE-NIFTY-03Nov26-22950-CE",
+      "day": "2026-10-29",
+      "role": "OPTION",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-03Nov26-22950-CE",
+        "trading_symbol": "NIFTY26N0322950CE",
+        "exchange": "NSE",
+        "underlying_code": "NIFTY",
+        "expiry": "2026-11-03",
+        "strike": "22950",
+        "option_type": "CE",
+        "lot_size": 65,
+        "tick_size": "0.05",
+        "provider": "GROWW",
+        "segment": "FNO",
+        "exchange_token": "53860",
+        "metadata_verified": true,
+        "metadata_source": "GROWW_INSTRUMENT_MASTER"
+      }
+    },
+    {
+      "key": "NSE-NIFTY-03Nov26-23000-PE",
+      "day": "2026-10-29",
+      "role": "OPTION",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-03Nov26-23000-PE",
+        "trading_symbol": "NIFTY26N0323000PE",
+        "exchange": "NSE",
+        "underlying_code": "NIFTY",
+        "expiry": "2026-11-03",
+        "strike": "23000",
+        "option_type": "PE",
+        "lot_size": 65,
+        "tick_size": "0.05",
+        "provider": "GROWW",
+        "segment": "FNO",
+        "exchange_token": "53923",
+        "metadata_verified": true,
+        "metadata_source": "GROWW_INSTRUMENT_MASTER"
+      }
+    },
+    {
+      "key": "NSE-NIFTY-03Nov26-23050-PE",
+      "day": "2026-10-29",
+      "role": "OPTION",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-03Nov26-23050-PE",
+        "trading_symbol": "NIFTY26N0323050PE",
+        "exchange": "NSE",
+        "underlying_code": "NIFTY",
+        "expiry": "2026-11-03",
+        "strike": "23050",
+        "option_type": "PE",
+        "lot_size": 65,
+        "tick_size": "0.05",
+        "provider": "GROWW",
+        "segment": "FNO",
+        "exchange_token": "53925",
+        "metadata_verified": true,
+        "metadata_source": "GROWW_INSTRUMENT_MASTER"
+      }
+    },
+    {
+      "key": "NSE-NIFTY",
+      "day": "2026-10-30",
+      "role": "SPOT",
+      "contract": null
+    },
+    {
+      "key": "NSE-NIFTY-23Nov26-FUT",
+      "day": "2026-10-30",
+      "role": "FUTURE",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-23Nov26-FUT",
+        "trading_symbol": "NSE-NIFTY-23Nov26-FUT",
+        "exchange": "NSE",
+        "underlying_code": "NIFTY",
+        "expiry": "2026-11-23",
+        "strike": "0",
+        "option_type": "FUT",
+        "lot_size": 0,
+        "tick_size": "0.05",
+        "provider": "GROWW",
+        "segment": "FNO",
+        "exchange_token": null,
+        "metadata_verified": false,
+        "metadata_source": "GROWW_HISTORICAL_SYMBOL"
+      }
+    },
+    {
+      "key": "NSE-NIFTY-03Nov26-22850-CE",
+      "day": "2026-10-30",
+      "role": "OPTION",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-03Nov26-22850-CE",
+        "trading_symbol": "NIFTY26N0322850CE",
+        "exchange": "NSE",
+        "underlying_code": "NIFTY",
+        "expiry": "2026-11-03",
+        "strike": "22850",
+        "option_type": "CE",
+        "lot_size": 65,
+        "tick_size": "0.05",
+        "provider": "GROWW",
+        "segment": "FNO",
+        "exchange_token": "53796",
+        "metadata_verified": true,
+        "metadata_source": "GROWW_INSTRUMENT_MASTER"
+      }
+    },
+    {
+      "key": "NSE-NIFTY-03Nov26-22900-CE",
+      "day": "2026-10-30",
+      "role": "OPTION",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-03Nov26-22900-CE",
+        "trading_symbol": "NIFTY26N0322900CE",
+        "exchange": "NSE",
+        "underlying_code": "NIFTY",
+        "expiry": "2026-11-03",
+        "strike": "22900",
+        "option_type": "CE",
+        "lot_size": 65,
+        "tick_size": "0.05",
+        "provider": "GROWW",
+        "segment": "FNO",
+        "exchange_token": "53836",
+        "metadata_verified": true,
+        "metadata_source": "GROWW_INSTRUMENT_MASTER"
+      }
+    },
+    {
+      "key": "NSE-NIFTY-03Nov26-22900-PE",
+      "day": "2026-10-30",
+      "role": "OPTION",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-03Nov26-22900-PE",
+        "trading_symbol": "NIFTY26N0322900PE",
+        "exchange": "NSE",
+        "underlying_code": "NIFTY",
+        "expiry": "2026-11-03",
+        "strike": "22900",
+        "option_type": "PE",
+        "lot_size": 65,
+        "tick_size": "0.05",
+        "provider": "GROWW",
+        "segment": "FNO",
+        "exchange_token": "53859",
+        "metadata_verified": true,
+        "metadata_source": "GROWW_INSTRUMENT_MASTER"
+      }
+    },
+    {
+      "key": "NSE-NIFTY-03Nov26-22950-CE",
+      "day": "2026-10-30",
+      "role": "OPTION",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-03Nov26-22950-CE",
+        "trading_symbol": "NIFTY26N0322950CE",
+        "exchange": "NSE",
+        "underlying_code": "NIFTY",
+        "expiry": "2026-11-03",
+        "strike": "22950",
+        "option_type": "CE",
+        "lot_size": 65,
+        "tick_size": "0.05",
+        "provider": "GROWW",
+        "segment": "FNO",
+        "exchange_token": "53860",
+        "metadata_verified": true,
+        "metadata_source": "GROWW_INSTRUMENT_MASTER"
+      }
+    },
+    {
+      "key": "NSE-NIFTY-03Nov26-23000-PE",
+      "day": "2026-10-30",
+      "role": "OPTION",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-03Nov26-23000-PE",
+        "trading_symbol": "NIFTY26N0323000PE",
+        "exchange": "NSE",
+        "underlying_code": "NIFTY",
+        "expiry": "2026-11-03",
+        "strike": "23000",
+        "option_type": "PE",
+        "lot_size": 65,
+        "tick_size": "0.05",
+        "provider": "GROWW",
+        "segment": "FNO",
+        "exchange_token": "53923",
+        "metadata_verified": true,
+        "metadata_source": "GROWW_INSTRUMENT_MASTER"
+      }
+    },
+    {
+      "key": "NSE-NIFTY-03Nov26-23050-PE",
+      "day": "2026-10-30",
+      "role": "OPTION",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-03Nov26-23050-PE",
+        "trading_symbol": "NIFTY26N0323050PE",
+        "exchange": "NSE",
+        "underlying_code": "NIFTY",
+        "expiry": "2026-11-03",
+        "strike": "23050",
+        "option_type": "PE",
+        "lot_size": 65,
+        "tick_size": "0.05",
+        "provider": "GROWW",
+        "segment": "FNO",
+        "exchange_token": "53925",
+        "metadata_verified": true,
+        "metadata_source": "GROWW_INSTRUMENT_MASTER"
+      }
+    },
+    {
+      "key": "NSE-NIFTY-03Nov26-23100-CE",
+      "day": "2026-10-30",
+      "role": "OPTION",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-03Nov26-23100-CE",
+        "trading_symbol": "NIFTY26N0323100CE",
+        "exchange": "NSE",
+        "underlying_code": "NIFTY",
+        "expiry": "2026-11-03",
+        "strike": "23100",
+        "option_type": "CE",
+        "lot_size": 65,
+        "tick_size": "0.05",
+        "provider": "GROWW",
+        "segment": "FNO",
+        "exchange_token": "53926",
+        "metadata_verified": true,
+        "metadata_source": "GROWW_INSTRUMENT_MASTER"
+      }
+    },
+    {
+      "key": "NSE-NIFTY-03Nov26-23100-PE",
+      "day": "2026-10-30",
+      "role": "OPTION",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-03Nov26-23100-PE",
+        "trading_symbol": "NIFTY26N0323100PE",
+        "exchange": "NSE",
+        "underlying_code": "NIFTY",
+        "expiry": "2026-11-03",
+        "strike": "23100",
+        "option_type": "PE",
+        "lot_size": 65,
+        "tick_size": "0.05",
+        "provider": "GROWW",
+        "segment": "FNO",
+        "exchange_token": "53927",
+        "metadata_verified": true,
+        "metadata_source": "GROWW_INSTRUMENT_MASTER"
+      }
+    },
+    {
+      "key": "NSE-NIFTY-03Nov26-23150-PE",
+      "day": "2026-10-30",
+      "role": "OPTION",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-03Nov26-23150-PE",
+        "trading_symbol": "NIFTY26N0323150PE",
+        "exchange": "NSE",
+        "underlying_code": "NIFTY",
+        "expiry": "2026-11-03",
+        "strike": "23150",
+        "option_type": "PE",
+        "lot_size": 65,
+        "tick_size": "0.05",
+        "provider": "GROWW",
+        "segment": "FNO",
+        "exchange_token": "53929",
+        "metadata_verified": true,
+        "metadata_source": "GROWW_INSTRUMENT_MASTER"
+      }
+    }
+  ]
+}

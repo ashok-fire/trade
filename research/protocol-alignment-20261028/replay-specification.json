@@ -1,0 +1,39 @@
+{
+  "source_hashes": {
+    "research/matched_candle_replay.py": "e4128e2785c36398226305e6767548051d62c5eaa8015387708e663e442964cc",
+    "app/research_protocol.py": "fcc2345450465e22edc3f15d4eae551306833f4190ff721cb110767d60bec80d",
+    "app/risk.py": "f8de1f566974f5a57703b3494472c560476fadf216786e5826ad989ba93909b8",
+    "research/matched_failure_audit.py": "cbceacee71e30b009640c69042012e23e7e65bb36b9edb24c3e86b57578ebc52"
+  },
+  "observations_snapshot_sha256": "b1329ef2ab050e0827b4c39dce5489e1adfbcd992f42ba1d34ca67db2b319a9d",
+  "observations_snapshot": "research/matched-failure-20261028/run-02/source-snapshot.json",
+  "kind": "Fixed post-import matched-label diagnostic; no model training or selection",
+  "created_at_utc": "2026-10-28T03:28:46.101Z",
+  "scope": {
+    "provider": "GROWW",
+    "index": "NIFTY",
+    "dates": [
+      "2026-10-26",
+      "2026-10-27"
+    ],
+    "observations": 46,
+    "contracts": "exact stored selected contract; never substitute"
+  },
+  "arms": {
+    "aligned": "Signal-close1ATRstop and stored1.5ATRtarget; original recorded signal close/ATR",
+    "legacy_geometry": "Original stored quote-anchored barriers; no rewrite of original outcomes",
+    "shared": "Same historical next-bar-open entry and candle-proxy exit, raw one-lot quantity, frozen per-observation slippage,25% premium stop, fees; conservative stop-first;15:20 candle open square-off"
+  },
+  "pass_fail": {
+    "data_ready": "All46 exact signal/entry pairs and complete contiguous replay labels; unknowns retained, never replaced",
+    "model_approval": "Not permitted; no fitting, threshold search, capital tuning or performance target claim",
+    "change_scope": "Future researchprotocolv2alreadyfrozen; do not select geometry using these replay outcomes"
+  },
+  "limitations": [
+    "Two observed days with overlapping trials are not46independent trades",
+    "Candle proxy labels are not broker-realised executable outcomes",
+    "Actual quote entries occur after the bar-open proxy",
+    "Current stored underlying path may differ from original decision-time candles",
+    "Reserved14–23October option outcomes remain untouched"
+  ]
+}

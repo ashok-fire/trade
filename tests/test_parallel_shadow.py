@@ -14,6 +14,7 @@ from app.models import Candle, Instrument, ModelArtifact, Order, RuntimeSetting,
 from app.market_frames import market_frame_for_boundary
 from app.parallel_shadow import ParallelShadowService, PROTOCOL
 from app.shadow_dashboard import daily_metrics, observation_export, shadow_context
+from app.research_protocol import PROTOCOL as ALIGNED_PROTOCOL, recorded_eligible
 from app.strategy import FEATURE_SCHEMA_V6, SETUP_FAMILIES
 
 NOW = datetime(2026, 10, 23, 4, 30, 25, tzinfo=UTC)  # Friday 10:00:25 IST
@@ -247,7 +248,13 @@ def test_market_frame_requires_exact_futures_bar(session):
     result = market_frame_for_boundary(session, "UPSTOX", "NIFTY", boundary)
     assert result is not None and result[1].timestamp == (boundary - timedelta(minutes=5)).replace(tzinfo=None)
     future = session.scalar(select(Candle).where(Candle.instrument_key == "FUT").order_by(Candle.timestamp.desc()))
+    missing_stamp = future.timestamp
     session.delete(future)
+    session.commit()
+    assert market_frame_for_boundary(session, "UPSTOX", "NIFTY", boundary) is None
+    session.add(Candle(provider="UPSTOX", instrument_key="FUT", underlying_code="NIFTY", data_role="FUTURE",
+        timestamp=missing_stamp, open=25000, high=25002, low=24998, close=25001,
+        volume=1000, source_verified=False))
     session.commit()
     assert market_frame_for_boundary(session, "UPSTOX", "NIFTY", boundary) is None
     assert market_frame_for_boundary(session, "GROWW", "NIFTY", boundary) is None
@@ -264,3 +271,91 @@ async def test_populated_template_renders(session, observer):
     html = templates.get_template("shadow-research.html").render(request=request, **shadow_context(session, service))
     assert "RESEARCH_ONLY" in html and "30.0%" in html
     assert "disabled/unavailable" in html and "Export evidence" in html
+
+
+@pytest.mark.asyncio
+async def test_v2_anchors_signal_close_and_freezes_actual_settings(session, observer):
+    service, broker = observer
+    # A later underlying quote must not shift the historical/runtime barriers.
+    broker.quotes.return_value["INDEX"] = quote("INDEX", NOW, "25029", "25031", "25030")
+    session.get(Setting, "reward_risk").value = "2"
+    session.get(Setting, "premium_emergency_stop_pct").value = "20"
+    session.commit()
+    await service.observe(NOW)
+    row = session.scalar(select(SetupObservation).where(SetupObservation.setup_family == "ORB"))
+    assert row.protocol_version == ALIGNED_PROTOCOL == "parallel-shadow-v2"
+    assert row.underlying_stop == D("24980") and row.underlying_target == D("25040")
+    assert row.premium_stop == row.entry_price*D(".8")
+    protocol = json.loads(row.protocol_json)
+    assert protocol["underlying_anchor"] == "signal_close"
+    assert protocol["risk_settings"]["reward_risk"] == "2"
+    assert recorded_eligible(row) is True
+    session.get(Setting, "paper_capital").value = "100"
+    session.get(Setting, "reward_risk").value = "5"
+    session.commit()
+    session.expire_all()
+    assert recorded_eligible(row) is True  # No retroactive settings lookup.
+    assert row.underlying_target == D("25040")
+
+
+@pytest.mark.asyncio
+async def test_ineligible_counterfactual_stays_raw_but_not_in_v2_daily_metrics(session, observer):
+    service, broker = observer
+    broker.quotes.return_value["CE"] = quote("CE", NOW, "250", "251", "250")
+    await service.observe(NOW)
+    row = session.scalar(select(SetupObservation).where(SetupObservation.setup_family == "ORB"))
+    assert row.status == "OPEN" and row.quantity == 65
+    assert recorded_eligible(row) is False
+    assert json.loads(row.selection_json)["economic_eligibility"]["reason"] == "One lot exceeds permitted risk"
+    comparison = next(c for c in shadow_context(session, service)["comparisons"] if c["family"] == "ORB")
+    assert comparison["executable"] == 1 and comparison["eligible_entered"] == 0
+    assert comparison["all_daily"]["selected"] == 0
+
+
+def test_v2_daily_selection_preserves_unknown_first_eligible_and_legacy_metrics():
+    base = dict(id="first", protocol_version="parallel-shadow-v2", quality_passed=True,
+        selection_json=json.dumps({"economic_eligibility": {"eligible": True}}),
+        entry_time=NOW, observed_at=NOW, status="INCOMPLETE", net_pnl=None, exit_time=None, charges=None)
+    first = SimpleNamespace(**base)
+    later = SimpleNamespace(**{**base, "id": "later", "observed_at": NOW+timedelta(minutes=5),
+        "status": "CLOSED", "net_pnl": D(500), "charges": D(50), "exit_time": NOW+timedelta(hours=1)})
+    result = daily_metrics([later, first], eligible_only=True)
+    assert result["selected"] == 1 and result["pending"] == 1 and result["closed"] == 0
+    first.protocol_version = "parallel-shadow-v1"
+    assert recorded_eligible(first) is None
+    assert daily_metrics([first])["pending"] == 1  # Legacy default not rewritten.
+
+
+def test_unknown_v2_eligibility_blocks_substitution_of_later_winner():
+    base = dict(id="first", protocol_version="parallel-shadow-v2", quality_passed=True,
+        selection_json="{}", entry_time=NOW, observed_at=NOW, status="CLOSED",
+        net_pnl=D("-100"), charges=D(50), exit_time=NOW+timedelta(hours=1))
+    first = SimpleNamespace(**base)
+    later = SimpleNamespace(**{**base, "id": "later", "observed_at": NOW+timedelta(minutes=5),
+        "selection_json": json.dumps({"economic_eligibility": {"eligible": True}}), "net_pnl": D(500)})
+    result = daily_metrics([later, first], eligible_only=True)
+    assert result["selected"] == 1 and result["pending"] == 1 and result["closed"] == 0
+    assert result["net"] == 0
+
+
+@pytest.mark.asyncio
+async def test_monitor_uses_legacy_stored_geometry_and_slippage(session, observer):
+    service, broker = observer
+    await service.observe(NOW)
+    row = session.scalar(select(SetupObservation).where(SetupObservation.setup_family == "ORB"))
+    row.protocol_version = "parallel-shadow-v1"
+    row.underlying_target = D("25090")
+    protocol = json.loads(row.protocol_json)
+    protocol["slippage_pct"] = "1"
+    row.protocol_json = json.dumps(protocol)
+    session.commit()
+    later = NOW+timedelta(seconds=15)
+    broker.quotes.return_value = {"CE": quote("CE", later, "120", "121", "120"),
+        "PE": quote("PE", later), "INDEX": quote("INDEX", later, "25039", "25041", "25040")}
+    await service.monitor(later)
+    session.expire_all()
+    assert row.status == "OPEN"  # v2 target would have closed; legacy target stays.
+    broker.quotes.return_value["INDEX"] = quote("INDEX", later, "25099", "25101", "25100")
+    await service.monitor(later)
+    session.expire_all()
+    assert row.exit_price == D("118.80")  # Original 1%, not current saved 0.05%.

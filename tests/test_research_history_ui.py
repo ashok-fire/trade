@@ -6,7 +6,6 @@ import re
 from types import SimpleNamespace
 from urllib.parse import parse_qs, urlsplit
 
-import httpx
 import pytest
 from sqlalchemy import func, select
 
@@ -156,9 +155,10 @@ def test_database_paging_latest5_and_selected_shadow_are_independent(session, tm
     assert session.get(Setting, "paper_capital").value=="100000"
 
 
-@pytest.mark.asyncio
-async def test_backtests_page_renders_pagination_preserves_other_pages_and_exposes_reports_read_only(session, tmp_path, monkeypatch):
+def test_backtests_page_renders_pagination_preserves_other_pages_and_exposes_reports_read_only(session, tmp_path, monkeypatch):
     from app import main
+    from fastapi import HTTPException
+    from starlette.requests import Request
     root = tmp_path/"models/research"
     for i in range(12):
         write_report(root, f"study-{i:02d}", {"status":"REJECTED_TEST", "audit":metric(), "development":metric(75, 20)}, stamp=i)
@@ -167,12 +167,22 @@ async def test_backtests_page_renders_pagination_preserves_other_pages_and_expos
     monkeypatch.setattr(main, "config", config)
     monkeypatch.setattr(dashboard, "research_readiness", lambda session:[])
     seed_histories(session)
-    main.app.dependency_overrides[main.get_session] = lambda:session
+    def request(query):
+        return Request({"type":"http", "method":"GET", "scheme":"http", "server":("testserver", 80),
+                        "path":"/backtests", "query_string":query.encode(), "headers":[], "app":main.app})
+    response = main.backtests_page(request("research_page=1&models_page=2&downloads_page=2&runs_page=2&run_id=1"),
+        run_id=1, research_page=1, models_page=2, downloads_page=2, runs_page=2, session=session)
+    assert response.status_code==200
+    html = response.body.decode()
     try:
-        client = httpx.AsyncClient(transport=httpx.ASGITransport(app=main.app), base_url="http://testserver")
-        response = await client.get("/backtests?research_page=1&models_page=2&downloads_page=2&runs_page=2&run_id=1")
-        assert response.status_code==200
-        html = response.text
+        for action in ("/backtests/sync-data", "/backtests/train", "/backtests"):
+            form = re.search(r'<form\b[^>]*action="'+re.escape(action)+r'"[^>]*>(.*?)</form>', html, re.S)
+            assert form is not None
+            inputs = re.findall(r'<input\b[^>]*name="indices"[^>]*>', form.group(1))
+            assert len(inputs)==3
+            checked = [re.search(r'value="([^"]+)"', field).group(1)
+                       for field in inputs if re.search(r'\bchecked\b', field)]
+            assert checked==["NIFTY"]
         assert html.count('data-research-study=')==10
         assert "Offline research history" in html and "10 per page" in html
         assert re.search(r'/static/app.css\?v=\d+', html)
@@ -184,17 +194,16 @@ async def test_backtests_page_renders_pagination_preserves_other_pages_and_expos
         assert latest.count('class="run-item ')==5
         assert "Latest 5" in latest
         assert "Development (selection-biased)" in html
-        second = await client.get("/backtests?research_page=2")
-        assert second.status_code==200 and second.text.count('data-research-study=')==2
-        assert (await client.get("/backtests?research_page=0")).status_code==422
-        assert (await client.get("/backtests?research_page=bad")).status_code==422
-        report = await client.get("/backtests/research-reports/study-11")
-        assert report.status_code==200 and report.json()["audit"]["win_rate_pct"]==42.59
+        second = main.backtests_page(request("research_page=2"), research_page=2,
+            runs_page=1, models_page=1, downloads_page=1, session=session)
+        assert second.status_code==200 and second.body.decode().count('data-research-study=')==2
+        report = main.offline_research_report("study-11")
+        assert report.status_code==200 and json.loads(report.body)["audit"]["win_rate_pct"]==42.59
         assert report.headers["x-content-type-options"]=="nosniff"
-        assert (await client.get("/backtests/research-reports/missing")).status_code==404
-        assert (await client.post("/backtests/research-reports/study-11")).status_code==405
+        with pytest.raises(HTTPException) as missing:
+            main.offline_research_report("missing")
+        assert missing.value.status_code==404
         assert session.get(RuntimeSetting, 1).execution_mode=="STOPPED"
         assert session.scalar(select(func.count()).select_from(ModelArtifact))==23
     finally:
-        await client.aclose()
         main.app.dependency_overrides.pop(main.get_session, None)

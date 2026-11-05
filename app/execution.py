@@ -96,7 +96,14 @@ class ExecutionService:
             connected, _ = await broker.health()
             reconciled, _ = await reconcile(session, broker)
         quote_age = (datetime.now(UTC) - quote.timestamp.astimezone(UTC)).total_seconds()
-        allowed, reason = can_enter(limits=limits, open_positions=open_positions, trades_today=len(closed_today), consecutive_losses=consecutive, realized_pnl_today=sum((row.net_pnl for row in closed_today), Decimal("0")), quote_fresh=quote_age <= int(settings["max_quote_age_seconds"]), broker_connected=connected, reconciled=reconciled)
+        mode = runtime.execution_mode
+        expected = quote.ask if mode == "LIVE" else paper_fill("BUY", quote.bid, quote.ask, Decimal(settings["paper_slippage_pct"]), contract.tick_size)
+        plan = position_size(expected, contract.lot_size, limits, mode)
+        if not plan.allowed:
+            signal.status, signal.rejection_reason = "REJECTED", plan.reason
+            session.commit()
+            raise ExecutionError(plan.reason)
+        allowed, reason = can_enter(limits=limits, open_positions=open_positions, trades_today=len(closed_today), consecutive_losses=consecutive, realized_pnl_today=sum((row.net_pnl for row in closed_today), Decimal("0")), quote_fresh=quote_age <= int(settings["max_quote_age_seconds"]), broker_connected=connected, reconciled=reconciled, planned_loss=plan.planned_loss)
         if not allowed:
             signal.status, signal.rejection_reason = "REJECTED", reason
             if reason in {"Daily-loss limit reached", "Consecutive-loss limit reached"}:
@@ -112,13 +119,6 @@ class ExecutionService:
                 )
             session.commit()
             raise ExecutionError(reason)
-        mode = runtime.execution_mode
-        expected = quote.ask if mode == "LIVE" else paper_fill("BUY", quote.bid, quote.ask, Decimal(settings["paper_slippage_pct"]), contract.tick_size)
-        plan = position_size(expected, contract.lot_size, limits, mode)
-        if not plan.allowed:
-            signal.status, signal.rejection_reason = "REJECTED", plan.reason
-            session.commit()
-            raise ExecutionError(plan.reason)
         simulated = mode in {"SHADOW", "PAPER"}
         order = Order(provider=provider, signal_id=signal_id, mode=mode, purpose="ENTRY", tag=f"np{signal_id[:18]}", instrument_key=contract.instrument_key, trading_symbol=contract.trading_symbol, side="BUY", quantity=plan.quantity, requested_price=expected, status="COMPLETE" if simulated else "CREATED", filled_quantity=plan.quantity if simulated else 0, average_price=expected if simulated else None)
         session.add(order)

@@ -26,20 +26,30 @@ def test_requested_capital_and_risk_defaults():
     assert DEFAULTS["reward_risk"] == "1.5"
 
 
-def test_risk_settings_route_accepts_requested_three_percent_not_more(session):
+@pytest.mark.parametrize("invalid", [
+    {"risk_per_trade_pct": "5.01"},
+    {"daily_loss_limit_pct": "7.01"},
+    {"risk_per_trade_pct": "0"},
+    {"daily_loss_limit_pct": "0"},
+    {"risk_per_trade_pct": "-1"},
+    {"daily_loss_limit_pct": "-1"},
+])
+def test_risk_settings_route_accepts_five_and_seven_percent_not_more(session, invalid):
     from decimal import Decimal
     from app.main import save_risk
     from app.models import Setting
-    values = dict(paper_capital=Decimal("100000"),risk_per_trade_pct=Decimal("3"),
-        daily_loss_limit_pct=Decimal("5"),max_trades_per_day=5,max_consecutive_losses=2,
+    values = dict(paper_capital=Decimal("100000"),risk_per_trade_pct=Decimal("5"),
+        daily_loss_limit_pct=Decimal("7"),max_trades_per_day=5,max_consecutive_losses=2,
         premium_emergency_stop_pct=Decimal("25"),reward_risk=Decimal("1.5"),
         paper_slippage_pct=Decimal("0.05"),session=session)
     response = save_risk(**values)
     assert "Risk+settings+saved" in response.headers["location"]
-    assert session.get(Setting,"risk_per_trade_pct").value == "3"
-    response = save_risk(**{**values,"risk_per_trade_pct":Decimal("3.1")})
+    assert session.get(Setting,"risk_per_trade_pct").value == "5"
+    assert session.get(Setting,"daily_loss_limit_pct").value == "7"
+    saved = {row.key: row.value for row in session.query(Setting).all()}
+    response = save_risk(**{**values, **{key: Decimal(value) for key, value in invalid.items()}})
     assert "safe+limits" in response.headers["location"]
-    assert session.get(Setting,"risk_per_trade_pct").value == "3"
+    assert {row.key: row.value for row in session.query(Setting).all()} == saved
 
 
 def test_new_backtest_snapshots_daily_limit_and_defaults(session,monkeypatch):
@@ -61,6 +71,36 @@ def test_new_backtest_snapshots_daily_limit_and_defaults(session,monkeypatch):
     values = json.loads(run.configuration_json)
     assert response.status_code == 303 and submitted == [run.id]
     assert values["daily_loss_limit_pct"] == "5" and values["risk_pct"] == "3"
+    assert values["max_trades_per_day"] == "5" and values["max_consecutive_losses"] == "2"
+    assert values["premium_emergency_stop_pct"] == "25" and values["reward_risk"] == "1.5"
+
+
+def test_backtest_snapshots_saved_portfolio_limits(session, monkeypatch):
+    from decimal import Decimal
+    from app import main
+    from app.models import BacktestRun, Setting
+    from sqlalchemy import select
+    import json
+    for key, value in {"risk_per_trade_pct": "5", "daily_loss_limit_pct": "7",
+                       "max_trades_per_day": "20", "max_consecutive_losses": "5"}.items():
+        session.get(Setting, key).value = value
+    session.commit()
+    submitted = []
+    monkeypatch.setattr(main.backtest_service, "submit", submitted.append)
+    response = main.start_backtest(
+        indices=["NIFTY"], start_date=date(2026, 10, 26), end_date=date(2026, 10, 30),
+        capital=Decimal("100000"), risk_pct=Decimal("5"), slippage_pct=Decimal("0.05"),
+        historical_provider="GROWW", cost_model="GROWW", strategy_mode="RULE_ONLY",
+        strike_policy="ATM_ITM1", entry_delay_bars=1, minimum_option_volume=1,
+        maximum_spread_pct=Decimal("1.5"), session=session,
+    )
+    assert response.status_code == 303 and submitted
+    values = json.loads(session.scalar(select(BacktestRun)).configuration_json)
+    assert {key: values[key] for key in ("risk_pct", "daily_loss_limit_pct",
+        "max_trades_per_day", "max_consecutive_losses", "premium_emergency_stop_pct",
+        "reward_risk")} == {"risk_pct": "5", "daily_loss_limit_pct": "7",
+        "max_trades_per_day": "20", "max_consecutive_losses": "5",
+        "premium_emergency_stop_pct": "25", "reward_risk": "1.5"}
 
 
 def test_splits_group_days_purge_boundaries_and_exclude_reserved_window():

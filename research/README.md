@@ -1,5 +1,69 @@
 # NIFTY research ledger and continuation
 
+## Decision-parity and risk foundation — 4 November 2026
+
+The user authorised the architecture correction identified by the full-system
+audit. No strategy/model was selected, no threshold or saved trading setting
+was changed, and no live order was enabled. Runtime and the parallel observer
+now persist immutable `decision-snapshot-v2` evidence containing verified-only
+spot/futures source hashes, the exact computed feature row, model contract,
+settings, option-selection evidence and final decision. The read-only
+`/api/decision-parity` report rebuilds captured market snapshots and requires
+at least 100 reconstructable snapshots across five sessions with 95% exact
+source/feature parity before it can mark the foundation ready for model
+selection. Selected and parallel records from the same provider/index/boundary
+count as one independent parity unit. Pre-final v1 snapshots remain immutable
+but are excluded from v2 acceptance. Snapshot collection begins only after the application process
+is restarted with this code; historical records are not fabricated.
+Post-restart validation captured three v2 records over two independent NIFTY
+boundaries; both reconstructed exactly (100%), but support remains false at
+2/100 boundaries and one of five required sessions.
+
+`market_frame_for_boundary` now rejects unverified spot/futures rows, and
+backtest underlying exit paths do the same. Position sizing now enforces both
+planned premium-stop risk and whole-premium cash affordability, records maximum
+premium exposure, and rejects a new trade when its planned stop would exceed
+the remaining daily-loss budget. The saved 100000/5%/7%/20-trade settings and
+SHADOW artifact9/reference11 remain unchanged. Health now distinguishes the
+last completed candle from the last position-monitor quote. A stale fixed-date
+Groww test and the Python3.14 ASGI test-harness deadlock were corrected without
+weakening application assertions. Full regression plus parity-report test: 241 passed. These changes
+establish evidence and risk invariants; they do not establish profitability.
+
+## Fixed multi-strategy batch — 4 November 2026
+
+See [full multi-strategy diagnostic](multi-strategy-20261104/README.md). The
+user-requested fixed first-of-five setup policy was tested on the same verified
+NIFTY history and one-lot option-cost proxy as a rule-only ORB control. In the
+already exposed 2026 period, the union had 179 completed first-daily trades,
+39.11% net wins, −₹18,783.24 after estimated costs and −₹20,530.36 at double
+slippage; the ORB rule control had 174 completed, 40.23%, −₹13,088.77. No gate
+for profitability, coverage, drawdown, stability or supported improvement
+passed. The spot-VWAP reversion arm was structurally unreachable because the
+stored spot index volume is zero, so it was retained as a rejected data-definition
+attempt, not presented as a negative mean-reversion test. No new strategy or
+model was selected. Historical quotes remain unavailable for final validation.
+
+## Latest alignment diagnostic — 4 November 2026
+
+See [portfolio replay alignment](portfolio-alignment-20261104/README.md).
+New backtests snapshot saved portfolio limits, and eight exact 2–3 November
+option contract-days are complete. A fixed replay of artifact 9 **failed
+signal/contract parity** with observed SHADOW trades: only one matching entry,
+despite seven proxy and eight observed trades. The proxy's positive net is not
+model improvement or validation. Current runtime settings were 100000/5%/7%/
+20 trades/five consecutive losses at this diagnostic. Further model selection
+requires feature/selection/quote parity and independent fresh evidence.
+
+**Indicator warm-up follow-up:** the backtest now reads up to 1,500 prior
+verified spot candles with corresponding futures context and excludes those
+dates from entries. On the same two inspected days, the corrected proxy yielded
+9 trades/−₹1,612.90 and matched 2 of 8 observed signal/contract pairs. The
+earlier +₹3,112.66 proxy result was an indicator-history artifact, not model
+improvement. Six entries remain unmatched; see the warm-up specification,
+report, comparison and limits in the linked ledger. No model was selected.
+
+
 ## Current conclusion — 25 October 2026
 
 No model has established the requested >70% realised net win rate with the
@@ -139,6 +203,45 @@ not2767 independent trades. Eight focused and177 total tests passed; all source,
 reference, specification and prepared/prediction snapshot hashes verified.
 
 ## Next follow-up — fresh evidence only, no offline search queued
+
+### Matched failure audit — 28 October 2026
+
+**Human-authorised follow-up completed:** see
+[`protocol-alignment-20261028/README.md`](protocol-alignment-20261028/README.md).
+525 missing NIFTY option candles were appended for the seven exact observed
+contract-days on26–27 October; download11 complete, verified pre-import backup,
+no existing candles/observations/settings/models overwritten. All46 signal/entry
+pairs and both fixed geometry replay arms are complete. Geometry changed9 exit
+bars and2 net-win labels;5 aligned candle labels disagree with original quote
+outcomes. These are diagnostics, not a win-rate improvement or fresh test.
+New `parallel-shadow-v2` uses signal-close barriers and frozen one-lot risk/cash
+eligibility for daily evaluation, retaining raw ineligible rows and legacy v1
+outcomes. Missing eligibility/first outcomes cannot be replaced by later winners.
+Model9/reference11, SHADOW,100000/3%/5%/RR1.5 and0.05% slippage are unchanged.
+44 focused tests passed; wider regression219 passed with the previously stalled
+HTTP integration test deselected. After the human authorised starting the app,
+final health verified v2/SHADOW/model9/reference11 without runtime errors.
+No retraining or new learner/cutoff search ran.
+Future checks must keep v1/v2 separate and treat the earlier missing-option
+blocker below as the audit's original state, now resolved by this follow-up.
+
+The human-requested matched audit is complete:
+[`matched-failure-20261028/README.md`](matched-failure-20261028/README.md).
+116 quote selections,46 reference scores,33 scoreable selected-model scores and
+all46 closed-trial accounting/exit checks reproduced. No new model/threshold
+change is justified. The reference observer anchors barriers to a current quote,
+unlike selected Shadow/training's signal close (median gap0.082ATR, max0.537ATR).
+Only22/46 research entries satisfy fixed100000/3% one-lot risk/cash rules; all24
+27 October observations are ineligible. Eligible first-daily reference-filter
+and unfiltered comparisons are identical on the sole eligible date26 October.
+Current-candle reconstruction differs from140 recorded26 October feature rows
+in four opening-input fields, without changing setup directions; revisions are
+a possible explanation, not an established root cause. Exact same-session option
+replay has0/46 signal/entry pairs and remains blocked on missing26–27 October
+option history. Future work is a separately approved data import and versioned
+protocol alignment, NOT another learner/cutoff grid. Keep legacy observations,
+model9/reference11, runtime/risk settings and reserved option outcomes unchanged.
+Run-01 export failure was retained; run-02 fixes JSON scalar serialization only.
 
 No objectively supported distinct offline experiment remains queued. Do not
 invent another indicator, learner, capital, window or cutoff variant to reuse

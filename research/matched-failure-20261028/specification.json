@@ -1,0 +1,75 @@
+{
+  "version": "matched-failure-audit-v1",
+  "created_at_utc": "2026-10-28T03:01:16.867Z",
+  "scope": {
+    "provider": "GROWW",
+    "index": "NIFTY",
+    "start_ist": "2026-10-26",
+    "end_ist": "2026-10-27",
+    "selected_artifact": 9,
+    "research_reference": 11
+  },
+  "kind": "Previously inspected forward-evidence diagnostic, not a new blind model-selection experiment",
+  "source_hashes": {
+    "research/matched_failure_audit.py": "17c4192217ea39a7f526039afb6b7e11be42056325727b96a1ecc36e4de40901",
+    "tests/test_matched_failure_audit.py": "8974f4f72014f5bb618ac3f5ba060f6f9fd34296943242468a6206d34d71b86b",
+    "app/strategy.py": "7d4c7a5094d6cc7c4ce557da90d8264647f70d62fc7769305f790069a62fe786",
+    "app/market_frames.py": "bde080a297b3e215f47d26569f54234dc2c134d554057d8dd49ebb6ff52c0ef2",
+    "app/parallel_shadow.py": "e73c27fb5bab064853c812fe60ce817dc1061c52dbc4120bff2183e0856f7b89",
+    "app/runtime.py": "77807925cfd42cdadfe0fba92900bab776080ed9174e107c04679dd1d107cc85",
+    "app/execution.py": "c03c7c6ff4191819ce424974e79667f63984f3ec26d9b05304abd1cc04e75fc7",
+    "app/v4_training.py": "b6052b3d02caf8172813b63eda9e82a428b7a514da478af922aabe4c865058fa",
+    "app/backtest.py": "1cc60de239673066ec2ab064a330c3badc1eb9d11c0d397ece68a4bd760fc60f",
+    "app/selection_audit.py": "7576476d3ed6ede27464e914fd9d450f384f7cc968f557777827f433c66d9cd1",
+    "app/option_selector.py": "3e21ac76965c72a59f7da6c325282af8eef9b46f3619a682c6229d72055e59a8",
+    "app/risk.py": "f8de1f566974f5a57703b3494472c560476fadf216786e5826ad989ba93909b8",
+    "app/shadow_dashboard.py": "40983f4828162f0e26a12bdc9357ce579f153f687caa3dc82df36b9b6661f615",
+    "models/candidates/candidate-v5-dedup-20261022T210923465217.metadata.json": "956b3f9f359bc107ce762cf9925cdc3e53690a663ea96b1558341f1031847603",
+    "models/candidates/candidate-v6-gated-20261023T154700131303.metadata.json": "1b92a91d5134f7afe156e315000c794d88a71983a8ee96318879ff444c6ee88a"
+  },
+  "comparisons": [
+    "replay saved quote selection against original decision clock",
+    "recompute frozen model scores from stored features without fitting",
+    "causal current-database feature reconstruction using only candles before each signal close boundary; revisions remain a confounder",
+    "match signal-close and current-quote underlying anchors; quantify geometry not counterfactual profitability",
+    "verify frozen entry/exit quotes, causality, fees, net labels and exit reasons",
+    "compare first eligible executable and first eligible score-passing trial per family/direction/protocol/day, preserving unknown first outcomes",
+    "check exact same-contract signal and next-bar historical option coverage; no substitutes",
+    "match selected-model signal scores to reference ORB trials by provider/index/bar/contract; distinguish different collection clocks"
+  ],
+  "policy": {
+    "capital": 100000,
+    "risk_per_trade_pct": 3,
+    "daily_loss_limit_pct": 5,
+    "quantity": "one whole historical/runtime contract lot",
+    "entry_eligibility": "cash affordability and gross 25% premium-stop risk within 3% capital, before outcomes",
+    "grouping": "provider/index/model/protocol hash/family/direction; never combine slippage settings",
+    "selection": "first by observed_at,id before reading outcome; incomplete/open first stays unknown",
+    "minimum_target_selected_trades": 100,
+    "minimum_target_net_win_pct_exclusive": 70,
+    "freshness": "Two observed dates cannot establish robust generalisation regardless of row count",
+    "acceptance": "No deployment or model selection. Any feature/score/selection reproduction discrepancy requires diagnosis; exact reproduced geometry difference warrants protocol-alignment proposal only. Any positive paired result is descriptive until independent support.",
+    "numeric_tolerance": {
+      "feature_abs": 1e-9,
+      "feature_rel": 1e-7,
+      "score_abs": 1e-7,
+      "price_abs": 0.0002
+    }
+  },
+  "forbidden": [
+    "model fitting or threshold search",
+    "reserved 2026-10-14 through 2026-10-23 outcome reads",
+    "broker APIs or live orders",
+    "runtime/model/risk mutations",
+    "future paths to select entries",
+    "replace unknown outcomes with later winners",
+    "claim candle proxies or poll samples are broker fills"
+  ],
+  "limitations": [
+    "No historical bid/ask or intrabar quote path can be invented",
+    "Source candles may have been revised since decision; reconstruction mismatch alone does not prove live feature bug",
+    "Observed exit timestamps are samples; changing anchor can change earlier exit timing that endpoint evidence cannot reconstruct",
+    "Research one-lot observations are not the selected model9 portfolio",
+    "Historical research has been searched repeatedly; no new success claim"
+  ]
+}

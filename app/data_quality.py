@@ -2,13 +2,26 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from collections import Counter
-from datetime import UTC, datetime, time
+from datetime import UTC, date, datetime, time
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .models import Candle, Instrument
+
+
+# Verified NSE normal-market windows, with five-minute candle START times.
+# Pre-open, inter-session breaks and close/post-close records are not expected
+# to have futures matches. Do not exempt whole dates or relax the 90% gate.
+# NSE/MSD/61893: https://nsearchives.nseindia.com/content/circulars/MSD61893.pdf
+# NSE/FAOP/70320: https://nsearchives.nseindia.com/content/circulars/FAOP70320.pdf
+_SPECIAL_SESSION_WINDOWS = {
+    date(2024, 5, 18): ((time(9, 15), time(10)), (time(11, 30), time(12, 30))),
+    date(2025, 10, 21): ((time(13, 45), time(14, 45)),),
+}
+_REGULAR_SESSION_WINDOWS = ((time(9, 15), time(15, 30)),)
+_IST = ZoneInfo("Asia/Kolkata")
 
 
 @dataclass(frozen=True)
@@ -35,20 +48,32 @@ def _utc_naive(value: datetime) -> datetime:
     return (value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)).replace(tzinfo=None)
 
 
+def _session_stamps(values):
+    """Map UTC-normalised timestamps to their dated normal-market window.
+
+    This is a coverage calendar, not permission to trade special sessions.
+    Unlisted dates retain the existing regular-hours behaviour.
+    """
+    result = {}
+    for value in values:
+        stamp = _utc_naive(value)
+        local = stamp.replace(tzinfo=UTC).astimezone(_IST)
+        windows = _SPECIAL_SESSION_WINDOWS.get(local.date(), _REGULAR_SESSION_WINDOWS)
+        for start, end in windows:
+            if start <= local.time() < end:
+                result[stamp] = (local.date(), start, end)
+                break
+    return result
+
+
 def futures_alignment_gaps(spot_values, future_values) -> list[str]:
     """Find observed spot sessions with less than 90% futures alignment.
 
-    Use actual regular-session spot timestamps, so holidays and pre-open
-    records do not become false missing sessions. Duplicate future contracts
-    at the same timestamp count only once.
+    Use observed spot timestamps inside normal-market windows, including the
+    verified special sessions above. Duplicate future contracts at the same
+    timestamp count only once. Actual missing in-session matches still fail.
     """
-    zone = ZoneInfo("Asia/Kolkata")
-    expected = {}
-    for value in spot_values:
-        stamp = _utc_naive(value)
-        local = stamp.replace(tzinfo=UTC).astimezone(zone)
-        if time(9, 15) <= local.time() < time(15, 30):
-            expected[stamp] = local.date().isoformat()
+    expected = {stamp: window[0].isoformat() for stamp, window in _session_stamps(spot_values).items()}
     futures = {_utc_naive(value) for value in future_values}
     counts = Counter(expected.values())
     matched = Counter(day for stamp, day in expected.items() if stamp in futures)
@@ -56,12 +81,11 @@ def futures_alignment_gaps(spot_values, future_values) -> list[str]:
 
 
 def _missing_intervals(values: list[datetime]) -> int:
-    if len(values) < 2:
-        return 0
-    normalized = sorted(_utc_naive(value) for value in values)
+    sessions = _session_stamps(values)
+    normalized = sorted(sessions)
     missing = 0
     for previous, current in zip(normalized, normalized[1:]):
-        if previous.date() != current.date():
+        if sessions[previous] != sessions[current]:
             continue
         gap = int((current - previous).total_seconds() // 300)
         if gap > 1:
@@ -111,7 +135,9 @@ def research_readiness(session: Session) -> list[DataReadiness]:
                     Instrument.metadata_verified.is_(False),
                 )
             ) or 0
-            spot_stamps = {_utc_naive(value) for value in spot_values}
+            # Keep raw candle counts, but use the same normal-session
+            # denominator as the readiness gate and missing-interval report.
+            spot_stamps = set(_session_stamps(spot_values))
             future_stamps = {_utc_naive(value) for value in future_values}
             aligned = len(spot_stamps & future_stamps)
             gap_days = futures_alignment_gaps(spot_values, future_values)

@@ -1,0 +1,173 @@
+{
+  "kind": "matched-observed-options-v1",
+  "snapshot_sha256": "b1329ef2ab050e0827b4c39dce5489e1adfbcd992f42ba1d34ca67db2b319a9d",
+  "targets": [
+    {
+      "day": "2026-10-26",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-27Oct26-22600-CE",
+        "trading_symbol": "NIFTY26OCT22600CE",
+        "exchange": "NSE",
+        "expiry": "2026-10-27",
+        "strike": "22600.00",
+        "lot_size": 65,
+        "tick_size": "0.0500",
+        "underlying_code": "NIFTY",
+        "option_type": "CE",
+        "provider": "GROWW"
+      },
+      "observation_ids": [
+        "dab7e9025a0a5f6da79c455fdf53a469",
+        "7ba9552478c65e4d9d80020e000caf45",
+        "be610b203cc452168660999c0f1fa1ed",
+        "29122b9220735003a3cbfbd684fa0793",
+        "4be77ba26a0958d39c08b50a0d197961",
+        "a0e9d1b28a145630801e9532db94965e",
+        "d96c0ae8d50c592296e183c424d965f3",
+        "6e916efb8cdf5b33bf8418e799575074"
+      ]
+    },
+    {
+      "day": "2026-10-26",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-27Oct26-22650-CE",
+        "trading_symbol": "NIFTY26OCT22650CE",
+        "exchange": "NSE",
+        "expiry": "2026-10-27",
+        "strike": "22650.00",
+        "lot_size": 65,
+        "tick_size": "0.0500",
+        "underlying_code": "NIFTY",
+        "option_type": "CE",
+        "provider": "GROWW"
+      },
+      "observation_ids": [
+        "3403dd7fb9fa5ea39efe70f284e75bfe",
+        "58149db3c5a851b7a1c9ba242c4e004d",
+        "53ec209645fe5658937f78b5e57da9c3",
+        "2136e4fc4f1a5f35bc9c88403ca41797",
+        "522ea7a9b59d5818b00cb30fa542ed2d",
+        "2a0c22c116665e5d87324f0bb2b3cc6c",
+        "6d6b8982f9d158acab0f504a654af96a"
+      ]
+    },
+    {
+      "day": "2026-10-26",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-27Oct26-22700-CE",
+        "trading_symbol": "NIFTY26OCT22700CE",
+        "exchange": "NSE",
+        "expiry": "2026-10-27",
+        "strike": "22700.00",
+        "lot_size": 65,
+        "tick_size": "0.0500",
+        "underlying_code": "NIFTY",
+        "option_type": "CE",
+        "provider": "GROWW"
+      },
+      "observation_ids": [
+        "d8adf8364d1f513cbbf1d16b307c8cbb",
+        "81e946c462765612a8d147e89c8bc17b",
+        "27e363d245ab5f0f93360158f9451d1d",
+        "31214146698c5d26bd42757e2bf194bd",
+        "c8b9f226d69c5bfd85a4192362c2b8e8",
+        "2c574e4309d05a83bb25eee97492b1c1",
+        "d6b2da8dfdaa5baeb495a28d3864b189"
+      ]
+    },
+    {
+      "day": "2026-10-27",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-03Nov26-22700-CE",
+        "trading_symbol": "NIFTY26N0322700CE",
+        "exchange": "NSE",
+        "expiry": "2026-11-03",
+        "strike": "22700.00",
+        "lot_size": 65,
+        "tick_size": "0.0500",
+        "underlying_code": "NIFTY",
+        "option_type": "CE",
+        "provider": "GROWW"
+      },
+      "observation_ids": [
+        "4e99b983a9a75258987124ab4b9bb66f",
+        "0957f12d809d590e8bc4244b64fd9fe8",
+        "a33c170b1ee85bdfb21367d39af4b947",
+        "7ac79f1142b4536aa123394be87aad70",
+        "5148b67a5dea59b380de6a76361a7a3b",
+        "32c27f9e22a652ada07f01f15c933f9d"
+      ]
+    },
+    {
+      "day": "2026-10-27",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-03Nov26-22750-CE",
+        "trading_symbol": "NIFTY26N0322750CE",
+        "exchange": "NSE",
+        "expiry": "2026-11-03",
+        "strike": "22750.00",
+        "lot_size": 65,
+        "tick_size": "0.0500",
+        "underlying_code": "NIFTY",
+        "option_type": "CE",
+        "provider": "GROWW"
+      },
+      "observation_ids": [
+        "2ea5ff917f555b2e9c6bf334d87ea954",
+        "99474d1d27ef52be9c0129c3673837b0",
+        "62b873eb06f25259b515fbafe10a0a3c",
+        "69e5b58872fa5eaaa52988213182847a",
+        "ce963ec5f9c25c0ba06e72305afdb4cd",
+        "c21d652c81835b87b4f1a828bcfc00a6",
+        "f282b39f9c5d59ceaa8b1b669562e5ed",
+        "42d1086fe95e551980a5808be0b37d5d",
+        "cd19dd264bbf57bea267da896d19f72d",
+        "5b07e6b3827150968426e6ab6ffbdfb5",
+        "1ceaebb14c1b5a2ea3532693c5fef733",
+        "592744a8f1fc549da209cd3ac4e8c209"
+      ]
+    },
+    {
+      "day": "2026-10-27",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-03Nov26-22750-PE",
+        "trading_symbol": "NIFTY26N0322750PE",
+        "exchange": "NSE",
+        "expiry": "2026-11-03",
+        "strike": "22750.00",
+        "lot_size": 65,
+        "tick_size": "0.0500",
+        "underlying_code": "NIFTY",
+        "option_type": "PE",
+        "provider": "GROWW"
+      },
+      "observation_ids": [
+        "996af9fd46185b5397c09a36e3ac000b",
+        "72b455dca54351baab388e3a66a944b4"
+      ]
+    },
+    {
+      "day": "2026-10-27",
+      "contract": {
+        "instrument_key": "NSE-NIFTY-03Nov26-22800-CE",
+        "trading_symbol": "NIFTY26N0322800CE",
+        "exchange": "NSE",
+        "expiry": "2026-11-03",
+        "strike": "22800.00",
+        "lot_size": 65,
+        "tick_size": "0.0500",
+        "underlying_code": "NIFTY",
+        "option_type": "CE",
+        "provider": "GROWW"
+      },
+      "observation_ids": [
+        "e81784d7bcf15c9982f4cf657f49981a",
+        "c4e9f20479565f6395f8ea07910398aa",
+        "eeb657771e135451b2879b21d0a94a14",
+        "218bb790dd885998be4bf4681cd69539"
+      ]
+    }
+  ],
+  "overwrite_existing": false,
+  "scope": "Only observed NIFTY option contract-days on26–27 October2026; no spot/futures refresh or discovery"
+}

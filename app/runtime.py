@@ -11,6 +11,7 @@ from sqlalchemy import select
 
 from .config import config
 from .database import settings_dict
+from .decision_snapshot import record_decision_snapshot
 from .domain import Contract
 from .execution import ExecutionService
 from .mode_control import reconcile
@@ -292,10 +293,26 @@ class RuntimeService:
                 if result is None:
                     continue
                 frame, candle = result
-                decision = decide(frame.iloc[-1], {"india_vix": candle.india_vix, "futures_basis_pct": candle.futures_basis_pct, "pcr": candle.pcr}, model)
+                row = frame.iloc[-1]
+                market_context = {"india_vix": candle.india_vix, "futures_basis_pct": candle.futures_basis_pct, "pcr": candle.pcr}
+                decision = decide(row, market_context, model)
+                market_snapshot = record_decision_snapshot(
+                    session,
+                    provider=provider,
+                    mode=runtime.execution_mode,
+                    underlying_code=code,
+                    boundary=boundary,
+                    stage="MARKET",
+                    model=model,
+                    settings=settings,
+                    market_evidence=result.evidence,
+                    row=row,
+                    context=market_context,
+                    decision=decision,
+                )
                 if decision.direction == "NO_TRADE":
                     signal_id = f"reject-{runtime.execution_mode.lower()}-{provider.lower()}-{code}-{int(candle.timestamp.timestamp())}"
-                    if not session.get(Signal, signal_id): session.add(Signal(provider=provider, id=signal_id, mode=runtime.execution_mode, underlying_code=code, candle_timestamp=candle.timestamp, direction="NO_TRADE", regime=decision.regime, confidence=decision.confidence, status="REJECTED", rejection_reason=decision.reason, decision_json=json.dumps({"features": decision.features, "checks": {"confidence": decision.confidence >= .70, "above_futures_vwap": float(frame.iloc[-1].futures_close) > float(frame.iloc[-1].futures_vwap), "ema9_above_ema20": float(frame.iloc[-1].ema9) > float(frame.iloc[-1].ema20), "breakout": float(frame.iloc[-1].close) > float(frame.iloc[-1].opening_range_high)}}, default=str), model_version=str(model.metadata.get("version", "unknown"))))
+                    if not session.get(Signal, signal_id): session.add(Signal(provider=provider, id=signal_id, mode=runtime.execution_mode, underlying_code=code, candle_timestamp=candle.timestamp, direction="NO_TRADE", regime=decision.regime, confidence=decision.confidence, status="REJECTED", rejection_reason=decision.reason, decision_json=json.dumps({"snapshot_id": market_snapshot.id, "snapshot_hash": market_snapshot.payload_hash, "features": decision.features, "checks": {"above_futures_vwap": float(row.futures_close) > float(row.futures_vwap), "ema9_above_ema20": float(row.ema9) > float(row.ema20), "breakout": float(row.close) > float(row.opening_range_high)}}, default=str), model_version=str(model.metadata.get("version", "unknown"))))
                     continue
                 trading_day = boundary.astimezone(ZoneInfo("Asia/Kolkata")).date()
                 db_contracts = session.scalars(select(Instrument).where(Instrument.provider == provider, Instrument.underlying_code == code, Instrument.option_type == decision.direction, Instrument.active.is_(True), Instrument.metadata_verified.is_(True), Instrument.lot_size > 0, Instrument.valid_from <= trading_day, (Instrument.valid_to.is_(None) | (Instrument.valid_to >= trading_day)))).all()
@@ -310,13 +327,20 @@ class RuntimeService:
                     "delta_min": float(settings["delta_min"]), "delta_max": float(settings["delta_max"]),
                 }
                 selection = select_option(short_list, quotes, spot=spot, direction=decision.direction, trading_day=trading_day, now=observed_at, **quote_filters)
-                record_option_selection(
+                selection_audit = record_option_selection(
                     session, provider=provider, mode=runtime.execution_mode, underlying_code=code,
                     candle_timestamp=candle.timestamp, model_version=str(model.metadata.get("version", "unknown")),
                     direction=decision.direction, spot=spot, contracts=short_list, quotes=quotes,
                     selection=selection, observed_at=observed_at, filters=quote_filters,
                 )
                 if selection.contract is None:
+                    option_snapshot = record_decision_snapshot(
+                        session, provider=provider, mode=runtime.execution_mode,
+                        underlying_code=code, boundary=boundary, stage="OPTION",
+                        model=model, settings=settings, market_evidence=result.evidence,
+                        row=row, context=market_context, decision=decision,
+                        option_evidence=json.loads(selection_audit.evidence_json), observed_at=observed_at,
+                    )
                     signal_id = f"option-{runtime.execution_mode.lower()}-{provider.lower()}-{code}-{int(candle.timestamp.timestamp())}"
                     if not session.get(Signal, signal_id):
                         session.add(Signal(
@@ -324,10 +348,11 @@ class RuntimeService:
                             underlying_code=code, candle_timestamp=candle.timestamp,
                             direction="NO_TRADE", regime=decision.regime, confidence=decision.confidence,
                             status="REJECTED", rejection_reason=f"Option selection: {selection.reason}",
-                            decision_json=json.dumps({"features": decision.features, "selection_reason": selection.reason}, default=str),
+                            decision_json=json.dumps({"snapshot_id": option_snapshot.id, "snapshot_hash": option_snapshot.payload_hash, "features": decision.features, "selection_reason": selection.reason}, default=str),
                             model_version=str(model.metadata.get("version", "unknown")),
                         ))
                 if selection.contract:
+                    quality_context = {}
                     if model.requires_option_context:
                         quality_context = option_quality_context(
                             premium=float(selection.quote.last),
@@ -349,6 +374,13 @@ class RuntimeService:
                             model,
                         )
                         if decision.direction == "NO_TRADE":
+                            option_snapshot = record_decision_snapshot(
+                                session, provider=provider, mode=runtime.execution_mode,
+                                underlying_code=code, boundary=boundary, stage="OPTION",
+                                model=model, settings=settings, market_evidence=result.evidence,
+                                row=row, context={**market_context, **quality_context}, decision=decision,
+                                option_evidence=json.loads(selection_audit.evidence_json), observed_at=observed_at,
+                            )
                             signal_id = f"quality-{runtime.execution_mode.lower()}-{provider.lower()}-{code}-{int(candle.timestamp.timestamp())}"
                             if not session.get(Signal, signal_id):
                                 setup = float(decision.features.get("setup_direction", 0.0))
@@ -372,22 +404,29 @@ class RuntimeService:
                                         ),
                                     )
                                 )
-                                session.add(Signal(provider=provider, id=signal_id, mode=runtime.execution_mode, underlying_code=code, candle_timestamp=candle.timestamp, direction="NO_TRADE", regime=decision.regime, confidence=decision.confidence, status="REJECTED", rejection_reason=decision.reason, decision_json=json.dumps({"features": decision.features, "quality_gate": True, "checks": {"setup_family": setup_family, "candidate_direction": candidate_direction, "quality_score_pct": round(decision.confidence * 100, 1), "required_score_pct": round(required_threshold * 100, 1), "threshold_passed": decision.confidence >= required_threshold}}, default=str), model_version=str(model.metadata.get("version", "unknown"))))
+                                session.add(Signal(provider=provider, id=signal_id, mode=runtime.execution_mode, underlying_code=code, candle_timestamp=candle.timestamp, direction="NO_TRADE", regime=decision.regime, confidence=decision.confidence, status="REJECTED", rejection_reason=decision.reason, decision_json=json.dumps({"snapshot_id": option_snapshot.id, "snapshot_hash": option_snapshot.payload_hash, "features": decision.features, "quality_gate": True, "checks": {"setup_family": setup_family, "candidate_direction": candidate_direction, "quality_score_pct": round(decision.confidence * 100, 1), "required_score_pct": round(required_threshold * 100, 1), "threshold_passed": decision.confidence >= required_threshold}}, default=str), model_version=str(model.metadata.get("version", "unknown"))))
                             continue
+                    option_snapshot = record_decision_snapshot(
+                        session, provider=provider, mode=runtime.execution_mode,
+                        underlying_code=code, boundary=boundary, stage="OPTION",
+                        model=model, settings=settings, market_evidence=result.evidence,
+                        row=row, context={**market_context, **quality_context}, decision=decision,
+                        option_evidence=json.loads(selection_audit.evidence_json), observed_at=observed_at,
+                    )
                     spread = float((selection.quote.ask - selection.quote.bid) / ((selection.quote.ask + selection.quote.bid) / 2) * 100)
                     score = decision.confidence - spread * 0.02 + min(selection.quote.volume / 100000, 1) * 0.08
-                    candidates.append((score, code, candle, decision, selection, frame.iloc[-1]))
+                    candidates.append((score, code, candle, decision, selection, row, option_snapshot))
             session.commit()
             if not candidates: return
             candidates.sort(key=lambda item: item[0], reverse=True)
-            for _, code, candle, decision, selection, _row in candidates[1:]:
+            for _, code, candle, decision, selection, _row, option_snapshot in candidates[1:]:
                 signal_id = f"rank-{runtime.execution_mode.lower()}-{provider.lower()}-{code}-{int(candle.timestamp.timestamp())}"
-                if not session.get(Signal, signal_id): session.add(Signal(provider=provider, id=signal_id, mode=runtime.execution_mode, underlying_code=code, candle_timestamp=candle.timestamp, direction=decision.direction, regime=decision.regime, confidence=decision.confidence, status="REJECTED", rejection_reason="Lower-ranked simultaneous signal", decision_json=json.dumps({"features": decision.features, "ranking": "lower-ranked simultaneous signal"}, default=str), model_version=str(model.metadata.get("version", "unknown"))))
+                if not session.get(Signal, signal_id): session.add(Signal(provider=provider, id=signal_id, mode=runtime.execution_mode, underlying_code=code, candle_timestamp=candle.timestamp, direction=decision.direction, regime=decision.regime, confidence=decision.confidence, status="REJECTED", rejection_reason="Lower-ranked simultaneous signal", decision_json=json.dumps({"snapshot_id": option_snapshot.id, "snapshot_hash": option_snapshot.payload_hash, "features": decision.features, "ranking": "lower-ranked simultaneous signal"}, default=str), model_version=str(model.metadata.get("version", "unknown"))))
             session.commit()
-            _, code, candle, decision, selection, row = candidates[0]
+            _, code, candle, decision, selection, row, option_snapshot = candidates[0]
             atr = Decimal(str(row.atr))
             underlying_stop = Decimal(candle.close) - atr if decision.direction == "CE" else Decimal(candle.close) + atr
-            await self.execution.enter(session, underlying_code=code, candle_time=candle.timestamp, regime=decision.regime, confidence=decision.confidence, direction=decision.direction, underlying_price=Decimal(candle.close), underlying_stop=underlying_stop, contract=selection.contract, quote=selection.quote, moneyness=selection.moneyness, model_version=str(model.metadata.get("version", "unknown")), decision_context={"features": decision.features, "reason": decision.reason, "checks": {"confidence": decision.confidence >= .70, "futures_vwap": f"{row.futures_close} vs {row.futures_vwap}", "ema9_20": f"{row.ema9} vs {row.ema20}", "opening_range": f"{row.close} / {row.opening_range_high} / {row.opening_range_low}"}, "selection": {"instrument": selection.contract.instrument_key, "symbol": selection.contract.trading_symbol, "strike": str(selection.contract.strike), "moneyness": selection.moneyness, "bid": str(selection.quote.bid), "ask": str(selection.quote.ask), "delta": selection.quote.delta, "iv": selection.quote.iv}})
+            await self.execution.enter(session, underlying_code=code, candle_time=candle.timestamp, regime=decision.regime, confidence=decision.confidence, direction=decision.direction, underlying_price=Decimal(candle.close), underlying_stop=underlying_stop, contract=selection.contract, quote=selection.quote, moneyness=selection.moneyness, model_version=str(model.metadata.get("version", "unknown")), decision_context={"snapshot_id": option_snapshot.id, "snapshot_hash": option_snapshot.payload_hash, "features": decision.features, "reason": decision.reason, "checks": {"futures_vwap": f"{row.futures_close} vs {row.futures_vwap}", "ema9_20": f"{row.ema9} vs {row.ema20}", "opening_range": f"{row.close} / {row.opening_range_high} / {row.opening_range_low}"}, "selection": {"instrument": selection.contract.instrument_key, "symbol": selection.contract.trading_symbol, "strike": str(selection.contract.strike), "moneyness": selection.moneyness, "bid": str(selection.quote.bid), "ask": str(selection.quote.ask), "delta": selection.quote.delta, "iv": selection.quote.iv}})
 
     async def monitor(self) -> None:
         with self.session_factory() as session:

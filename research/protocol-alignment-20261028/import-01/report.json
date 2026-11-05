@@ -1,0 +1,120 @@
+{
+  "status": "COMPLETE",
+  "plan_hash": "ab88bccca4a9bea2d8a132159353bd5d125428c9bad1f4daa46a00964a338177",
+  "targets": [
+    {
+      "day": "2026-10-26",
+      "instrument_key": "NSE-NIFTY-27Oct26-22600-CE",
+      "received": 76,
+      "valid": 75,
+      "inserted": 75,
+      "rejected": [
+        {
+          "row": 75,
+          "reason": "outside exact requested session"
+        }
+      ],
+      "missing_timestamps": [],
+      "existing_conflicts_preserved": [],
+      "parsed_rows_hash": "dfb914df3339fa516e1da5a5c4f9f8801cadf147692d21e482ceadd37a6dfd0d"
+    },
+    {
+      "day": "2026-10-26",
+      "instrument_key": "NSE-NIFTY-27Oct26-22650-CE",
+      "received": 76,
+      "valid": 75,
+      "inserted": 75,
+      "rejected": [
+        {
+          "row": 75,
+          "reason": "outside exact requested session"
+        }
+      ],
+      "missing_timestamps": [],
+      "existing_conflicts_preserved": [],
+      "parsed_rows_hash": "879029c7751b4b9ca8a8e0dc867aa3a0adf167e1d32e39577cf188e9d28810c8"
+    },
+    {
+      "day": "2026-10-26",
+      "instrument_key": "NSE-NIFTY-27Oct26-22700-CE",
+      "received": 76,
+      "valid": 75,
+      "inserted": 75,
+      "rejected": [
+        {
+          "row": 75,
+          "reason": "outside exact requested session"
+        }
+      ],
+      "missing_timestamps": [],
+      "existing_conflicts_preserved": [],
+      "parsed_rows_hash": "485620f35f6210e4be8d5d57866e07b882ebd7b2e55e9ee59b3c64d8d1db46b3"
+    },
+    {
+      "day": "2026-10-27",
+      "instrument_key": "NSE-NIFTY-03Nov26-22700-CE",
+      "received": 76,
+      "valid": 75,
+      "inserted": 75,
+      "rejected": [
+        {
+          "row": 75,
+          "reason": "outside exact requested session"
+        }
+      ],
+      "missing_timestamps": [],
+      "existing_conflicts_preserved": [],
+      "parsed_rows_hash": "693cd3c3aa96d060afecf46ea7f34cf889b2266e820ceb7e3efae3ea3f2a5aec"
+    },
+    {
+      "day": "2026-10-27",
+      "instrument_key": "NSE-NIFTY-03Nov26-22750-CE",
+      "received": 76,
+      "valid": 75,
+      "inserted": 75,
+      "rejected": [
+        {
+          "row": 75,
+          "reason": "outside exact requested session"
+        }
+      ],
+      "missing_timestamps": [],
+      "existing_conflicts_preserved": [],
+      "parsed_rows_hash": "27ccedb779d00490afbbbcda82f8ec347d68d4e7ff7edd84189b853403351ac3"
+    },
+    {
+      "day": "2026-10-27",
+      "instrument_key": "NSE-NIFTY-03Nov26-22750-PE",
+      "received": 76,
+      "valid": 75,
+      "inserted": 75,
+      "rejected": [
+        {
+          "row": 75,
+          "reason": "outside exact requested session"
+        }
+      ],
+      "missing_timestamps": [],
+      "existing_conflicts_preserved": [],
+      "parsed_rows_hash": "21db486abda57b5921e721c7b892cb28b2ab25a2202a764be8ac40206e9a1cd8"
+    },
+    {
+      "day": "2026-10-27",
+      "instrument_key": "NSE-NIFTY-03Nov26-22800-CE",
+      "received": 76,
+      "valid": 75,
+      "inserted": 75,
+      "rejected": [
+        {
+          "row": 75,
+          "reason": "outside exact requested session"
+        }
+      ],
+      "missing_timestamps": [],
+      "existing_conflicts_preserved": [],
+      "parsed_rows_hash": "34bc15c5fd28e510a6e904f88fa2a51fe9b6d6b895e97cdf456b63296b8d1ab3"
+    }
+  ],
+  "backup": "/home/ashok/Ashok/trade/data/backups/niftypilot-20261028T032243459441Z-before-matched-option-import.db",
+  "run_id": 11
+}

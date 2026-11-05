@@ -15,18 +15,19 @@ from sqlalchemy import select
 
 from .config import config
 from .database import settings_dict
+from .decision_snapshot import record_decision_snapshot
 from .domain import Contract
 from .market_frames import market_frame_for_boundary
 from .models import Instrument, ModelArtifact, RuntimeSetting, Setting, SetupObservation
 from .option_selector import option_candidates, select_option
 from .providers import provider_name
 from .risk import option_charges, paper_fill
+from .research_protocol import PROTOCOL, one_lot_eligibility, risk_snapshot, signal_barriers
 from .selection_audit import record_option_selection
 from .strategy import FEATURE_SCHEMA_V6, SETUP_FAMILIES, RegimeModel, feature_values, setup_direction
 from .v4_training import option_quality_context
 
 IST = ZoneInfo("Asia/Kolkata")
-PROTOCOL = "parallel-shadow-v1"
 
 
 def utc(stamp):
@@ -94,6 +95,7 @@ class ParallelShadowService:
                 "model_available": self.model.available, "model_error": self.model_error,
                 "loop_enabled": config.trading_loop_enabled,
                 "research_only": True, "last_observation": self.last_observation,
+                "protocol_version": PROTOCOL,
                 "last_monitor": self.last_monitor, "waiting_reason": self.waiting_reason,
                 "error": self.last_error}
 
@@ -152,6 +154,15 @@ class ParallelShadowService:
                     continue
                 frame, candle = result
                 row, day = frame.iloc[-1], local.date()
+                market_context = {"india_vix": candle.india_vix, "pcr": candle.pcr,
+                                  "futures_basis_pct": candle.futures_basis_pct}
+                market_snapshot = record_decision_snapshot(
+                    session, provider=provider, mode="PARALLEL_SHADOW",
+                    underlying_code=code, boundary=boundary, stage="MARKET",
+                    model=self.model, settings=settings,
+                    market_evidence=getattr(result, "evidence", {}), row=row,
+                    context=market_context, observed_at=now,
+                )
                 spot = Decimal(candle.close)
                 contracts = session.scalars(select(Instrument).where(
                     Instrument.provider == provider, Instrument.underlying_code == code,
@@ -175,10 +186,14 @@ class ParallelShadowService:
                            "max_quote_age_seconds": int(settings["max_quote_age_seconds"]),
                            "delta_min": float(settings["delta_min"]), "delta_max": float(settings["delta_max"])}
                 protocol = {"selection_policy": "ATM_ITM1", "slippage_pct": settings["paper_slippage_pct"],
-                            "premium_stop_pct": "25", "atr_stop": 1, "atr_target": 1.5,
+                            "premium_stop_pct": settings["premium_emergency_stop_pct"], "atr_stop": 1,
+                            "atr_target": settings["reward_risk"], "underlying_anchor": "signal_close",
+                            "risk_settings": risk_snapshot(settings),
+                            "evaluation_eligibility": "decision-time one-lot premium-stop risk and cash; raw counterfactuals retained",
                             "quantity_policy": "ONE_LOT", "exit_time_ist": "15:20", "poll_seconds": 15,
                             "max_quote_age_seconds": filters["max_quote_age_seconds"], "quote_filters": filters,
                             "research_artifact_id": self.artifact_id, "feature_schema": self.model.metadata.get("feature_schema"),
+                            "market_snapshot_id": market_snapshot.id, "market_snapshot_hash": market_snapshot.payload_hash,
                             "fills": "observed ask/bid plus slippage",
                             "limitation": "Polling observes prices, not every intrabar touch; overlapping trials are not portfolio returns"}
                 for family, direction in directions.items():
@@ -200,33 +215,47 @@ class ParallelShadowService:
                     audit = record_option_selection(session, provider=provider, mode="PARALLEL_SHADOW", underlying_code=code,
                         candle_timestamp=candle.timestamp, model_version=obs.model_version or "none", direction=direction,
                         spot=spot, contracts=shortlists[direction], quotes=quotes, selection=selection,
-                        observed_at=captured, filters=filters, scope=family)
+                        observed_at=captured, filters=filters, scope=family, protocol_version=PROTOCOL)
                     obs.selection_json = audit.evidence_json
                     obs.status, obs.reason = "QUOTE_REJECTED", selection.reason
                     if not selection.contract:
                         continue
                     contract, quote = selection.contract, selection.quote
-                    values = feature_values(row, {"setup_family": family, "india_vix": candle.india_vix,
-                        "pcr": candle.pcr, "futures_basis_pct": candle.futures_basis_pct,
-                        **option_quality_context(premium=float(quote.last), volume=quote.volume,
+                    quality_context = option_quality_context(premium=float(quote.last), volume=quote.volume,
                         open_interest=quote.open_interest, expiry=contract.expiry, strike=contract.strike,
-                        spot=float(spot), trading_day=day)})
+                        spot=float(spot), trading_day=day)
+                    values = feature_values(row, {"setup_family": family, **market_context, **quality_context})
                     obs.features_json = encode(values)
                     self.score(obs, values)
+                    option_snapshot = record_decision_snapshot(
+                        session, provider=provider, mode="PARALLEL_SHADOW",
+                        underlying_code=code, boundary=boundary, stage="OPTION",
+                        model=self.model, settings=settings,
+                        market_evidence=getattr(result, "evidence", {}), row=row,
+                        context={"setup_family": family, **market_context, **quality_context},
+                        option_evidence={**json.loads(audit.evidence_json),
+                            "quality_score": obs.quality_score,
+                            "research_threshold": obs.research_threshold,
+                            "quality_passed": obs.quality_passed},
+                        observed_at=captured,
+                    )
+                    obs.selection_json = encode({**json.loads(obs.selection_json),
+                        "decision_snapshot_id": option_snapshot.id,
+                        "decision_snapshot_hash": option_snapshot.payload_hash})
                     underlying = quotes.get(underlying_key)
                     atr = Decimal(str(row.atr))
                     if not fresh(underlying, captured, filters["max_quote_age_seconds"]) or not atr.is_finite() or atr <= 0:
                         obs.reason = "Fresh underlying quote or positive ATR unavailable"
                         continue
-                    sign = Decimal(1 if direction == "CE" else -1)
                     obs.instrument_key, obs.trading_symbol, obs.exchange = contract.instrument_key, contract.trading_symbol, contract.exchange
                     obs.quantity, obs.tick_size = contract.lot_size, contract.tick_size
                     obs.entry_time = captured
                     obs.entry_price = paper_fill("BUY", quote.bid, quote.ask, Decimal(protocol["slippage_pct"]), contract.tick_size)
-                    obs.premium_stop = obs.entry_price * Decimal("0.75")
-                    obs.underlying_stop = underlying.last - sign * atr
-                    obs.underlying_target = underlying.last + sign * atr * Decimal("1.5")
-                    obs.selection_json = encode({**json.loads(obs.selection_json), "underlying_quote": asdict(underlying)})
+                    obs.premium_stop = obs.entry_price * (1-Decimal(protocol["premium_stop_pct"])/100)
+                    obs.underlying_stop, obs.underlying_target = signal_barriers(
+                        spot, atr, direction, Decimal(protocol["atr_target"]))
+                    obs.selection_json = encode({**json.loads(obs.selection_json), "underlying_quote": asdict(underlying),
+                        "economic_eligibility": one_lot_eligibility(obs.entry_price, contract.lot_size, settings)})
                     obs.status, obs.reason = "OPEN", "Counterfactual opened regardless of research score; no order placed"
                 session.commit()
                 self.last_observation = captured

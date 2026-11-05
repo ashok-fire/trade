@@ -121,6 +121,33 @@ class OptionSelectionAudit(Base):
     evidence_json: Mapped[str] = mapped_column(Text)
 
 
+class DecisionSnapshot(Base):
+    """Immutable signal-time inputs used to audit live/backtest parity."""
+    __tablename__ = "decision_snapshots"
+    __table_args__ = (
+        UniqueConstraint(
+            "provider", "mode", "underlying_code", "boundary", "stage",
+            "model_version", "input_hash", name="uq_decision_snapshot_input",
+        ),
+        Index("ix_decision_snapshot_lookup", "provider", "underlying_code", "boundary"),
+    )
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    protocol_version: Mapped[str] = mapped_column(String(32))
+    provider: Mapped[str] = mapped_column(String(16), index=True)
+    mode: Mapped[str] = mapped_column(String(24), index=True)
+    underlying_code: Mapped[str] = mapped_column(String(24), index=True)
+    boundary: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    stage: Mapped[str] = mapped_column(String(16))
+    model_version: Mapped[str] = mapped_column(String(80))
+    input_hash: Mapped[str] = mapped_column(String(64))
+    payload_hash: Mapped[str] = mapped_column(String(64))
+    spot_candle_id: Mapped[int | None] = mapped_column(Integer)
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    payload_json: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class SetupObservation(Base):
     """Counterfactual research evidence; never a broker order or portfolio trade."""
     __tablename__ = "setup_observations"

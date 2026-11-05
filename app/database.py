@@ -54,7 +54,7 @@ DEFAULTS = {
     "delta_max": "0.60",
     "paper_slippage_pct": "0.05",
     "square_off_time": "15:20",
-    "enabled_indices": "NIFTY,BANK_NIFTY,SENSEX",
+    "enabled_indices": "NIFTY",
     "active_broker": "UPSTOX",
     "parallel_shadow_enabled": "true",
     "parallel_shadow_model_artifact_id": "",

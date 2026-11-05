@@ -19,14 +19,14 @@
 </section>
 <section class="card">
   <h2>Setup comparison</h2>
-  <p>Each candidate uses one lot at observed ask/bid plus frozen slippage, a 1 ATR underlying stop, 1.5 ATR target, 25% premium stop and 15:20 exit. Quotes are polled every 15 seconds; intrabar touches can be missed. Costs are estimates. Overlapping observations are not portfolio returns.</p>
-  <p>Daily metrics select the first executable observation per family/direction/day before checking its outcome. “Quality daily” separately selects the first research-threshold pass. Pending/incomplete first observations are not replaced with later winners. Groups with different providers, indices, models or fill/filter settings remain separate.</p>
+  <p>New v2 candidates use the signal-close underlying anchor, one lot at observed ask/bid plus frozen slippage, and the saved reward/risk and premium-stop settings. One-lot risk/cash eligibility is captured at entry. Raw ineligible counterfactuals are retained; they are not portfolio trades. Legacy v1 rows keep their original quote-anchor rules. Both versions exit at 15:20. Quotes are polled every 15 seconds; intrabar touches can be missed. Costs are estimates.</p>
+  <p>For v2, daily metrics select the first risk/cash-eligible observation per family/direction/day before checking its outcome. Legacy v1 metrics remain raw, without retroactive risk filtering. “Quality daily” separately selects the first eligible research-threshold pass. Pending/incomplete first observations are not replaced with later winners. Portfolio position limits and daily loss state are not replayed. Groups with different protocols, providers, indices, models or fill/filter settings remain separate.</p>
   <div class="table-wrap"><table>
     <thead><tr><th>Group / setup</th><th>Checks / candidates</th><th>Executable / closed / incomplete</th><th>Quote / quality rejects</th><th>First daily: closed / selected</th><th>Win / PF</th><th>Net / costs / max drawdown</th><th>Quality daily: closed / selected · win · net</th></tr></thead>
     <tbody>{% for item in comparisons %}<tr>
       <td title="{{ item.settings }}">{{ item.provider }} · {{ item.code }}<br>{{ item.family }} {{ item.direction }}<br><small>{{ item.model }} · {{ item.protocol }}</small></td>
       <td>{{ item.checks }} / {{ item.candidates }}</td>
-      <td>{{ item.executable }} / {{ item.closed }} / {{ item.incomplete }}</td>
+      <td>{{ item.executable }} / {{ item.closed }} / {{ item.incomplete }}<br><small>{% if item.eligible_only %}{{ item.eligible_entered }} risk/cash eligible · {{ item.eligibility_unknown }} unknown{% else %}Legacy raw outcomes{% endif %}</small></td>
       <td>{{ item.quote_rejected }} / {{ item.quality_rejected }}</td>
       <td>{{ item.all_daily.closed }} / {{ item.all_daily.selected }}</td>
       <td>{{ (item.all_daily.win_rate|string + '%') if item.all_daily.win_rate is not none else '—' }} / {{ item.all_daily.pf }}</td>

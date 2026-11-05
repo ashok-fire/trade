@@ -2,7 +2,7 @@ import json
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.domain import Contract, Quote
 from app.models import OptionSelectionAudit
@@ -35,3 +35,10 @@ def test_recorded_quotes_reproduce_itm_fallback_without_new_prices(session):
     assert replay.moneyness == "ITM1"
     assert replay.reason == result.reason
     assert any(item["rejection_reason"] == "spread too wide" for item in evidence["candidates"])
+    old_evidence = rows[0].evidence_json
+    versioned = record_option_selection(session, **kwargs, protocol_version="parallel-shadow-v2")
+    session.commit()
+    assert versioned.id != rows[0].id
+    assert session.scalar(select(func.count()).select_from(OptionSelectionAudit)) == 2
+    assert rows[0].evidence_json == old_evidence
+    assert json.loads(versioned.evidence_json)["protocol_version"] == "parallel-shadow-v2"

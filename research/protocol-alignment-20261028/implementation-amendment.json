@@ -1,0 +1,9 @@
+{
+  "original_specification_sha256": "1a7f95a7f52962706692495fadefdaeed7f5fc1bf380e4d9b6dbdf8e614bccfa",
+  "old_source_sha256": "54779b367c967484501c9fe0d6f5ab71b1eb937c1ee305eef8e96c8f15a9227a",
+  "source_hash_overrides": {
+    "app/shadow_dashboard.py": "4fde4a497d4d392eeaa95a1c16304c61203dca7ac281968489dd4ea697872d60"
+  },
+  "reason": "Before any v2 observation, harden the preregistered preserve-first-unknown rule: missing decision-time eligibility blocks a later winner, rather than being silently skipped. No geometry, gates, capital, score or historical outcomes changed.",
+  "created_at_utc": "2026-10-28T03:34:52.587Z"
+}

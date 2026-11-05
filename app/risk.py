@@ -26,6 +26,9 @@ class PositionPlan:
     risk_budget: Decimal
     premium_stop: Decimal
     reason: str
+    planned_loss: Decimal = Decimal("0")
+    cash_required: Decimal = Decimal("0")
+    maximum_premium_loss: Decimal = Decimal("0")
 
 
 def limits_from_settings(settings: dict[str, str]) -> RiskLimits:
@@ -61,15 +64,26 @@ def position_size(entry_price: Decimal, lot_size: int, limits: RiskLimits, mode:
         return PositionPlan(False, 0, 0, Decimal("0"), Decimal("0"), "Invalid price or lot size")
     premium_stop = entry_price * (Decimal("1") - limits.premium_emergency_stop_pct / 100)
     risk_per_lot = (entry_price - premium_stop) * lot_size
+    cash_per_lot = entry_price * lot_size
     budget = limits.capital * limits.risk_per_trade_pct / 100
     if risk_per_lot > budget:
-        return PositionPlan(False, 0, 0, budget, premium_stop, "One lot exceeds permitted risk")
-    lots = int((budget / risk_per_lot).to_integral_value(rounding=ROUND_DOWN))
+        return PositionPlan(False, 0, 0, budget, premium_stop, "One lot exceeds permitted risk",
+                            risk_per_lot, cash_per_lot, cash_per_lot)
+    if cash_per_lot > limits.capital:
+        return PositionPlan(False, 0, 0, budget, premium_stop, "One lot exceeds cash capital",
+                            risk_per_lot, cash_per_lot, cash_per_lot)
+    risk_lots = int((budget / risk_per_lot).to_integral_value(rounding=ROUND_DOWN))
+    cash_lots = int((limits.capital / cash_per_lot).to_integral_value(rounding=ROUND_DOWN))
+    lots = min(risk_lots, cash_lots)
     if mode == "LIVE":
         lots = min(lots, limits.live_max_lots)
     if lots < 1:
         return PositionPlan(False, 0, 0, budget, premium_stop, "No whole lot fits permitted risk")
-    return PositionPlan(True, lots * lot_size, lots, budget, premium_stop, "Risk checks passed")
+    quantity = lots * lot_size
+    planned_loss = (entry_price - premium_stop) * quantity
+    cash_required = entry_price * quantity
+    return PositionPlan(True, quantity, lots, budget, premium_stop, "Risk and cash checks passed",
+                        planned_loss, cash_required, cash_required)
 
 
 def can_enter(
@@ -82,12 +96,16 @@ def can_enter(
     quote_fresh: bool,
     broker_connected: bool,
     reconciled: bool,
+    planned_loss: Decimal = Decimal("0"),
 ) -> tuple[bool, str]:
+    daily_limit = limits.capital * limits.daily_loss_limit_pct / 100
+    projected_loss = max(Decimal("0"), -realized_pnl_today) + max(Decimal("0"), planned_loss)
     checks = (
         (open_positions < limits.max_open_positions, "Maximum open positions reached"),
         (trades_today < limits.max_trades_per_day, "Maximum trades per day reached"),
         (consecutive_losses < limits.max_consecutive_losses, "Consecutive-loss limit reached"),
-        (realized_pnl_today > -(limits.capital * limits.daily_loss_limit_pct / 100), "Daily-loss limit reached"),
+        (realized_pnl_today > -daily_limit, "Daily-loss limit reached"),
+        (projected_loss <= daily_limit, "Planned trade risk exceeds remaining daily-loss budget"),
         (quote_fresh, "Market quote is stale"),
         (broker_connected, "Selected broker is disconnected"),
         (reconciled, "Broker and database positions do not match"),

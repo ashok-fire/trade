@@ -1,0 +1,58 @@
+{
+  "schema": "nifty-fixed-multi-setup-candle-proxy-v1",
+  "purpose": "Compare five preregistered NIFTY setup families and their fixed-priority first-daily union against matched rule-only ORB; no training or activation",
+  "source_database": "/tmp/nifty-exact-options-20261104/warmup-offline.db",
+  "database_sha256": "bc7a057ed80ed0e84b78428fcd90a1b277f277f21119bdea40de62a82991b021",
+  "code_path": "/home/ashok/Ashok/trade/research/multi_strategy_study.py",
+  "provider": "GROWW",
+  "index": "NIFTY",
+  "timeframe": "5minute",
+  "start": "2023-01-01",
+  "end_exclusive": "2026-10-14",
+  "development": "2023-01-01..2025-12-31",
+  "exposed_comparison": "2026-01-01..2026-10-13",
+  "reserved_untouched": "2026-10-14..2026-10-23",
+  "arms": [
+    "ORB_CONTROL",
+    "ROLLING_30M",
+    "VWAP_PULLBACK",
+    "RANGE_REJECTION",
+    "VWAP_REVERSION",
+    "GAP_FADE",
+    "FIVE_SETUP_FIRST"
+  ],
+  "priority": [
+    "ROLLING_30M",
+    "VWAP_PULLBACK",
+    "RANGE_REJECTION",
+    "VWAP_REVERSION",
+    "GAP_FADE"
+  ],
+  "signal_rules": {
+    "common": "First signal per complete day only, 09:45<=signal bar start<14:30 IST; >=75 verified regular spot bars and >=90% exact-timestamp verified front-future coverage; current bar closed; ATR>0. No replacement after missing/ineligible first signal.",
+    "ORB_CONTROL": "Spot close outside 09:15-09:35 opening high/low; matching front-future vs VWAP and EMA9 vs EMA20.",
+    "ROLLING_30M": "Spot close beyond previous six same-day five-minute highs/lows, excluding current bar; matching front-future VWAP side and EMA9/EMA20 trend.",
+    "VWAP_PULLBACK": "Existing causal pullback geometry with EMA9/20/50 alignment, wick/previous-close touch, same-side futures VWAP, RSI 45..72 CE or 28..55 PE.",
+    "RANGE_REJECTION": "Current bar touches opening-range edge but closes back inside with reversal candle body and confirming futures VWAP side.",
+    "VWAP_REVERSION": "Previous close more than one ATR beyond previous spot VWAP, current bar reverses toward VWAP while still beyond it; RSI<=45 CE or >=55 PE.",
+    "GAP_FADE": "Opening gap magnitude >0.5 current ATR; first bar reverses toward prior close while gap remains open, with futures VWAP confirmation.",
+    "FIVE_SETUP_FIRST": "Earliest of five alternative first signals per day; ties resolved by frozen priority above, without looking at outcome."
+  },
+  "contract_selection": "Earliest eligible non-expiry-day metadata-verified option expiry; ATM then ITM1; choose first with verified positive-volume exact signal candle; no substitution after chosen next-bar path is absent.",
+  "entry_exit": "One whole lot at next exact five-minute option open +0.05% slippage; signal-close underlying stop one ATR and target 1.5 ATR; premium emergency stop25%; square-off15:20 IST; contiguous option/spot bars; conservative stop-first same bar; actual Groww fee formula in app/risk.py. Double-slippage replay uses 0.10% per side.",
+  "risk": "Research capital INR100000, max one first signal/day, one whole lot cash+estimated-fee affordability, <=5% capital premium-stop risk, saved7% daily loss immaterial with one trade/day. Unknown first outcomes retained. No oversizing.",
+  "comparison": "All arms use same eligible sessions, costs, timeframe and exit rules; paired calendar-day difference of fixed five-setup union vs rule-only ORB with 2000 day-bootstrap draws seed42; unknown paired days reported and not replaced.",
+  "acceptance": "On exposed2026: >=100 completed first-daily selected trades, >=99% selected and ORB coverage, >70% net wins, PF>=1.3, positive net and double-slippage P&L with >=99% stress coverage, drawdown<=INR10000, >=60% positive active months across >=6 active months, paired bootstrap lower95>0. Even all gates cannot establish live readiness because history is exposed and OHLC not executable quotes.",
+  "limitations": [
+    "All historic years have been inspected; not a fresh final test",
+    "No historical bid/ask, quote freshness, delta, IV or exact live option selection",
+    "November4 observed market inspired family choice and is excluded",
+    "Matched ORB control is rule-only in same hours, not selected model9",
+    "No model/threshold/regime router trained or activated; no live or shadow order"
+  ],
+  "code_sha256": "bb6aace1290594baab438579175e813925dcd13baf1b7c32393a6e6d8cae1b63",
+  "preflight_correction": {
+    "prior_spec_sha256": "7da73bf4d11e74be11072fae98e5107f988de8b27f87ffc66a4bd2f664a2e9ee",
+    "reason": "Code expected code_sha256 key; failed before reading any historical outcome or creating output."
+  }
+}

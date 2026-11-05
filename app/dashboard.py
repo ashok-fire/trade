@@ -269,6 +269,7 @@ def backtests_context(session: Session, selected_id: int | None = None, *, runs_
         "model_details": model_details,
         "edge_study": edge_study,
         "option_selection_records": session.scalar(select(func.count()).select_from(OptionSelectionAudit)) or 0,
+        "settings": settings_dict(session),
         "active_broker": settings_dict(session).get("active_broker", "UPSTOX"),
         "default_historical_provider": settings_dict(session).get("default_historical_provider", "UPSTOX"),
     }

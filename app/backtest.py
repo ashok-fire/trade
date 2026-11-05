@@ -93,6 +93,41 @@ def _intrabar_underlying_outcome(
     return None
 
 
+def replay_limits(config: dict, model: RegimeModel | None) -> RiskLimits:
+    """Freeze new portfolio limits; preserve old-run behavior when absent."""
+    legacy_daily_limit = model.metadata.get("daily_trade_limit", 5) if model else 5
+    return RiskLimits(
+        Decimal(str(config["capital"])), Decimal(str(config["risk_pct"])),
+        Decimal(str(config.get("daily_loss_limit_pct", "0.75"))),
+        int(config.get("max_trades_per_day", legacy_daily_limit)),
+        int(config.get("max_consecutive_losses", 2)),
+        1, 1, Decimal(str(config.get("premium_emergency_stop_pct", "25"))),
+        Decimal(str(config.get("reward_risk", "1.5"))),
+    )
+
+
+def replay_spot_candles(
+    session: Session, provider: str, code: str, start_stamp: datetime, end_stamp: datetime,
+) -> tuple[list[Candle], list[Candle]]:
+    """Return bounded prior indicator history and separately counted test candles."""
+    common = (
+        Candle.provider == provider,
+        Candle.underlying_code == code,
+        Candle.data_role == "SPOT",
+        Candle.timeframe == "5minute",
+        Candle.source_verified.is_(True),
+    )
+    period = session.scalars(
+        select(Candle).where(*common, Candle.timestamp >= start_stamp, Candle.timestamp <= end_stamp)
+        .order_by(Candle.timestamp)
+    ).all()
+    prior = session.scalars(
+        select(Candle).where(*common, Candle.timestamp < start_stamp)
+        .order_by(Candle.timestamp.desc()).limit(1500)
+    ).all()[::-1]
+    return prior, period
+
+
 def run_backtest_job(db_url: str, run_id: int, model_path: str) -> None:
     engine = create_engine(db_url, connect_args={"check_same_thread": False, "timeout": 30} if db_url.startswith("sqlite") else {})
     with Session(engine) as session:
@@ -120,11 +155,19 @@ def run_backtest_job(db_url: str, run_id: int, model_path: str) -> None:
                 )
             events: list[dict] = []
             for code_index, code in enumerate(config["indices"]):
-                candles = session.scalars(select(Candle).where(Candle.provider == provider, Candle.underlying_code == code, Candle.data_role == "SPOT", Candle.timeframe == "5minute", Candle.timestamp >= datetime.combine(run.start_date, time.min, tzinfo=UTC), Candle.timestamp <= datetime.combine(run.end_date, time.max, tzinfo=UTC), Candle.source_verified.is_(True)).order_by(Candle.timestamp)).all()
-                if len(candles) < 60:
+                start_stamp = datetime.combine(run.start_date, time.min, tzinfo=UTC)
+                end_stamp = datetime.combine(run.end_date, time.max, tzinfo=UTC)
+                warmup, period_candles = replay_spot_candles(
+                    session, provider, code, start_stamp, end_stamp,
+                )
+                if len(period_candles) < 60:
                     warnings.add(f"{code}: fewer than 60 verified candles")
                     continue
-                future_candles = session.scalars(select(Candle).where(Candle.provider == provider, Candle.underlying_code == code, Candle.data_role == "FUTURE", Candle.timeframe == "5minute", Candle.timestamp >= datetime.combine(run.start_date, time.min, tzinfo=UTC), Candle.timestamp <= datetime.combine(run.end_date, time.max, tzinfo=UTC), Candle.source_verified.is_(True)).order_by(Candle.timestamp)).all()
+                # Match the runtime's rolling indicator context at the first
+                # tested bar. These prior candles warm features, never become
+                # backtest entries or outcomes.
+                candles = [*warmup, *period_candles]
+                future_candles = session.scalars(select(Candle).where(Candle.provider == provider, Candle.underlying_code == code, Candle.data_role == "FUTURE", Candle.timeframe == "5minute", Candle.timestamp >= candles[0].timestamp, Candle.timestamp <= end_stamp, Candle.source_verified.is_(True)).order_by(Candle.timestamp)).all()
                 future_instruments = session.scalars(select(Instrument).where(Instrument.provider == provider, Instrument.underlying_code == code, Instrument.instrument_kind == "FUTURE")).all()
                 futures_frame = front_future_frame(future_candles, future_instruments)
                 if len(futures_frame) < 60:
@@ -141,6 +184,8 @@ def run_backtest_job(db_url: str, run_id: int, model_path: str) -> None:
                 for index in range(50, len(frame)):
                     row = frame.iloc[index]
                     stamp = pd.Timestamp(row.timestamp).to_pydatetime().astimezone(UTC)
+                    if stamp < start_stamp or stamp > end_stamp:
+                        continue
                     source = spot_context_by_time.get(stamp)
                     if source is None:
                         continue
@@ -208,9 +253,7 @@ def run_backtest_job(db_url: str, run_id: int, model_path: str) -> None:
             events.sort(key=lambda item: (-item["decision"].confidence, item["code"]))
             events.sort(key=lambda item: item["time"])
             capital = Decimal(str(config["capital"]))
-            daily_trade_limit = int(model.metadata.get("daily_trade_limit", 5)) if model else 5
-            # Old runs retain their original daily limit; new submissions snapshot it.
-            limits = RiskLimits(capital, Decimal(str(config["risk_pct"])), Decimal(str(config.get("daily_loss_limit_pct", "0.75"))), daily_trade_limit, 2, 1, 1, Decimal("25"), Decimal("1.5"))
+            limits = replay_limits(config, model)
             recorded: list[dict] = []
             position_until: datetime | None = None
             daily: dict[date, dict[str, int | Decimal]] = {}
@@ -300,6 +343,20 @@ def run_backtest_job(db_url: str, run_id: int, model_path: str) -> None:
                 if not plan.allowed:
                     replay_counts["position_size_rejected"] += 1
                     continue
+                permitted, _ = can_enter(
+                    limits=limits,
+                    open_positions=0,
+                    trades_today=int(day_state["trades"]),
+                    consecutive_losses=int(day_state["consecutive_losses"]),
+                    realized_pnl_today=Decimal(day_state["pnl"]),
+                    quote_fresh=True,
+                    broker_connected=True,
+                    reconciled=True,
+                    planned_loss=plan.planned_loss,
+                )
+                if not permitted:
+                    replay_counts["risk_rejected"] += 1
+                    continue
                 underlying_risk = Decimal(str(row.atr))
                 underlying_stop = Decimal(str(row.close)) - underlying_risk if decision.direction == "CE" else Decimal(str(row.close)) + underlying_risk
                 underlying_target = Decimal(str(row.close)) + underlying_risk * limits.reward_risk if decision.direction == "CE" else Decimal(str(row.close)) - underlying_risk * limits.reward_risk
@@ -313,6 +370,7 @@ def run_backtest_job(db_url: str, run_id: int, model_path: str) -> None:
                         Candle.underlying_code == event["code"],
                         Candle.data_role == "SPOT",
                         Candle.timeframe == "5minute",
+                        Candle.source_verified.is_(True),
                         Candle.timestamp >= bars[0].timestamp,
                         Candle.timestamp <= bars[-1].timestamp,
                     )

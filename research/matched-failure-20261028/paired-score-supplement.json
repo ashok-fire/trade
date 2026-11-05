@@ -1,0 +1,104 @@
+{
+  "model9_common_quote_diagnostics": [
+    {
+      "identity": [
+        "GROWW",
+        "NIFTY",
+        "quality-v6-20261023T101725Z",
+        "parallel-shadow-v1",
+        "a48820200885ab4cdef5b2845f9845ac27655d76954c3c7b40e6bf0a6cae2597",
+        "ORB",
+        "CE"
+      ],
+      "entered_trials": 34,
+      "one_lot_risk_cash_eligible": 20,
+      "rule_only": {
+        "selected_days": 1,
+        "completed": 1,
+        "unknown": 0,
+        "net": 1964.51,
+        "win_pct": 100,
+        "pf": null,
+        "entries": [
+          {
+            "day": "2026-10-26",
+            "id": "dab7e9025a0a5f6da79c455fdf53a469",
+            "status": "CLOSED",
+            "net": "1964.51"
+          }
+        ]
+      },
+      "frozen_score": {
+        "selected_days": 1,
+        "completed": 1,
+        "unknown": 0,
+        "net": 2283.47,
+        "win_pct": 100,
+        "pf": null,
+        "entries": [
+          {
+            "day": "2026-10-26",
+            "id": "6d6b8982f9d158acab0f504a654af96a",
+            "status": "CLOSED",
+            "net": "2283.47"
+          }
+        ]
+      },
+      "paired_days": [
+        {
+          "day": "2026-10-26",
+          "baseline_id": "dab7e9025a0a5f6da79c455fdf53a469",
+          "scored_id": "6d6b8982f9d158acab0f504a654af96a",
+          "known": true,
+          "net_difference": 318.96
+        }
+      ],
+      "limitation": "Separate family/protocol diagnostics, not a combined portfolio or independent model selection"
+    },
+    {
+      "identity": [
+        "GROWW",
+        "NIFTY",
+        "quality-v6-20261023T101725Z",
+        "parallel-shadow-v1",
+        "73219d5b913642c7f5e7ffbe24e10df3d0f776ae2785aaa2f6b2f334d7bb275c",
+        "ORB",
+        "CE"
+      ],
+      "entered_trials": 6,
+      "one_lot_risk_cash_eligible": 0,
+      "rule_only": {
+        "selected_days": 0,
+        "completed": 0,
+        "unknown": 0,
+        "net": 0,
+        "win_pct": null,
+        "pf": null,
+        "entries": []
+      },
+      "frozen_score": {
+        "selected_days": 0,
+        "completed": 0,
+        "unknown": 0,
+        "net": 0,
+        "win_pct": null,
+        "pf": null,
+        "entries": []
+      },
+      "paired_days": [],
+      "limitation": "Separate family/protocol diagnostics, not a combined portfolio or independent model selection"
+    }
+  ],
+  "run01_run02_input_hash_equal": true,
+  "feature_mismatch_dates": [
+    "2026-10-26"
+  ],
+  "kind": "Descriptive post-processing of frozen run-02 inputs, not additional model selection",
+  "selected_model_recorded_score_replays": {
+    "scoreable": 33,
+    "mismatches": 0,
+    "not_scoreable_or_no_option_context": 46,
+    "method": "Frozen model9 quality_probabilities on each stored selected-model signal feature vector; no reconstruction or fitting"
+  },
+  "common_quote_limitation": "Model9 score applied to the reference11 quote/features and reference11 quote-anchored exit outcomes; NOT model9 actual portfolio or historical signal-close replay. Group identity identifies source protocol, not the scorer."
+}

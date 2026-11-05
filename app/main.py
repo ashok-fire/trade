@@ -21,10 +21,12 @@ from .backtest import BacktestService, trades_csv
 from .config import config
 from .dashboard import backtests_context, dashboard_context, orders_context, system_context, telegram_context
 from .database import SessionLocal, database_health, get_session, init_db, settings_dict
+from .decision_snapshot import PROTOCOL as DECISION_SNAPSHOT_PROTOCOL
 from .groww import GrowwClient
 from .model_registry import activate_candidate, register_candidate, select_shadow_candidate
 from .mode_control import change_mode, reconcile
-from .models import BacktestRun, BacktestTrade, Candle, Instrument, Order, ResearchSyncRun, RuntimeSetting, Setting, SetupObservation, SystemEvent, Trade
+from .models import BacktestRun, BacktestTrade, Candle, DecisionSnapshot, Instrument, Order, ResearchSyncRun, RuntimeSetting, Setting, SetupObservation, SystemEvent, Trade
+from .parity import decision_parity_report
 from .shadow_dashboard import observation_export, shadow_context
 from .parallel_shadow import encode
 from .providers import provider_name
@@ -300,17 +302,21 @@ def start_backtest(
         cost_model = "UPSTOX"
     if historical_provider not in {"UPSTOX", "GROWW"} or cost_model not in {"UPSTOX", "GROWW", "UPSTOX_PLUS"} or strategy_mode not in {"MODEL", "RULE_ONLY"} or strike_policy not in {"ATM_ONLY", "ATM_ITM1"}:
         return flash_redirect("/backtests", "Unknown data provider or cost model", False)
-    if not selected or start_date > end_date or capital <= 0 or not (Decimal("0") < risk_pct <= Decimal("3")) or slippage_pct < 0 or entry_delay_bars < 1 or minimum_option_volume < 0 or maximum_spread_pct <= 0:
+    if not selected or start_date > end_date or capital <= 0 or not (Decimal("0") < risk_pct <= Decimal("5")) or slippage_pct < 0 or entry_delay_bars < 1 or minimum_option_volume < 0 or maximum_spread_pct <= 0:
         return flash_redirect("/backtests", "Please check the backtest inputs", False)
     model_metadata = load_model_metadata(config.model_path)
-    daily_loss_limit_pct = settings_dict(session).get("daily_loss_limit_pct", "5")
+    settings = settings_dict(session)
     run = BacktestRun(
         configuration_json=json.dumps({"indices": selected, "capital": str(capital), "risk_pct": str(risk_pct), "slippage_pct": str(slippage_pct), "historical_provider": historical_provider, "cost_model": cost_model, "strategy_mode": strategy_mode, "strike_policy": strike_policy, "entry_delay_bars": entry_delay_bars, "minimum_option_volume": minimum_option_volume, "maximum_spread_pct": str(maximum_spread_pct), "model_version": model_metadata.get("version"), "feature_schema": model_metadata.get("feature_schema")}),
         start_date=start_date,
         end_date=end_date,
     )
-    run.configuration_json = json.dumps({**json.loads(run.configuration_json),
-                                         "daily_loss_limit_pct": daily_loss_limit_pct})
+    run.configuration_json = json.dumps({**json.loads(run.configuration_json), **{
+        key: settings[key] for key in (
+            "daily_loss_limit_pct", "max_trades_per_day", "max_consecutive_losses",
+            "premium_emergency_stop_pct", "reward_risk",
+        )
+    }})
     session.add(run)
     session.commit()
     backtest_service.submit(run.id)
@@ -693,7 +699,7 @@ def save_risk(
 ):
     values = locals().copy()
     values.pop("session")
-    if paper_capital <= 0 or not (Decimal("0") < risk_per_trade_pct <= 3) or not (Decimal("0") < daily_loss_limit_pct <= 5) or max_trades_per_day < 1 or max_consecutive_losses < 1 or not (Decimal("5") <= premium_emergency_stop_pct <= 50) or reward_risk <= 0 or paper_slippage_pct < 0:
+    if paper_capital <= 0 or not (Decimal("0") < risk_per_trade_pct <= 5) or not (Decimal("0") < daily_loss_limit_pct <= 7) or max_trades_per_day < 1 or max_consecutive_losses < 1 or not (Decimal("5") <= premium_emergency_stop_pct <= 50) or reward_risk <= 0 or paper_slippage_pct < 0:
         return flash_redirect("/settings", "Risk values are outside safe limits", False)
     for key, value in values.items():
         session.get(Setting, key).value = str(value)
@@ -810,6 +816,12 @@ def health(session: Session = Depends(get_session)):
     if runtime_service.last_tick:
         tick = runtime_service.last_tick.replace(tzinfo=UTC) if runtime_service.last_tick.tzinfo is None else runtime_service.last_tick.astimezone(UTC)
         last_tick_age = round((datetime.now(UTC) - tick).total_seconds(), 1)
+    last_candle_age = None
+    if runtime_service.last_candle:
+        candle = runtime_service.last_candle.replace(tzinfo=UTC) if runtime_service.last_candle.tzinfo is None else runtime_service.last_candle.astimezone(UTC)
+        last_candle_age = round((datetime.now(UTC) - candle).total_seconds(), 1)
+    snapshot_count = session.scalar(select(func.count()).select_from(DecisionSnapshot)) or 0
+    latest_snapshot = session.scalar(select(func.max(DecisionSnapshot.observed_at)))
     backup = backup_status(config.root)
     permissions_ok, permissions_detail = file_permission_status(
         [config.upstox_analytics_token_file, config.upstox_trading_token_file, config.groww_token_file]
@@ -828,7 +840,15 @@ def health(session: Session = Depends(get_session)):
             "version": runtime_service.shadow_model.metadata.get("version"),
             "artifact_id": runtime_service.shadow_artifact_id,
         },
-        "market_data": {"last_tick": runtime_service.last_tick, "age_seconds": last_tick_age},
+        "market_data": {
+            "last_candle": runtime_service.last_candle,
+            "last_candle_age_seconds": last_candle_age,
+            "last_position_tick": runtime_service.last_tick,
+            "last_position_tick_age_seconds": last_tick_age,
+            "last_tick": runtime_service.last_tick,
+            "age_seconds": last_tick_age,
+        },
+        "decision_snapshots": {"count": snapshot_count, "latest": latest_snapshot, "protocol_version": DECISION_SNAPSHOT_PROTOCOL},
         "backup": backup,
         "secret_permissions": {"ok": permissions_ok, "detail": permissions_detail},
         "market_token_configured": bool(market_broker.access_token()),
@@ -836,3 +856,9 @@ def health(session: Session = Depends(get_session)):
         "runtime_error": runtime_service.last_error,
         "parallel_shadow": runtime_service.parallel_shadow.health(),
     }
+
+
+@app.get("/api/decision-parity")
+def decision_parity(limit: int = Query(500, ge=1, le=500), session: Session = Depends(get_session)):
+    """Rebuild captured market inputs and report exact source/feature parity."""
+    return decision_parity_report(session, limit)

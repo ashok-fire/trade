@@ -85,8 +85,9 @@ async def test_groww_index_quote_uses_official_live_quote_shape(tmp_path):
 
 @pytest.mark.asyncio
 async def test_groww_contract_master_and_greeks_are_normalized(tmp_path):
-    expiry = date(2026, 10, 29)
-    symbol = "NSE-NIFTY-29Oct26-25000-CE"
+    # Keep this normalization fixture independent of the wall-clock date.
+    expiry = date(2099, 10, 29)
+    symbol = "NSE-NIFTY-29Oct99-25000-CE"
     csv_body = (
         "exchange,exchange_token,trading_symbol,groww_symbol,instrument_type,segment,"
         "underlying_symbol,expiry_date,strike_price,lot_size,tick_size,buy_allowed\n"

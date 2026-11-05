@@ -60,7 +60,7 @@
     <form method="post" action="/backtests/sync-data" class="form-stack">
       <input type="hidden" name="historical_provider" value="{{ active_broker }}">
       <div class="selected-source"><span>Download from</span><b>{{ active_broker }}</b></div>
-      <fieldset><legend>Indices</legend><label class="check"><input type="checkbox" name="indices" value="NIFTY" checked>NIFTY 50</label><label class="check"><input type="checkbox" name="indices" value="BANK_NIFTY" checked>BANK NIFTY</label><label class="check"><input type="checkbox" name="indices" value="SENSEX" checked>SENSEX</label></fieldset>
+      <fieldset><legend>Indices</legend><label class="check"><input type="checkbox" name="indices" value="NIFTY" checked>NIFTY 50</label><label class="check"><input type="checkbox" name="indices" value="BANK_NIFTY">BANK NIFTY</label><label class="check"><input type="checkbox" name="indices" value="SENSEX">SENSEX</label></fieldset>
       <div class="form-grid"><label>From<input type="date" name="start_date" required></label><label>To<input type="date" name="end_date" required></label></div>
       <label class="card-check check"><input type="checkbox" name="include_options" value="true"><span>Include expired options<small>Required for trustworthy historical CE/PE profit and loss.</small></span></label>
       <details class="advanced-settings"><summary>Advanced download options</summary><label class="card-check check"><input type="checkbox" name="include_one_minute" value="true"><span>Include one-minute index candles<small>Used only when stop and target occur inside the same five-minute candle.</small></span></label></details>
@@ -74,7 +74,7 @@
       <input type="hidden" name="historical_provider" value="{{ active_broker }}">
       <div class="selected-source"><span>Train using</span><b>Stored {{ active_broker }} data</b></div>
       <label>Algorithm<select name="model_type"><option value="V4_OPTION_QUALITY">V6 multi-setup option quality research</option><option value="V3_UNDERLYING">V3 underlying-only comparison</option></select></label>
-      <fieldset><legend>Training indices</legend><label class="check"><input type="checkbox" name="indices" value="NIFTY" checked>NIFTY</label><label class="check"><input type="checkbox" name="indices" value="BANK_NIFTY" checked>BANK NIFTY</label><label class="check"><input type="checkbox" name="indices" value="SENSEX" checked>SENSEX</label></fieldset>
+      <fieldset><legend>Training indices</legend><label class="check"><input type="checkbox" name="indices" value="NIFTY" checked>NIFTY</label><label class="check"><input type="checkbox" name="indices" value="BANK_NIFTY">BANK NIFTY</label><label class="check"><input type="checkbox" name="indices" value="SENSEX">SENSEX</label></fieldset>
       <div class="form-grid"><label>Training from<input type="date" name="start_date" required></label><label>Training to<input type="date" name="end_date" required></label></div>
       <div class="notice">V6 requires verified spot, futures, options and lot sizes. It tests ORB, pullback, failed-breakout and VWAP-reclaim setups with family-specific gates. New candidates remain research-only until they pass locked validation and a genuinely forward paper-shadow period.</div>
       <button class="button primary">Train candidate model</button>
@@ -135,7 +135,7 @@
   <section class="card form-card workflow-card">
     <div class="step-heading"><span>3</span><div><h2>Run a backtest</h2><p>Choose the period after model training and replay real option candles.</p></div></div>
     <form method="post" action="/backtests" class="form-stack">
-      <fieldset><legend>Indices</legend><label class="check"><input type="checkbox" name="indices" value="NIFTY" checked>NIFTY 50</label><label class="check"><input type="checkbox" name="indices" value="BANK_NIFTY" checked>BANK NIFTY</label><label class="check"><input type="checkbox" name="indices" value="SENSEX" checked>SENSEX</label></fieldset>
+      <fieldset><legend>Indices</legend><label class="check"><input type="checkbox" name="indices" value="NIFTY" checked>NIFTY 50</label><label class="check"><input type="checkbox" name="indices" value="BANK_NIFTY">BANK NIFTY</label><label class="check"><input type="checkbox" name="indices" value="SENSEX">SENSEX</label></fieldset>
       <div class="form-grid">
         <label>Backtest from<input type="date" name="start_date" required></label><label>Backtest to<input type="date" name="end_date" required></label>
         <label>Strategy<select name="strategy_mode"><option value="MODEL">Active validated model</option><option value="RULE_ONLY">Rule-only comparison</option></select></label>
@@ -145,8 +145,8 @@
       <details class="advanced-settings"><summary>Advanced backtest settings</summary><div class="form-grid advanced-grid">
         <input type="hidden" name="historical_provider" value="{{ active_broker }}">
         {% if active_broker == 'UPSTOX' %}<label>Upstox charge calculation<select name="cost_model"><option value="UPSTOX">Upstox Basic</option><option value="UPSTOX_PLUS">Upstox Plus</option></select></label>{% else %}<input type="hidden" name="cost_model" value="GROWW">{% endif %}
-        <label>Risk per trade %<input type="number" name="risk_pct" value="3" min="0.01" max="3" step="0.01"></label>
-        <label>Slippage per side %<input type="number" name="slippage_pct" value="0.05" min="0" step="0.01"></label>
+        <label>Risk per trade %<input type="number" name="risk_pct" value="{{ settings.risk_per_trade_pct }}" min="0.01" max="5" step="0.01"></label>
+        <label>Slippage per side %<input type="number" name="slippage_pct" value="{{ settings.paper_slippage_pct }}" min="0" step="0.01"></label>
         <label>Entry delay (bars)<input type="number" name="entry_delay_bars" value="1" min="1" max="6"></label>
         <label>Minimum option volume<input type="number" name="minimum_option_volume" value="1" min="0"></label>
         <label>Maximum spread %<input type="number" name="maximum_spread_pct" value="1.5" min="0.1" step="0.1"></label>

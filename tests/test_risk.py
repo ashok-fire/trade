@@ -24,9 +24,31 @@ def test_one_lot_above_risk_budget_is_rejected():
     assert "One lot" in plan.reason
 
 
+def test_position_size_caps_premium_cash_and_reports_tail_exposure():
+    constrained = RiskLimits(Decimal("1000"), Decimal("100"), Decimal("100"), 5, 2, 1, 10, Decimal("25"), Decimal("1.5"))
+    rejected = position_size(Decimal("500"), 3, constrained, "PAPER")
+    assert not rejected.allowed
+    assert rejected.reason == "One lot exceeds cash capital"
+    plan = position_size(Decimal("100"), 5, constrained, "PAPER")
+    assert plan.allowed
+    assert plan.cash_required <= constrained.capital
+    assert plan.planned_loss == (Decimal("100") - plan.premium_stop) * plan.quantity
+    assert plan.maximum_premium_loss == plan.cash_required
+
+
 def test_daily_loss_gate_blocks_entry():
     allowed, reason = can_enter(limits=limits(), open_positions=0, trades_today=1, consecutive_losses=0, realized_pnl_today=Decimal("-4000"), quote_fresh=True, broker_connected=True, reconciled=True)
     assert not allowed and "Daily-loss" in reason
+
+
+def test_projected_stop_must_fit_remaining_daily_loss_budget():
+    allowed, reason = can_enter(
+        limits=limits(), open_positions=0, trades_today=1, consecutive_losses=1,
+        realized_pnl_today=Decimal("-3000"), planned_loss=Decimal("1250"),
+        quote_fresh=True, broker_connected=True, reconciled=True,
+    )
+    assert not allowed
+    assert reason == "Planned trade risk exceeds remaining daily-loss budget"
 
 
 def test_option_charge_model_versions_the_2026_stt_change():
