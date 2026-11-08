@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 
 from .backtest import BacktestService, trades_csv
 from .config import config
-from .dashboard import backtests_context, dashboard_context, orders_context, system_context, telegram_context
+from .dashboard import backtest_result_context, backtests_context, dashboard_context, orders_context, system_context, telegram_context
 from .database import SessionLocal, database_health, get_session, init_db, settings_dict
 from .decision_snapshot import PROTOCOL as DECISION_SNAPSHOT_PROTOCOL
 from .groww import GrowwClient
@@ -522,10 +522,9 @@ def select_shadow_model(artifact_id: int, session: Session = Depends(get_session
 
 @app.get("/backtests/{run_id}/status", response_class=HTMLResponse)
 def backtest_status(request: Request, run_id: int, session: Session = Depends(get_session)):
-    selected = session.get(BacktestRun, run_id)
-    if not selected:
+    context = backtest_result_context(session, run_id)
+    if context is None:
         raise HTTPException(404, "Backtest not found")
-    context = backtests_context(session, run_id)
     return templates.TemplateResponse(name="partials/backtest_result.html", request=request, context=context)
 
 

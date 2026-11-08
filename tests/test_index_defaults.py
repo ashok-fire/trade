@@ -46,3 +46,21 @@ def test_rendered_workflow_forms_default_to_nifty_only(session, tmp_path, monkey
     parser.feed(html)
     for action in ("/backtests/sync-data", "/backtests/train", "/backtests"):
         assert parser.forms[action] == [("NIFTY", True), ("BANK_NIFTY", False), ("SENSEX", False)]
+
+
+def test_backtests_reuses_display_only_research_statistics(session, tmp_path, monkeypatch):
+    calls = 0
+
+    def readiness(_session):
+        nonlocal calls
+        calls += 1
+        return []
+
+    dashboard.clear_portal_caches()
+    monkeypatch.setattr(dashboard, "config", SimpleNamespace(root=tmp_path, model_path=tmp_path / "none.json"))
+    monkeypatch.setattr(dashboard, "research_readiness", readiness)
+
+    dashboard.backtests_context(session)
+    dashboard.backtests_context(session)
+
+    assert calls == 1

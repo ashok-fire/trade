@@ -111,6 +111,12 @@ def _migrate_research_columns() -> None:
                 )
             )
             connection.execute(text("CREATE INDEX IF NOT EXISTS ix_candles_data_role ON candles (data_role)"))
+            connection.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS ix_candles_dashboard_readiness "
+                    "ON candles (data_role, source_verified, provider, underlying_code, timeframe, timestamp)"
+                )
+            )
         if "instruments" in tables:
             columns = {column["name"] for column in inspector.get_columns("instruments")}
             if "instrument_kind" not in columns:

@@ -3,6 +3,9 @@ from __future__ import annotations
 import json
 from datetime import UTC, date, datetime, time
 from decimal import Decimal
+from threading import Lock
+from time import monotonic
+from weakref import WeakKeyDictionary
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select
@@ -16,6 +19,70 @@ from .strategy import SUPPORTED_FEATURE_SCHEMAS
 from .training import load_model_metadata
 from .pagination import LATEST_LIMIT, database_page
 from .research_history import research_history
+
+
+PORTAL_CACHE_SECONDS = 300.0
+_portal_cache_lock = Lock()
+_health_cache = WeakKeyDictionary()
+_research_statistics_cache = WeakKeyDictionary()
+
+
+def clear_portal_caches() -> None:
+    """Drop presentation-only caches without touching trading state."""
+    with _portal_cache_lock:
+        _health_cache.clear()
+        _research_statistics_cache.clear()
+
+
+def _cached_database_health(session: Session) -> tuple[bool, str]:
+    bind = session.get_bind()
+    now = monotonic()
+    with _portal_cache_lock:
+        cached = _health_cache.get(bind)
+        if cached and now - cached[0] < PORTAL_CACHE_SECONDS:
+            return cached[1]
+    result = database_health(session)
+    with _portal_cache_lock:
+        _health_cache[bind] = (monotonic(), result)
+    return result
+
+
+def _research_statistics(session: Session) -> dict:
+    """Cache expensive, display-only history summaries for a short period."""
+    bind = session.get_bind()
+    now = monotonic()
+    with _portal_cache_lock:
+        cached = _research_statistics_cache.get(bind)
+        if cached and now - cached[0] < PORTAL_CACHE_SECONDS:
+            return cached[1]
+
+    grouped_counts = session.execute(
+        select(Candle.provider, Candle.data_role, func.count())
+        .where(Candle.source_verified.is_(True))
+        .group_by(Candle.provider, Candle.data_role)
+    ).all()
+    counts = {(provider, role): int(count) for provider, role, count in grouped_counts}
+    provider_counts = {
+        provider: {
+            "underlying": counts.get((provider, "SPOT"), 0),
+            "futures": counts.get((provider, "FUTURE"), 0),
+            "options": counts.get((provider, "OPTION"), 0),
+        }
+        for provider in ("UPSTOX", "GROWW")
+    }
+    result = {
+        "verified_underlying": sum(values["underlying"] for values in provider_counts.values()),
+        "verified_futures": sum(values["futures"] for values in provider_counts.values()),
+        "verified_options": sum(values["options"] for values in provider_counts.values()),
+        "provider_counts": provider_counts,
+        "data_readiness": research_readiness(session),
+        "option_selection_records": session.scalar(
+            select(func.count()).select_from(OptionSelectionAudit)
+        ) or 0,
+    }
+    with _portal_cache_lock:
+        _research_statistics_cache[bind] = (monotonic(), result)
+    return result
 
 
 def _today_start() -> datetime:
@@ -62,7 +129,7 @@ def dashboard_context(session: Session, runtime_service=None) -> dict:
         if row.exit_time and row.entry_time
     ]
     average_holding_minutes = round(sum(holding_minutes) / len(holding_minutes)) if holding_minutes else 0
-    db_ok, db_detail = database_health(session)
+    db_ok, db_detail = _cached_database_health(session)
     per_index = {}
     for code in ("NIFTY", "BANK_NIFTY", "SENSEX"):
         rows = [row for row in closed_month if row.underlying_code == code]
@@ -205,22 +272,7 @@ def backtests_context(session: Session, selected_id: int | None = None, *, runs_
             run_details[run.id] = json.loads(run.configuration_json)
         except (TypeError, ValueError):
             run_details[run.id] = {}
-    verified_underlying = session.scalar(
-        select(func.count()).select_from(Candle).where(Candle.data_role == "SPOT", Candle.source_verified.is_(True))
-    ) or 0
-    verified_futures = session.scalar(
-        select(func.count()).select_from(Candle).where(Candle.data_role == "FUTURE", Candle.source_verified.is_(True))
-    ) or 0
-    verified_options = session.scalar(
-        select(func.count()).select_from(Candle).where(Candle.data_role == "OPTION", Candle.source_verified.is_(True))
-    ) or 0
-    provider_counts = {}
-    for provider in ("UPSTOX", "GROWW"):
-        provider_counts[provider] = {
-            "underlying": session.scalar(select(func.count()).select_from(Candle).where(Candle.provider == provider, Candle.data_role == "SPOT", Candle.source_verified.is_(True))) or 0,
-            "futures": session.scalar(select(func.count()).select_from(Candle).where(Candle.provider == provider, Candle.data_role == "FUTURE", Candle.source_verified.is_(True))) or 0,
-            "options": session.scalar(select(func.count()).select_from(Candle).where(Candle.provider == provider, Candle.data_role == "OPTION", Candle.source_verified.is_(True))) or 0,
-        }
+    statistics = _research_statistics(session)
     research_runs, downloads_pagination = database_page(session, ResearchSyncRun, downloads_page)
     model_artifacts, models_pagination = database_page(session, ModelArtifact, models_page)
     model_details = {}
@@ -259,20 +311,36 @@ def backtests_context(session: Session, selected_id: int | None = None, *, runs_
         "shadow_model_ready": bool(shadow_model_metadata) and shadow_model_metadata.get("feature_schema") in SUPPORTED_FEATURE_SCHEMAS,
         "shadow_model_metadata": shadow_model_metadata,
         "run_details": run_details,
-        "verified_underlying": verified_underlying,
-        "verified_futures": verified_futures,
-        "verified_options": verified_options,
-        "provider_counts": provider_counts,
-        "data_readiness": research_readiness(session),
+        "verified_underlying": statistics["verified_underlying"],
+        "verified_futures": statistics["verified_futures"],
+        "verified_options": statistics["verified_options"],
+        "provider_counts": statistics["provider_counts"],
+        "data_readiness": statistics["data_readiness"],
         "research_runs": research_runs,
         "model_artifacts": model_artifacts,
         "model_details": model_details,
         "edge_study": edge_study,
-        "option_selection_records": session.scalar(select(func.count()).select_from(OptionSelectionAudit)) or 0,
+        "option_selection_records": statistics["option_selection_records"],
         "settings": settings_dict(session),
         "active_broker": settings_dict(session).get("active_broker", "UPSTOX"),
         "default_historical_provider": settings_dict(session).get("default_historical_provider", "UPSTOX"),
     }
+
+
+def backtest_result_context(session: Session, run_id: int) -> dict | None:
+    """Build only the context used by the two-second result poll."""
+    selected = session.get(BacktestRun, run_id)
+    if selected is None:
+        return None
+    try:
+        summary = json.loads(selected.summary_json) if selected.summary_json else None
+    except (TypeError, ValueError):
+        summary = None
+    try:
+        warnings = json.loads(selected.warnings_json) if selected.warnings_json else []
+    except (TypeError, ValueError):
+        warnings = []
+    return {"selected": selected, "summary": summary, "warnings": warnings}
 
 
 def telegram_context(session: Session) -> dict:

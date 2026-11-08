@@ -65,6 +65,15 @@ class Candle(Base):
     __table_args__ = (
         UniqueConstraint("provider", "instrument_key", "timeframe", "timestamp", name="uq_provider_candle"),
         Index("ix_candle_replay", "provider", "instrument_key", "timeframe", "timestamp"),
+        Index(
+            "ix_candles_dashboard_readiness",
+            "data_role",
+            "source_verified",
+            "provider",
+            "underlying_code",
+            "timeframe",
+            "timestamp",
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)

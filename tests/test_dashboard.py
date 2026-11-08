@@ -2,6 +2,7 @@ from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
 from app.dashboard import dashboard_context
+from app import dashboard
 from app.models import Signal, Trade
 
 
@@ -87,3 +88,20 @@ def test_dashboard_profit_risk_and_breakdowns(session):
     assert context["per_index"]["NIFTY"]["win_rate"] == 100
     assert context["daily_loss_budget"] == Decimal("5000")
     assert context["capital_return"] == 0.6
+
+
+def test_dashboard_database_health_is_cached_for_presentation(session, monkeypatch):
+    calls = 0
+
+    def health(_session):
+        nonlocal calls
+        calls += 1
+        return True, "ok"
+
+    dashboard.clear_portal_caches()
+    monkeypatch.setattr(dashboard, "database_health", health)
+
+    dashboard.dashboard_context(session)
+    dashboard.dashboard_context(session)
+
+    assert calls == 1
