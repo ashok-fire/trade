@@ -11,3 +11,6 @@ data/secrets/
 models/*.json
 models/research/**/*.pkl
 models/research/**/*.joblib
+
+/models/
+/research/

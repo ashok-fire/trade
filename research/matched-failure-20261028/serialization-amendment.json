@@ -1,8 +1,0 @@
-{
-  "reason": "Run-01 analysis completed but JSON export failed on NumPy scalar. Fix serialization only; preserve original specification and all analytic settings.",
-  "source_hash_overrides": {
-    "research/matched_failure_audit.py": "cbceacee71e30b009640c69042012e23e7e65bb36b9edb24c3e86b57578ebc52",
-    "tests/test_matched_failure_audit.py": "1f044de6b5cbb17d23deeeeafa7f93091fc5ccf6cc3f6c0640ecf8d04ab89e56"
-  },
-  "original_specification_sha256": "301075fd1eb7b640526d021c9aede9c7607d7fbd5b66ca4c486996d770efa298"
-}
