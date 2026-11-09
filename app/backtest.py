@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import io
 import json
 from concurrent.futures import Future, ProcessPoolExecutor
@@ -15,10 +16,60 @@ from sqlalchemy.orm import Session
 
 from .models import BacktestRun, BacktestTrade, Candle, Instrument
 from .option_selector import option_candidates
-from .risk import RiskLimits, can_enter, option_charges, position_size
+from .risk import MAX_TRADES_PER_DAY, RiskLimits, can_enter, option_charges, position_size
 from .strategy import RegimeModel, decide, rule_only_decide, with_futures_features
-from .training import front_future_frame
+from .training import front_future_frame, load_model_metadata
 from .v4_training import option_quality_context
+
+
+BACKTEST_ENGINE_VERSION = "backtest-v2"
+STRATEGY_SOURCE_FILES = (
+    "backtest.py",
+    "strategy.py",
+    "risk.py",
+    "option_selector.py",
+    "training_contract.py",
+    "training.py",
+    "v4_training.py",
+)
+
+
+def current_strategy_fingerprint() -> str:
+    """Identify the exact local strategy/replay implementation used by a run."""
+    digest = hashlib.sha256()
+    root = Path(__file__).resolve().parent
+    for name in STRATEGY_SOURCE_FILES:
+        path = root / name
+        digest.update(name.encode())
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def model_bundle_fingerprint(model_path: Path) -> str:
+    """Hash a model, its metadata and every file referenced by its manifest."""
+    model_path = model_path.resolve()
+    metadata_path = model_path.with_name(f"{model_path.stem}.metadata.json")
+    paths = [model_path, metadata_path]
+    metadata = load_model_metadata(model_path)
+    if model_path.exists() and metadata.get("feature_schema") in {
+        "cost-aware-option-v4", "cost-aware-option-v5", "cost-aware-option-v6",
+    }:
+        manifest = json.loads(model_path.read_text())
+        names = [*manifest.get("quality_models", {}).values()]
+        if manifest.get("ranker"):
+            names.append(manifest["ranker"])
+        paths.extend(model_path.parent / name for name in names)
+    digest = hashlib.sha256()
+    for path in paths:
+        if not path.is_file():
+            raise FileNotFoundError(f"Model bundle file is missing: {path.name}")
+        digest.update(path.name.encode())
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
 
 
 def _utc_datetime(value: datetime) -> datetime:
@@ -99,7 +150,7 @@ def replay_limits(config: dict, model: RegimeModel | None) -> RiskLimits:
     return RiskLimits(
         Decimal(str(config["capital"])), Decimal(str(config["risk_pct"])),
         Decimal(str(config.get("daily_loss_limit_pct", "0.75"))),
-        int(config.get("max_trades_per_day", legacy_daily_limit)),
+        min(int(config.get("max_trades_per_day", legacy_daily_limit)), MAX_TRADES_PER_DAY),
         int(config.get("max_consecutive_losses", 2)),
         1, 1, Decimal(str(config.get("premium_emergency_stop_pct", "25"))),
         Decimal(str(config.get("reward_risk", "1.5"))),
@@ -138,6 +189,12 @@ def run_backtest_job(db_url: str, run_id: int, model_path: str) -> None:
         warnings: set[str] = set()
         try:
             config = json.loads(run.configuration_json)
+            expected_fingerprint = config.get("strategy_fingerprint")
+            actual_fingerprint = current_strategy_fingerprint()
+            if expected_fingerprint and expected_fingerprint != actual_fingerprint:
+                raise RuntimeError(
+                    "Strategy code changed after this backtest was queued; create a new run"
+                )
             provider = str(config.get("historical_provider", "UPSTOX")).upper()
             cost_model = str(config.get("cost_model", provider)).upper()
             strategy_mode = str(config.get("strategy_mode", "MODEL")).upper()
@@ -145,9 +202,18 @@ def run_backtest_job(db_url: str, run_id: int, model_path: str) -> None:
             entry_delay_bars = max(1, int(config.get("entry_delay_bars", 1)))
             minimum_option_volume = max(0, int(config.get("minimum_option_volume", 1)))
             maximum_spread_pct = Decimal(str(config.get("maximum_spread_pct", "1.5")))
-            model = RegimeModel(Path(model_path)) if strategy_mode == "MODEL" else None
+            selected_model_path = Path(config.get("model_path") or model_path)
+            if strategy_mode == "MODEL" and config.get("model_bundle_fingerprint"):
+                if model_bundle_fingerprint(selected_model_path) != config["model_bundle_fingerprint"]:
+                    raise RuntimeError(
+                        "Selected model bundle changed after this backtest was queued; create a new run"
+                    )
+            model = RegimeModel(selected_model_path) if strategy_mode == "MODEL" else None
             if strategy_mode == "MODEL" and (model is None or not model.available):
                 raise RuntimeError("Model unavailable. Download verified index candles and train the XGBoost model first.")
+            expected_model_version = config.get("model_version")
+            if model is not None and expected_model_version and model.metadata.get("version") != expected_model_version:
+                raise RuntimeError("Selected model version does not match the queued backtest")
             training_end = model.metadata.get("training_end") if model else None
             if training_end and run.start_date <= date.fromisoformat(training_end):
                 raise RuntimeError(

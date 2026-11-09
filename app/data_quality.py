@@ -14,11 +14,15 @@ from .models import Candle, Instrument
 # Verified NSE normal-market windows, with five-minute candle START times.
 # Pre-open, inter-session breaks and close/post-close records are not expected
 # to have futures matches. Do not exempt whole dates or relax the 90% gate.
+# NSE/MSD/60677: https://nsearchives.nseindia.com/content/circulars/MSD60677.pdf
 # NSE/MSD/61893: https://nsearchives.nseindia.com/content/circulars/MSD61893.pdf
 # NSE/FAOP/70320: https://nsearchives.nseindia.com/content/circulars/FAOP70320.pdf
+# NSE/FAOP/76940: https://nsearchives.nseindia.com/content/circulars/FAOP76940.pdf
 _SPECIAL_SESSION_WINDOWS = {
+    date(2024, 3, 2): ((time(9, 15), time(10)), (time(11, 30), time(12, 30))),
     date(2024, 5, 18): ((time(9, 15), time(10)), (time(11, 30), time(12, 30))),
     date(2025, 10, 21): ((time(13, 45), time(14, 45)),),
+    date(2026, 11, 8): ((time(14, 20), time(15, 40)),),
 }
 _REGULAR_SESSION_WINDOWS = ((time(9, 15), time(15, 30)),)
 _IST = ZoneInfo("Asia/Kolkata")

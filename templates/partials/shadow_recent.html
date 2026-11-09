@@ -1,0 +1,4 @@
+<div id="shadow-recent-content"><div class="table-wrap"><table>
+  <thead><tr><th>Observed IST / signal bar</th><th>Index / setup</th><th>Research score / threshold</th><th>Status / outcome</th><th>Reason</th></tr></thead>
+  <tbody>{% for item in recent %}<tr><td>{{ item.observed_at|ist_datetime }}<br>{{ item.signal_time|ist_datetime }}</td><td>{{ item.provider }} {{ item.underlying_code }}<br>{{ item.setup_family }} {{ item.direction }}</td><td>{{ ('%.1f'|format(item.quality_score * 100) + '%') if item.quality_score is not none else '—' }} / {{ ('%.1f'|format(item.research_threshold * 100) + '%') if item.research_threshold is not none else 'disabled/unavailable' }}<br>{{ item.score_status }}</td><td>{{ item.status }}<br>{{ item.net_pnl|money if item.net_pnl is not none else 'Unlabelled' }} {{ item.exit_reason or '' }}</td><td>{{ item.reason }}</td></tr>{% else %}<tr><td colspan="5">Waiting for observations.</td></tr>{% endfor %}</tbody>
+</table></div></div>

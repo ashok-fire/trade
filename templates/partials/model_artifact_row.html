@@ -1,0 +1,26 @@
+{% set detail = model_details[artifact.id] %}
+{% set locked = detail.get('locked_validation',{}) %}
+<tr>
+  <td>
+    <b>{{ artifact.version }}</b><small>{{ detail.get('feature_schema','') }}</small>
+    <details><summary>Technical diagnostics</summary>
+      {% if locked %}<small><b>Cost-aware result:</b> {{ locked.get('trades',0) }} trades · {{ locked.get('win_rate_pct',0) }}% wins · PF {{ locked.get('profit_factor','—') }} · net ₹{{ locked.get('net_pnl',0) }} · stress ₹{{ locked.get('double_slippage_net_pnl',0) }}</small>{% endif %}
+      <small><b>Confusion matrix:</b> {{ detail.get('confusion_matrix',[]) }}</small>
+      {% for name,values in detail.get('per_class_metrics',{}).items() %}<small>{{ name }} · precision {{ (values.precision * 100)|round(1) }}% · recall {{ (values.recall * 100)|round(1) }}%</small>{% endfor %}
+      {% for fold in detail.get('walk_forward_validation',[]) %}
+        <small><b>Walk-forward:</b> {{ fold.get('development_end', fold.get('training_end',''))[:10] }} → {{ fold.get('validation_end','')[:10] }} · {% if fold.get('balanced_accuracy') is not none %}{{ (fold.get('balanced_accuracy',0) * 100)|round(1) }}% balanced{% else %}{{ fold.get('trades',0) }} trades · {{ fold.get('win_rate_pct',0) }}% wins · PF {{ fold.get('profit_factor','—') }}{% endif %}</small>
+      {% endfor %}
+      {% for blocker in detail.get('activation_blockers',[]) %}<small><b>Activation blocked:</b> {{ blocker }}</small>{% endfor %}
+      <small><b>Feature gain:</b> {{ detail.get('feature_importance',{}) }}</small>
+    </details>
+  </td>
+  <td>{{ detail.get('training_data_provider','') }}<small>{{ detail.get('training_start','') }} → {{ detail.get('training_end','') }}</small></td>
+  <td>{{ detail.get('samples',0) }}</td>
+  <td>{% if locked %}{{ locked.get('win_rate_pct',0) }}% wins<small>{{ locked.get('trades',0) }} trades · PF {{ locked.get('profit_factor','—') }}</small>{% else %}{{ (detail.get('balanced_accuracy',0) * 100)|round(1) }}%{% endif %}</td>
+  <td>{{ detail.get('validation_confidence',{}).get('above_decision_threshold_percent', detail.get('validation_confidence',{}).get('above_70_percent',0)) }}%<small>threshold {{ detail.get('decision_threshold',0.70) }}</small></td>
+  <td><span class="status {{ 'green' if artifact.status == 'ACTIVE' else ('blue' if artifact.status in ['CANDIDATE','SHADOW'] else 'muted') }}">{{ artifact.status }}</span></td>
+  <td>
+    {% if artifact.status in ['CANDIDATE','SHADOW'] %}<form method="post" action="/backtests/models/{{ artifact.id }}/shadow"><button class="button small secondary" {{ 'disabled' if artifact.status == 'SHADOW' }}>{{ 'Shadow selected' if artifact.status == 'SHADOW' else 'Use in Shadow' }}</button></form>{% endif %}
+    {% if artifact.status not in ['ACTIVE','PRUNED'] and detail.get('activation_eligible',False) %}<form method="post" action="/backtests/models/{{ artifact.id }}/activate"><button class="button small primary">Activate</button></form>{% endif %}
+  </td>
+</tr>

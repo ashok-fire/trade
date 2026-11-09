@@ -1,0 +1,16 @@
+<section class="card readiness-summary" id="data-readiness-panel">
+  <div class="card-head"><div><h2>{{ active_broker }} data readiness</h2><span>Loaded on demand from verified historical candles</span></div><span class="status blue">{{ active_broker }}</span></div>
+  <div class="metrics two simple-readiness">
+    <article class="metric"><span>Training candles</span><strong>{{ verified_futures }}</strong><small>Verified futures candles</small></article>
+    <article class="metric"><span>Option replay candles</span><strong class="{{ 'positive' if verified_options else 'negative' }}">{{ verified_options }}</strong><small>Verified historical option candles</small></article>
+  </div>
+  <div class="readiness-cards">
+    {% for row in data_readiness %}{% if row.provider == active_broker %}
+    <article class="readiness-card">
+      <div class="readiness-title"><b>{{ row.underlying_code|replace('_',' ') }}</b><span class="status {{ 'green' if row.backtest_ready else ('blue' if row.training_ready else 'amber') }}">{{ 'BACKTEST READY' if row.backtest_ready else ('TRAINING READY' if row.training_ready else 'NOT READY') }}</span></div>
+      <dl><div><dt>Spot</dt><dd>{{ row.spot_count }}</dd></div><div><dt>Futures</dt><dd>{{ row.futures_count }}</dd></div><div><dt>Aligned</dt><dd>{{ row.aligned_count }} · {{ row.alignment_percent }}%</dd></div><div><dt>Options</dt><dd>{{ row.option_count }}</dd></div></dl>
+      {% if not row.backtest_ready %}<p>{{ row.reason }}</p>{% endif %}
+    </article>
+    {% endif %}{% endfor %}
+  </div>
+</section>

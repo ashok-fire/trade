@@ -1,0 +1,5 @@
+{% from "partials/pagination.html" import pagination with context %}
+<div id="download-history-content" hx-boost="true" hx-target="#download-history-content" hx-swap="outerHTML">
+  <div class="run-list">{% for run in research_runs %}{% include "partials/research_status.html" %}{% else %}<div class="empty-state compact">No downloads submitted.</div>{% endfor %}</div>
+  {{ pagination(downloads_pagination, 'downloads_page', 'download-history') }}
+</div>

@@ -98,6 +98,15 @@ class RuntimeService:
         """Do not open fresh positions close to the mandatory 15:20 square-off."""
         return entry_window_open(boundary)
 
+    @staticmethod
+    def _quote_fresh(quote, now: datetime, maximum_age_seconds: int) -> bool:
+        if quote is None:
+            return False
+        stamp = quote.timestamp
+        stamp = stamp.replace(tzinfo=UTC) if stamp.tzinfo is None else stamp.astimezone(UTC)
+        age = (now - stamp).total_seconds()
+        return 0 <= age <= maximum_age_seconds
+
     def _store_runtime_rows(
         self,
         session,
@@ -428,10 +437,22 @@ class RuntimeService:
             underlying_stop = Decimal(candle.close) - atr if decision.direction == "CE" else Decimal(candle.close) + atr
             await self.execution.enter(session, underlying_code=code, candle_time=candle.timestamp, regime=decision.regime, confidence=decision.confidence, direction=decision.direction, underlying_price=Decimal(candle.close), underlying_stop=underlying_stop, contract=selection.contract, quote=selection.quote, moneyness=selection.moneyness, model_version=str(model.metadata.get("version", "unknown")), decision_context={"snapshot_id": option_snapshot.id, "snapshot_hash": option_snapshot.payload_hash, "features": decision.features, "reason": decision.reason, "checks": {"futures_vwap": f"{row.futures_close} vs {row.futures_vwap}", "ema9_20": f"{row.ema9} vs {row.ema20}", "opening_range": f"{row.close} / {row.opening_range_high} / {row.opening_range_low}"}, "selection": {"instrument": selection.contract.instrument_key, "symbol": selection.contract.trading_symbol, "strike": str(selection.contract.strike), "moneyness": selection.moneyness, "bid": str(selection.quote.bid), "ask": str(selection.quote.ask), "delta": selection.quote.delta, "iv": selection.quote.iv}})
 
-    async def monitor(self) -> None:
+    async def monitor(self, now: datetime | None = None) -> None:
+        observed_at = now or datetime.now(UTC)
+        observed_at = observed_at.replace(tzinfo=UTC) if observed_at.tzinfo is None else observed_at.astimezone(UTC)
         with self.session_factory() as session:
             trade = session.scalar(select(Trade).where(Trade.status == "OPEN").limit(1))
             if not trade: return
+            local_now = observed_at.astimezone(ZoneInfo("Asia/Kolkata"))
+            entry_time = trade.entry_time
+            entry_time = entry_time.replace(tzinfo=UTC) if entry_time.tzinfo is None else entry_time.astimezone(UTC)
+            entry_day = entry_time.astimezone(ZoneInfo("Asia/Kolkata")).date()
+            missed_same_day_exit = local_now.date() != entry_day or local_now.time() >= time(15, 31)
+            if trade.mode in {"SHADOW", "PAPER"} and missed_same_day_exit:
+                self.execution.mark_incomplete(
+                    session, trade, "MISSED_SAME_DAY_EXIT", observed_at=observed_at,
+                )
+                return
             provider = provider_name(trade.provider)
             broker = self.market_brokers[provider]
             underlying_key = broker.index_key(trade.underlying_code)
@@ -439,15 +460,25 @@ class RuntimeService:
             underlying_quote = (await broker.quotes([underlying_key])).get(underlying_key)
             if not option_quote or not underlying_quote: return
             self.last_tick = min(option_quote.timestamp, underlying_quote.timestamp)
+            settings = settings_dict(session)
+            maximum_age = int(settings["max_quote_age_seconds"])
+            option_fresh = self._quote_fresh(option_quote, observed_at, maximum_age)
+            underlying_fresh = self._quote_fresh(underlying_quote, observed_at, maximum_age)
+            time_exit_due = local_now.date() != entry_day or local_now.time() >= time(15, 20)
+            if trade.mode == "LIVE" and time_exit_due:
+                await self.execution.exit(session, trade, option_quote, "TIME_EXIT")
+                return
+            if not option_fresh or not underlying_fresh:
+                return
             trade.current_bid = option_quote.bid
             session.commit()
             reason = None
-            if option_quote.bid <= trade.premium_emergency_stop: reason = "PREMIUM_EMERGENCY_STOP"
+            if time_exit_due: reason = "TIME_EXIT"
+            elif option_quote.bid <= trade.premium_emergency_stop: reason = "PREMIUM_EMERGENCY_STOP"
             elif trade.option_type == "CE" and underlying_quote.last <= trade.underlying_stop: reason = "UNDERLYING_STOP"
             elif trade.option_type == "PE" and underlying_quote.last >= trade.underlying_stop: reason = "UNDERLYING_STOP"
             elif trade.option_type == "CE" and underlying_quote.last >= trade.underlying_target: reason = "UNDERLYING_TARGET"
             elif trade.option_type == "PE" and underlying_quote.last <= trade.underlying_target: reason = "UNDERLYING_TARGET"
-            elif datetime.now(UTC).astimezone(ZoneInfo("Asia/Kolkata")).time() >= time(15, 20): reason = "TIME_EXIT"
             if reason: await self.execution.exit(session, trade, option_quote, reason)
 
     async def validate_live_token(self) -> bool:

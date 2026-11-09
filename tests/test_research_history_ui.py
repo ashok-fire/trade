@@ -171,7 +171,8 @@ def test_backtests_page_renders_pagination_preserves_other_pages_and_exposes_rep
         return Request({"type":"http", "method":"GET", "scheme":"http", "server":("testserver", 80),
                         "path":"/backtests", "query_string":query.encode(), "headers":[], "app":main.app})
     response = main.backtests_page(request("research_page=1&models_page=2&downloads_page=2&runs_page=2&run_id=1"),
-        run_id=1, research_page=1, models_page=2, downloads_page=2, runs_page=2, session=session)
+        run_id=1, research_page=1, models_page=2, archived_models_page=1,
+        downloads_page=2, runs_page=2, session=session)
     assert response.status_code==200
     html = response.body.decode()
     try:
@@ -183,19 +184,21 @@ def test_backtests_page_renders_pagination_preserves_other_pages_and_exposes_rep
             checked = [re.search(r'value="([^"]+)"', field).group(1)
                        for field in inputs if re.search(r'\bchecked\b', field)]
             assert checked==["NIFTY"]
-        assert html.count('data-research-study=')==10
-        assert "Offline research history" in html and "10 per page" in html
+        assert html.count('data-research-study=') == 0
+        assert "Offline research archive" in html and "Load on demand" in html
         assert re.search(r'/static/app.css\?v=\d+', html)
-        next_links = [urlsplit(unescape(url)) for url in re.findall(r'href="([^"]+)"', html)
+        research_response = main.backtests_offline_research(request("research_page=1"), research_page=1)
+        research_html = research_response.body.decode()
+        assert research_html.count('data-research-study=') == 10
+        assert "Offline research history" in research_html and "10 per page" in research_html
+        next_links = [urlsplit(unescape(url)) for url in re.findall(r'href="([^"]+)"', research_html)
                       if url.endswith("#research-history")]
-        assert any(parse_qs(url.query)=={"research_page":["2"], "models_page":["2"], "downloads_page":["2"],
-                                         "runs_page":["2"], "run_id":["1"]} for url in next_links)
+        assert any(parse_qs(url.query)=={"research_page":["2"]} for url in next_links)
         latest = html.split('id="latest-backtest-runs"', 1)[1].split("</section>", 1)[0]
         assert latest.count('class="run-item ')==5
         assert "Latest 5" in latest
-        assert "Development (selection-biased)" in html
-        second = main.backtests_page(request("research_page=2"), research_page=2,
-            runs_page=1, models_page=1, downloads_page=1, session=session)
+        assert "Development (selection-biased)" in research_html
+        second = main.backtests_offline_research(request("research_page=2"), research_page=2)
         assert second.status_code==200 and second.body.decode().count('data-research-study=')==2
         report = main.offline_research_report("study-11")
         assert report.status_code==200 and json.loads(report.body)["audit"]["win_rate_pct"]==42.59
@@ -207,3 +210,27 @@ def test_backtests_page_renders_pagination_preserves_other_pages_and_exposes_rep
         assert session.scalar(select(func.count()).select_from(ModelArtifact))==23
     finally:
         main.app.dependency_overrides.pop(main.get_session, None)
+
+
+def test_pruned_models_are_kept_in_collapsed_archive(session, tmp_path, monkeypatch):
+    from app import main
+    from starlette.requests import Request
+
+    monkeypatch.setattr(dashboard, "config", SimpleNamespace(root=tmp_path, model_path=tmp_path/"none.json"))
+    monkeypatch.setattr(dashboard, "research_readiness", lambda session: [])
+    session.add_all([
+        ModelArtifact(version="current", status="CANDIDATE", model_path="current.json",
+                      metadata_path="current-meta.json", metadata_json="{}"),
+        ModelArtifact(version="old", status="PRUNED", model_path="old.json",
+                      metadata_path="old-meta.json", metadata_json="{}"),
+    ])
+    session.commit()
+    request = Request({"type":"http", "method":"GET", "scheme":"http", "server":("testserver", 80),
+                       "path":"/backtests", "query_string":b"", "headers":[], "app":main.app})
+    response = main.backtests_model_history(request, models_page=1, archived_models_page=1, session=session)
+    html = response.body.decode()
+    current = html.split('id="model-history-content"', 1)[1].split('id="archived-models"', 1)[0]
+    archived = html.split('id="archived-models"', 1)[1]
+    assert ">current</b>" in current and ">old</b>" not in current
+    assert ">old</b>" in archived and "PRUNED" in archived
+    assert '<details id="archived-models" class="advanced-settings">' in html

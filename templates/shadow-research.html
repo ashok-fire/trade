@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% block title %}Shadow research · NiftyPilot{% endblock %}
-{% block heading %}<h1>Parallel Shadow research</h1><p>Independent ORB, pullback, failed-breakout and VWAP-reclaim observations · all times IST</p>{% endblock %}
+{% block heading %}<h1>Parallel research</h1><p>Experimental observations kept separate from the selected Shadow strategy</p>{% endblock %}
 {% block content %}
 <section class="card">
   <h2>{{ 'Enabled' if settings.parallel_shadow_enabled == 'true' else 'Paused' }} · mode {{ runtime.execution_mode }}</h2>
-  <p>{{ observer.waiting_reason }}. New observations require SHADOW mode and fresh closed five-minute spot/futures bars, weekdays 09:35–15:10 IST. Pausing new observations does not stop tracking open simulations.</p>
-  <p>Frozen research reference: {{ observer.model_version or 'No compatible model — outcomes still collected' }} (artifact {{ observer.artifact_id or 'none' }}). This reference is unapproved; scores and thresholds are diagnostic, not validated win probabilities. The selected trading/Shadow model is unchanged.</p>
+  <p>{{ observer.waiting_reason }}. This observer is research-only: it does not select the primary Shadow model and cannot place broker orders.</p>
+  <p>Frozen research reference: {{ observer.model_version or 'No compatible model — outcomes still collected' }} (artifact {{ observer.artifact_id or 'none' }}).</p>
   <p>Last observation: {{ observer.last_observation|ist_datetime }} · last monitor: {{ observer.last_monitor|ist_datetime }} · checks saved: {{ total }}</p>
   {% if observer.error %}<p class="negative">Observer error: {{ observer.error }}</p>{% endif %}
   {% if observer.model_error %}<p class="negative">Research scoring unavailable: {{ observer.model_error }}. Outcome collection can continue.</p>{% endif %}
@@ -17,35 +17,6 @@
     <a class="button secondary" href="/shadow-research/export.jsonl">Export evidence (JSONL)</a>
   </form>
 </section>
-<section class="card">
-  <h2>Setup comparison</h2>
-  <p>New v2 candidates use the signal-close underlying anchor, one lot at observed ask/bid plus frozen slippage, and the saved reward/risk and premium-stop settings. One-lot risk/cash eligibility is captured at entry. Raw ineligible counterfactuals are retained; they are not portfolio trades. Legacy v1 rows keep their original quote-anchor rules. Both versions exit at 15:20. Quotes are polled every 15 seconds; intrabar touches can be missed. Costs are estimates.</p>
-  <p>For v2, daily metrics select the first risk/cash-eligible observation per family/direction/day before checking its outcome. Legacy v1 metrics remain raw, without retroactive risk filtering. “Quality daily” separately selects the first eligible research-threshold pass. Pending/incomplete first observations are not replaced with later winners. Portfolio position limits and daily loss state are not replayed. Groups with different protocols, providers, indices, models or fill/filter settings remain separate.</p>
-  <div class="table-wrap"><table>
-    <thead><tr><th>Group / setup</th><th>Checks / candidates</th><th>Executable / closed / incomplete</th><th>Quote / quality rejects</th><th>First daily: closed / selected</th><th>Win / PF</th><th>Net / costs / max drawdown</th><th>Quality daily: closed / selected · win · net</th></tr></thead>
-    <tbody>{% for item in comparisons %}<tr>
-      <td title="{{ item.settings }}">{{ item.provider }} · {{ item.code }}<br>{{ item.family }} {{ item.direction }}<br><small>{{ item.model }} · {{ item.protocol }}</small></td>
-      <td>{{ item.checks }} / {{ item.candidates }}</td>
-      <td>{{ item.executable }} / {{ item.closed }} / {{ item.incomplete }}<br><small>{% if item.eligible_only %}{{ item.eligible_entered }} risk/cash eligible · {{ item.eligibility_unknown }} unknown{% else %}Legacy raw outcomes{% endif %}</small></td>
-      <td>{{ item.quote_rejected }} / {{ item.quality_rejected }}</td>
-      <td>{{ item.all_daily.closed }} / {{ item.all_daily.selected }}</td>
-      <td>{{ (item.all_daily.win_rate|string + '%') if item.all_daily.win_rate is not none else '—' }} / {{ item.all_daily.pf }}</td>
-      <td>{{ item.all_daily.net|money }} / {{ item.all_daily.charges|money }} / {{ item.all_daily.drawdown|money }}</td>
-      <td>{{ item.quality_daily.closed }} / {{ item.quality_daily.selected }} · {{ (item.quality_daily.win_rate|string + '%') if item.quality_daily.win_rate is not none else '—' }} · {{ item.quality_daily.net|money }}</td>
-    </tr>{% else %}<tr><td colspan="8">No observations yet. Collection starts during an eligible market session with fresh data; historical quotes are not invented.</td></tr>{% endfor %}</tbody>
-  </table></div>
-</section>
-<section class="card"><h2>Quote rejection / incomplete reasons</h2>
-  {% for reason, count in reasons %}<p>{{ count }} · {{ reason }}</p>{% else %}<p>No rejection evidence yet.</p>{% endfor %}
-</section>
-<section class="card"><h2>Latest 100 checks</h2><div class="table-wrap"><table>
-  <thead><tr><th>Observed IST / signal bar</th><th>Index / setup</th><th>Research score / threshold</th><th>Status / outcome</th><th>Reason</th></tr></thead>
-  <tbody>{% for item in recent %}<tr>
-    <td>{{ item.observed_at|ist_datetime }}<br>{{ item.signal_time|ist_datetime }}</td>
-    <td>{{ item.provider }} {{ item.underlying_code }}<br>{{ item.setup_family }} {{ item.direction }}</td>
-    <td>{{ ('%.1f'|format(item.quality_score * 100) + '%') if item.quality_score is not none else '—' }} / {{ ('%.1f'|format(item.research_threshold * 100) + '%') if item.research_threshold is not none else 'disabled/unavailable' }}<br>{{ item.score_status }}</td>
-    <td>{{ item.status }}<br>{{ item.net_pnl|money if item.net_pnl is not none else 'Unlabelled' }} {{ item.exit_reason or '' }}</td>
-    <td>{{ item.reason }}</td>
-  </tr>{% else %}<tr><td colspan="5">Waiting for observations.</td></tr>{% endfor %}</tbody>
-</table></div></section>
+<details class="card disclosure-card"><summary><span><b>Setup comparison</b><small>Aggregated experimental outcomes</small></span><em>Load on demand</em></summary><div class="disclosure-content" hx-get="/shadow-research/comparison" hx-trigger="intersect once" hx-swap="innerHTML"><div class="empty-state compact">Loading comparison…</div></div></details>
+<details class="card disclosure-card"><summary><span><b>Recent experimental checks</b><small>Latest 20 observations</small></span><em>Load on demand</em></summary><div class="disclosure-content" hx-get="/shadow-research/recent" hx-trigger="intersect once" hx-swap="innerHTML"><div class="empty-state compact">Loading observations…</div></div></details>
 {% endblock %}

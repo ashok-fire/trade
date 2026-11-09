@@ -1,0 +1,7 @@
+{% from "partials/pagination.html" import pagination with context %}
+<div id="run-history-content" hx-boost="true" hx-target="#run-history-content" hx-swap="outerHTML">
+  <div class="run-list">
+    {% for run in runs %}<a class="run-item {{ 'active' if selected and selected.id == run.id }}" href="/backtests?run_id={{ run.id }}#backtest-result"><div><b>#{{ run.id }} · {{ run.start_date }} to {{ run.end_date }}</b><small>{{ run.created_at|ist_datetime }} · {{ run_details[run.id].get('historical_provider', 'UPSTOX') }} data</small></div><span class="status {{ 'green' if run.status == 'COMPLETE' else ('red' if run.status == 'FAILED' else 'amber') }}">{{ run.status }}</span></a>{% else %}<p class="empty-state compact">No backtests submitted.</p>{% endfor %}
+  </div>
+  {{ pagination(runs_pagination, 'runs_page', 'backtest-history') }}
+</div>

@@ -7,6 +7,7 @@ import json
 from contextlib import asynccontextmanager, suppress
 from datetime import UTC, date, datetime, time, timedelta
 from decimal import Decimal
+from pathlib import Path
 from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
@@ -17,17 +18,36 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from .backtest import BacktestService, trades_csv
+from .backtest import (
+    BACKTEST_ENGINE_VERSION,
+    BacktestService,
+    current_strategy_fingerprint,
+    model_bundle_fingerprint,
+    trades_csv,
+)
 from .config import config
-from .dashboard import backtest_result_context, backtests_context, dashboard_context, orders_context, system_context, telegram_context
+from .dashboard import (
+    backtest_result_context,
+    backtests_core_context,
+    dashboard_context,
+    download_history_context,
+    model_history_context,
+    offline_research_context,
+    orders_context,
+    readiness_context,
+    research_diagnostics_context,
+    run_history_context,
+    system_context,
+    telegram_context,
+)
 from .database import SessionLocal, database_health, get_session, init_db, settings_dict
 from .decision_snapshot import PROTOCOL as DECISION_SNAPSHOT_PROTOCOL
 from .groww import GrowwClient
 from .model_registry import activate_candidate, register_candidate, select_shadow_candidate
 from .mode_control import change_mode, reconcile
-from .models import BacktestRun, BacktestTrade, Candle, DecisionSnapshot, Instrument, Order, ResearchSyncRun, RuntimeSetting, Setting, SetupObservation, SystemEvent, Trade
+from .models import BacktestRun, BacktestTrade, Candle, DecisionSnapshot, Instrument, ModelArtifact, Order, ResearchSyncRun, RuntimeSetting, Setting, SetupObservation, SystemEvent, Trade
 from .parity import decision_parity_report
-from .shadow_dashboard import observation_export, shadow_context
+from .shadow_dashboard import observation_export, shadow_context, shadow_recent_context, shadow_status_context
 from .parallel_shadow import encode
 from .providers import provider_name
 from .operations import backup_status, file_permission_status
@@ -37,6 +57,7 @@ from .telegram import TelegramWorker, enqueue
 from .time_utils import format_ist
 from .training import load_model_metadata, train_regime_model
 from .research_history import read_report
+from .risk import MAX_TRADES_PER_DAY
 from .v4_training import train_option_quality_model
 from .upstox import UpstoxClient
 
@@ -253,18 +274,71 @@ async def manual_exit_trade(
 
 
 @app.get("/orders", response_class=HTMLResponse)
-def orders_page(request: Request, session: Session = Depends(get_session)):
-    return page(request, "orders.html", {**orders_context(session), **dashboard_context(session, runtime_service)})
+def orders_page(request: Request, signals_page: int = Query(1, ge=1), session: Session = Depends(get_session)):
+    return page(request, "orders.html", orders_context(session, runtime_service, signals_page=signals_page))
 
 
 @app.get("/backtests", response_class=HTMLResponse)
 def backtests_page(request: Request, run_id: int | None = None, message: str = "", ok: bool = True,
                    runs_page: int = Query(1, ge=1), models_page: int = Query(1, ge=1),
+                   archived_models_page: int = Query(1, ge=1),
                    downloads_page: int = Query(1, ge=1), research_page: int = Query(1, ge=1),
                    session: Session = Depends(get_session)):
-    context = backtests_context(session, run_id, runs_page=runs_page, models_page=models_page,
-                               downloads_page=downloads_page, research_page=research_page)
+    context = backtests_core_context(session, run_id)
     return page(request, "backtests.html", {**context, "message": message, "message_ok": ok})
+
+
+@app.get("/backtests/data-readiness", response_class=HTMLResponse)
+def backtests_data_readiness(request: Request, session: Session = Depends(get_session)):
+    return templates.TemplateResponse(
+        name="partials/data_readiness.html", request=request, context=readiness_context(session)
+    )
+
+
+@app.get("/backtests/download-history", response_class=HTMLResponse)
+def backtests_download_history(request: Request, downloads_page: int = Query(1, ge=1),
+                               session: Session = Depends(get_session)):
+    return templates.TemplateResponse(
+        name="partials/download_history.html", request=request,
+        context=download_history_context(session, downloads_page=downloads_page),
+    )
+
+
+@app.get("/backtests/model-history", response_class=HTMLResponse)
+def backtests_model_history(request: Request, models_page: int = Query(1, ge=1),
+                            archived_models_page: int = Query(1, ge=1),
+                            session: Session = Depends(get_session)):
+    return templates.TemplateResponse(
+        name="partials/model_history.html", request=request,
+        context=model_history_context(
+            session, models_page=models_page, archived_models_page=archived_models_page
+        ),
+    )
+
+
+@app.get("/backtests/run-history", response_class=HTMLResponse)
+def backtests_run_history(request: Request, runs_page: int = Query(1, ge=1), run_id: int | None = None,
+                          session: Session = Depends(get_session)):
+    return templates.TemplateResponse(
+        name="partials/run_history.html", request=request,
+        context=run_history_context(session, runs_page=runs_page, selected_id=run_id),
+    )
+
+
+@app.get("/backtests/offline-research", response_class=HTMLResponse)
+def backtests_offline_research(request: Request, research_page: int = Query(1, ge=1)):
+    return templates.TemplateResponse(
+        name="partials/offline_research.html", request=request,
+        context=offline_research_context(research_page=research_page),
+    )
+
+
+@app.get("/backtests/diagnostics", response_class=HTMLResponse)
+def backtests_diagnostics(request: Request, session: Session = Depends(get_session)):
+    return templates.TemplateResponse(
+        name="partials/research_diagnostics.html", request=request,
+        context=research_diagnostics_context(session),
+    )
 
 
 @app.get("/backtests/research-reports/{study_id}")
@@ -291,10 +365,13 @@ def start_backtest(
     entry_delay_bars: int = Form(1),
     minimum_option_volume: int = Form(1),
     maximum_spread_pct: Decimal = Form(Decimal("1.5")),
+    model_artifact_id: int | None = Form(None),
     session: Session = Depends(get_session),
 ):
     allowed = {"NIFTY", "BANK_NIFTY", "SENSEX"}
     selected = [item for item in indices if item in allowed]
+    if not isinstance(model_artifact_id, int):
+        model_artifact_id = None
     historical_provider = provider_name(settings_dict(session).get("active_broker"))
     if historical_provider == "GROWW":
         cost_model = "GROWW"
@@ -304,12 +381,46 @@ def start_backtest(
         return flash_redirect("/backtests", "Unknown data provider or cost model", False)
     if not selected or start_date > end_date or capital <= 0 or not (Decimal("0") < risk_pct <= Decimal("5")) or slippage_pct < 0 or entry_delay_bars < 1 or minimum_option_volume < 0 or maximum_spread_pct <= 0:
         return flash_redirect("/backtests", "Please check the backtest inputs", False)
-    model_metadata = load_model_metadata(config.model_path)
     settings = settings_dict(session)
+    strategy_fingerprint = current_strategy_fingerprint()
+    selected_model_path: Path | None = None
+    model_metadata: dict = {}
+    model_fingerprint: str | None = None
+    if strategy_mode == "MODEL":
+        if model_artifact_id is not None:
+            artifact = session.get(ModelArtifact, model_artifact_id)
+            if artifact is None or artifact.status not in {"ACTIVE", "SHADOW", "CANDIDATE"}:
+                return flash_redirect("/backtests", "Selected model artifact is unavailable", False)
+            selected_model_path = Path(artifact.model_path)
+        else:
+            selected_model_path = config.model_path
+        model_metadata = load_model_metadata(selected_model_path)
+        try:
+            model_fingerprint = model_bundle_fingerprint(selected_model_path)
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            return flash_redirect("/backtests", f"Selected model bundle is unavailable: {exc}", False)
+        if not model_metadata.get("version"):
+            return flash_redirect("/backtests", "Selected model metadata is unavailable", False)
+        training_end = model_metadata.get("training_end")
+        if training_end and start_date <= date.fromisoformat(training_end):
+            return flash_redirect(
+                "/backtests",
+                f"Backtest must start after model training ended on {training_end}",
+                False,
+            )
+        compatible = set(model_metadata.get("compatible_live_providers") or [])
+        if compatible and historical_provider not in compatible:
+            return flash_redirect("/backtests", "Selected model is incompatible with the active broker", False)
+        model_indices = set(model_metadata.get("indices") or [])
+        if model_indices and not set(selected).issubset(model_indices):
+            return flash_redirect("/backtests", "Selected model does not support every chosen index", False)
+    selected_model_version = str(model_metadata.get("version")) if strategy_mode == "MODEL" else "rule-only"
     run = BacktestRun(
-        configuration_json=json.dumps({"indices": selected, "capital": str(capital), "risk_pct": str(risk_pct), "slippage_pct": str(slippage_pct), "historical_provider": historical_provider, "cost_model": cost_model, "strategy_mode": strategy_mode, "strike_policy": strike_policy, "entry_delay_bars": entry_delay_bars, "minimum_option_volume": minimum_option_volume, "maximum_spread_pct": str(maximum_spread_pct), "model_version": model_metadata.get("version"), "feature_schema": model_metadata.get("feature_schema")}),
+        configuration_json=json.dumps({"indices": selected, "capital": str(capital), "risk_pct": str(risk_pct), "slippage_pct": str(slippage_pct), "historical_provider": historical_provider, "cost_model": cost_model, "strategy_mode": strategy_mode, "strike_policy": strike_policy, "entry_delay_bars": entry_delay_bars, "minimum_option_volume": minimum_option_volume, "maximum_spread_pct": str(maximum_spread_pct), "model_artifact_id": model_artifact_id, "model_path": str(selected_model_path.resolve()) if selected_model_path else None, "model_version": model_metadata.get("version"), "model_bundle_fingerprint": model_fingerprint, "feature_schema": model_metadata.get("feature_schema"), "backtest_engine_version": BACKTEST_ENGINE_VERSION, "strategy_fingerprint": strategy_fingerprint}),
         start_date=start_date,
         end_date=end_date,
+        strategy_version=f"strategy-{strategy_fingerprint[:12]}",
+        model_version=selected_model_version,
     )
     run.configuration_json = json.dumps({**json.loads(run.configuration_json), **{
         key: settings[key] for key in (
@@ -583,8 +694,7 @@ async def settings_page(request: Request, message: str = "", ok: bool = True, se
         [config.upstox_analytics_token_file, config.upstox_trading_token_file, config.groww_token_file]
     )
     return page(request, "settings.html", {
-        **system_context(session),
-        **dashboard_context(session, runtime_service),
+        **system_context(session, runtime_service),
         "message": message,
         "message_ok": ok,
         "analytics_configured": analytics_configured,
@@ -698,7 +808,7 @@ def save_risk(
 ):
     values = locals().copy()
     values.pop("session")
-    if paper_capital <= 0 or not (Decimal("0") < risk_per_trade_pct <= 5) or not (Decimal("0") < daily_loss_limit_pct <= 7) or max_trades_per_day < 1 or max_consecutive_losses < 1 or not (Decimal("5") <= premium_emergency_stop_pct <= 50) or reward_risk <= 0 or paper_slippage_pct < 0:
+    if paper_capital <= 0 or not (Decimal("0") < risk_per_trade_pct <= 5) or not (Decimal("0") < daily_loss_limit_pct <= 7) or not (1 <= max_trades_per_day <= MAX_TRADES_PER_DAY) or max_consecutive_losses < 1 or not (Decimal("5") <= premium_emergency_stop_pct <= 50) or reward_risk <= 0 or paper_slippage_pct < 0:
         return flash_redirect("/settings", "Risk values are outside safe limits", False)
     for key, value in values.items():
         session.get(Setting, key).value = str(value)
@@ -784,7 +894,23 @@ async def reconcile_now(session: Session = Depends(get_session)):
 
 @app.get("/shadow-research", response_class=HTMLResponse)
 def shadow_research(request: Request, session: Session = Depends(get_session)):
-    return page(request, "shadow-research.html", shadow_context(session, runtime_service.parallel_shadow))
+    return page(request, "shadow-research.html", shadow_status_context(session, runtime_service.parallel_shadow))
+
+
+@app.get("/shadow-research/comparison", response_class=HTMLResponse)
+def shadow_research_comparison(request: Request, session: Session = Depends(get_session)):
+    return templates.TemplateResponse(
+        name="partials/shadow_comparison.html", request=request,
+        context=shadow_context(session, runtime_service.parallel_shadow),
+    )
+
+
+@app.get("/shadow-research/recent", response_class=HTMLResponse)
+def shadow_research_recent(request: Request, session: Session = Depends(get_session)):
+    return templates.TemplateResponse(
+        name="partials/shadow_recent.html", request=request,
+        context=shadow_recent_context(session),
+    )
 
 
 @app.post("/shadow-research/enabled")

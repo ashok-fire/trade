@@ -12,11 +12,12 @@
     <a class="brand" href="/overview"><span class="logo">⌁</span><span>NiftyPilot</span></a>
     <nav>
       <a class="nav-item {% if active == 'overview' %}active{% endif %}" href="/overview"><span>▦</span>Overview</a>
-      <a class="nav-item {% if active == 'orders' %}active{% endif %}" href="/orders"><span>⇄</span>Orders</a>
-      <a class="nav-item {% if active == 'backtests' %}active{% endif %}" href="/backtests"><span>♙</span>Backtests</a>
-      <a class="nav-item {% if active == 'shadow-research' %}active{% endif %}" href="/shadow-research"><span>◉</span>Shadow research</a>
-      <a class="nav-item {% if active == 'telegram' %}active{% endif %}" href="/telegram"><span>➤</span>Telegram</a>
+      <a class="nav-item {% if active == 'orders' %}active{% endif %}" href="/orders"><span>⇄</span>Activity</a>
       <a class="nav-item {% if active == 'settings' %}active{% endif %}" href="/settings"><span>⚙</span>Settings</a>
+      <span class="nav-label">Research lab</span>
+      <a class="nav-item nav-secondary {% if active == 'backtests' %}active{% endif %}" href="/backtests"><span>♙</span>Data, models &amp; backtests</a>
+      <a class="nav-item nav-secondary {% if active == 'shadow-research' %}active{% endif %}" href="/shadow-research"><span>◉</span>Parallel research</a>
+      <a class="nav-item nav-secondary {% if active == 'telegram' %}active{% endif %}" href="/telegram"><span>➤</span>Notifications</a>
     </nav>
     <div class="side-health">
       <div><i class="dot {{ 'ok' if db_ok|default(true) else 'bad' }}"></i>Database</div>

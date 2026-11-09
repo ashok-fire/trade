@@ -13,7 +13,13 @@ from app.domain import Quote
 from app.models import Candle, Instrument, ModelArtifact, Order, RuntimeSetting, Setting, SetupObservation, Trade
 from app.market_frames import market_frame_for_boundary
 from app.parallel_shadow import ParallelShadowService, PROTOCOL
-from app.shadow_dashboard import daily_metrics, observation_export, shadow_context
+from app.shadow_dashboard import (
+    daily_metrics,
+    observation_export,
+    shadow_context,
+    shadow_recent_context,
+    shadow_status_context,
+)
 from app.research_protocol import PROTOCOL as ALIGNED_PROTOCOL, recorded_eligible
 from app.strategy import FEATURE_SCHEMA_V6, SETUP_FAMILIES
 
@@ -154,7 +160,7 @@ async def test_pause_still_monitors_and_exits_at_squareoff(session, observer):
     session.commit()
     late = datetime(2026, 10, 23, 9, 50, 15, tzinfo=UTC)
     broker.quotes.return_value = {"CE": quote("CE", late), "PE": quote("PE", late),
-        "INDEX": quote("INDEX", late, "24999", "25001", "25000")}
+        "INDEX": quote("INDEX", late, "25039", "25041", "25040")}
     await service.observe(late)
     await service.monitor(late)
     session.expire_all()
@@ -268,9 +274,19 @@ async def test_populated_template_renders(session, observer):
     await service.observe(NOW)
     request = Request({"type": "http", "app": app, "scheme": "http", "server": ("localhost", 8001),
                        "path": "/shadow-research", "root_path": "", "headers": []})
-    html = templates.get_template("shadow-research.html").render(request=request, **shadow_context(session, service))
-    assert "RESEARCH_ONLY" in html and "30.0%" in html
-    assert "disabled/unavailable" in html and "Export evidence" in html
+    html = templates.get_template("shadow-research.html").render(
+        request=request, **shadow_status_context(session, service)
+    )
+    comparison = templates.get_template("partials/shadow_comparison.html").render(
+        request=request, **shadow_context(session, service)
+    )
+    recent = templates.get_template("partials/shadow_recent.html").render(
+        request=request, **shadow_recent_context(session)
+    )
+    assert "Load on demand" in html and "Export evidence" in html
+    assert "Research-only comparisons" in comparison
+    assert "30.0%" in recent and "RESEARCH_ONLY" in recent
+    assert "disabled/unavailable" in recent
 
 
 @pytest.mark.asyncio

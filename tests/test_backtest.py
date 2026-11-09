@@ -3,7 +3,15 @@ from decimal import Decimal
 
 import pandas as pd
 
-from app.backtest import _intrabar_underlying_outcome, _utc_datetime, metrics, replay_limits, replay_spot_candles
+from app.backtest import (
+    _intrabar_underlying_outcome,
+    _utc_datetime,
+    current_strategy_fingerprint,
+    metrics,
+    model_bundle_fingerprint,
+    replay_limits,
+    replay_spot_candles,
+)
 from app.risk import can_enter
 from app.models import Candle
 from app.strategy import indicators
@@ -18,6 +26,27 @@ def test_metrics_are_chronological_and_after_costs():
     assert result["net_pnl"] == 500.0
     assert result["trades"] == 2
     assert result["equity_curve"] == [101000.0, 100500.0]
+
+
+def test_strategy_fingerprint_is_stable_and_auditable():
+    fingerprint = current_strategy_fingerprint()
+    assert len(fingerprint) == 64
+    assert set(fingerprint) <= set("0123456789abcdef")
+
+
+def test_model_bundle_fingerprint_covers_manifest_metadata_and_components(tmp_path):
+    import json
+    model = tmp_path / "candidate.json"
+    metadata = tmp_path / "candidate.metadata.json"
+    ce, pe, ranker = tmp_path / "ce.cbm", tmp_path / "pe.cbm", tmp_path / "ranker.json"
+    model.write_text(json.dumps({"quality_models": {"CE": ce.name, "PE": pe.name}, "ranker": ranker.name}))
+    metadata.write_text(json.dumps({"version": "test", "feature_schema": "cost-aware-option-v5"}))
+    ce.write_bytes(b"ce")
+    pe.write_bytes(b"pe")
+    ranker.write_bytes(b"rank")
+    first = model_bundle_fingerprint(model)
+    ranker.write_bytes(b"changed")
+    assert len(first) == 64 and model_bundle_fingerprint(model) != first
 
 
 def test_backtest_timestamp_normalization_handles_sqlite_naive_values():
@@ -38,8 +67,9 @@ def test_replay_uses_saved_portfolio_trade_and_loss_gates():
             consecutive_losses=losses, realized_pnl_today=Decimal(realized),
             quote_fresh=True, broker_connected=True, reconciled=True)[0]
     assert limits.risk_per_trade_pct == 5 and limits.reward_risk == Decimal("1.5")
-    assert gate(19, 4, "-6999")
-    assert not gate(20, 4, "0")
+    assert limits.max_trades_per_day == 8
+    assert gate(7, 4, "-6999")
+    assert not gate(8, 4, "0")
     assert not gate(1, 5, "0")
     assert not gate(1, 0, "-7000")
 

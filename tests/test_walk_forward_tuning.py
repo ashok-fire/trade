@@ -23,6 +23,7 @@ def test_requested_capital_and_risk_defaults():
     assert DEFAULTS["paper_capital"] == "100000"
     assert DEFAULTS["risk_per_trade_pct"] == "3"
     assert DEFAULTS["daily_loss_limit_pct"] == "5"
+    assert DEFAULTS["max_trades_per_day"] == "8"
     assert DEFAULTS["reward_risk"] == "1.5"
 
 
@@ -33,13 +34,14 @@ def test_requested_capital_and_risk_defaults():
     {"daily_loss_limit_pct": "0"},
     {"risk_per_trade_pct": "-1"},
     {"daily_loss_limit_pct": "-1"},
+    {"max_trades_per_day": "9"},
 ])
 def test_risk_settings_route_accepts_five_and_seven_percent_not_more(session, invalid):
     from decimal import Decimal
     from app.main import save_risk
     from app.models import Setting
     values = dict(paper_capital=Decimal("100000"),risk_per_trade_pct=Decimal("5"),
-        daily_loss_limit_pct=Decimal("7"),max_trades_per_day=5,max_consecutive_losses=2,
+        daily_loss_limit_pct=Decimal("7"),max_trades_per_day=8,max_consecutive_losses=2,
         premium_emergency_stop_pct=Decimal("25"),reward_risk=Decimal("1.5"),
         paper_slippage_pct=Decimal("0.05"),session=session)
     response = save_risk(**values)
@@ -71,8 +73,12 @@ def test_new_backtest_snapshots_daily_limit_and_defaults(session,monkeypatch):
     values = json.loads(run.configuration_json)
     assert response.status_code == 303 and submitted == [run.id]
     assert values["daily_loss_limit_pct"] == "5" and values["risk_pct"] == "3"
-    assert values["max_trades_per_day"] == "5" and values["max_consecutive_losses"] == "2"
+    assert values["max_trades_per_day"] == "8" and values["max_consecutive_losses"] == "2"
     assert values["premium_emergency_stop_pct"] == "25" and values["reward_risk"] == "1.5"
+    assert values["backtest_engine_version"] == "backtest-v2"
+    assert len(values["strategy_fingerprint"]) == 64
+    assert run.strategy_version == f"strategy-{values['strategy_fingerprint'][:12]}"
+    assert run.model_version == "rule-only"
 
 
 def test_backtest_snapshots_saved_portfolio_limits(session, monkeypatch):
@@ -82,7 +88,7 @@ def test_backtest_snapshots_saved_portfolio_limits(session, monkeypatch):
     from sqlalchemy import select
     import json
     for key, value in {"risk_per_trade_pct": "5", "daily_loss_limit_pct": "7",
-                       "max_trades_per_day": "20", "max_consecutive_losses": "5"}.items():
+                       "max_trades_per_day": "8", "max_consecutive_losses": "5"}.items():
         session.get(Setting, key).value = value
     session.commit()
     submitted = []
@@ -99,8 +105,44 @@ def test_backtest_snapshots_saved_portfolio_limits(session, monkeypatch):
     assert {key: values[key] for key in ("risk_pct", "daily_loss_limit_pct",
         "max_trades_per_day", "max_consecutive_losses", "premium_emergency_stop_pct",
         "reward_risk")} == {"risk_pct": "5", "daily_loss_limit_pct": "7",
-        "max_trades_per_day": "20", "max_consecutive_losses": "5",
+        "max_trades_per_day": "8", "max_consecutive_losses": "5",
         "premium_emergency_stop_pct": "25", "reward_risk": "1.5"}
+
+
+def test_backtest_can_freeze_registry_model_without_activating_it(session, monkeypatch, tmp_path):
+    from decimal import Decimal
+    from app import main
+    from app.models import BacktestRun, ModelArtifact
+    from sqlalchemy import select
+    import json
+    model = tmp_path / "shadow.json"
+    metadata_path = tmp_path / "shadow.metadata.json"
+    ce, pe, ranker = tmp_path / "ce.cbm", tmp_path / "pe.cbm", tmp_path / "ranker.json"
+    model.write_text(json.dumps({"quality_models": {"CE": ce.name, "PE": pe.name}, "ranker": ranker.name}))
+    metadata = {"version": "shadow-test", "feature_schema": "cost-aware-option-v5",
+        "training_end": "2024-12-31", "compatible_live_providers": ["UPSTOX"], "indices": ["NIFTY"]}
+    metadata_path.write_text(json.dumps(metadata))
+    ce.write_bytes(b"ce")
+    pe.write_bytes(b"pe")
+    ranker.write_bytes(b"rank")
+    artifact = ModelArtifact(version="shadow-test", status="SHADOW", model_path=str(model),
+        metadata_path=str(metadata_path), metadata_json=json.dumps(metadata))
+    session.add(artifact)
+    session.commit()
+    submitted = []
+    monkeypatch.setattr(main.backtest_service, "submit", submitted.append)
+    response = main.start_backtest(indices=["NIFTY"], start_date=date(2025, 1, 1), end_date=date(2025, 2, 1),
+        capital=Decimal("100000"), risk_pct=Decimal("3"), slippage_pct=Decimal("0.05"),
+        historical_provider="UPSTOX", cost_model="UPSTOX", strategy_mode="MODEL",
+        strike_policy="ATM_ITM1", entry_delay_bars=1, minimum_option_volume=1,
+        maximum_spread_pct=Decimal("1.5"), model_artifact_id=artifact.id, session=session)
+    run = session.scalar(select(BacktestRun))
+    values = json.loads(run.configuration_json)
+    assert response.status_code == 303 and submitted == [run.id]
+    assert values["model_artifact_id"] == artifact.id
+    assert values["model_path"] == str(model.resolve())
+    assert len(values["model_bundle_fingerprint"]) == 64
+    assert run.model_version == "shadow-test"
 
 
 def test_splits_group_days_purge_boundaries_and_exclude_reserved_window():

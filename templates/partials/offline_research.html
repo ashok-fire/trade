@@ -1,3 +1,4 @@
+{% from "partials/pagination.html" import pagination with context %}
 {% macro research_metrics(result) -%}
   {% if result is not none %}
     {% if result.trades %}<b>{{ result.win_rate_pct if result.win_rate_pct is not none else '—' }}% wins</b>{% else %}<b>No selected trades</b>{% endif %}
@@ -5,7 +6,7 @@
     <small>Net {{ result.net_pnl|money if result.net_pnl is not none else '—' }}<br>Stress {{ result.stress_net_pnl|money if result.stress_net_pnl is not none else '—' }}</small>
   {% else %}<span class="hint">Not available / not run</span>{% endif %}
 {%- endmacro %}
-<section class="card" id="research-history">
+<section id="research-history-content" hx-boost="true" hx-target="#research-history-content" hx-swap="outerHTML">
   <div class="card-head"><div><h2>Offline research history</h2><span>Saved experiments, including rejected attempts · newest first · all times IST</span></div><span class="status amber">READ ONLY</span></div>
   <p class="hint">Development results are selection-biased. Later historical checks are already-inspected history, not fresh forward validation. These experiments are not activated models; opening a report never changes trading or risk settings.</p>
   <div class="table-wrap"><table>

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from .config import config
 from .models import Base, RuntimeSetting, Setting
+from .risk import MAX_TRADES_PER_DAY
 
 
 def _sqlite_path(url: str) -> Path | None:
@@ -42,7 +43,7 @@ DEFAULTS = {
     "paper_capital": "100000",
     "risk_per_trade_pct": "3",
     "daily_loss_limit_pct": "5",
-    "max_trades_per_day": "5",
+    "max_trades_per_day": str(MAX_TRADES_PER_DAY),
     "max_consecutive_losses": "2",
     "max_open_positions": "1",
     "live_max_lots": "1",
@@ -169,6 +170,14 @@ def init_db() -> None:
             session.add(RuntimeSetting(id=1))
         existing = set(session.scalars(select(Setting.key)).all())
         session.add_all(Setting(key=key, value=value) for key, value in DEFAULTS.items() if key not in existing)
+        daily_trade_limit = session.get(Setting, "max_trades_per_day")
+        if daily_trade_limit is not None:
+            try:
+                configured_limit = int(daily_trade_limit.value)
+            except (TypeError, ValueError):
+                configured_limit = MAX_TRADES_PER_DAY
+            if configured_limit > MAX_TRADES_PER_DAY or configured_limit < 1:
+                daily_trade_limit.value = str(MAX_TRADES_PER_DAY)
 
 
 def get_session():

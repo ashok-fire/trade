@@ -5,6 +5,9 @@ from datetime import date
 from decimal import ROUND_DOWN, ROUND_HALF_UP, Decimal
 
 
+MAX_TRADES_PER_DAY = 8
+
+
 @dataclass(frozen=True)
 class RiskLimits:
     capital: Decimal
@@ -36,7 +39,7 @@ def limits_from_settings(settings: dict[str, str]) -> RiskLimits:
         capital=Decimal(settings["paper_capital"]),
         risk_per_trade_pct=Decimal(settings["risk_per_trade_pct"]),
         daily_loss_limit_pct=Decimal(settings["daily_loss_limit_pct"]),
-        max_trades_per_day=int(settings["max_trades_per_day"]),
+        max_trades_per_day=min(int(settings["max_trades_per_day"]), MAX_TRADES_PER_DAY),
         max_consecutive_losses=int(settings["max_consecutive_losses"]),
         max_open_positions=int(settings["max_open_positions"]),
         live_max_lots=int(settings["live_max_lots"]),

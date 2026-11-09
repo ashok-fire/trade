@@ -2,7 +2,7 @@
 from collections import Counter, defaultdict
 import json
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from .models import RuntimeSetting, SetupObservation
 from .database import settings_dict
@@ -64,6 +64,24 @@ def shadow_context(session, service):
     return {"settings": settings_dict(session), "runtime": session.get(RuntimeSetting, 1),
             "observer": service.health(), "comparisons": comparisons, "recent": rows[:100],
             "total": len(rows), "reasons": reasons.most_common(20)}
+
+
+def shadow_status_context(session, service):
+    """Small initial-page context; experimental evidence loads only on demand."""
+    return {
+        "settings": settings_dict(session),
+        "runtime": session.get(RuntimeSetting, 1),
+        "observer": service.health(),
+        "total": session.scalar(select(func.count()).select_from(SetupObservation)) or 0,
+    }
+
+
+def shadow_recent_context(session, limit=20):
+    return {
+        "recent": session.scalars(
+            select(SetupObservation).order_by(SetupObservation.observed_at.desc()).limit(limit)
+        ).all()
+    }
 
 
 def observation_export(row):

@@ -85,12 +85,24 @@ def test_futures_gaps_ignore_preopen_and_allow_small_intraday_gaps():
 
 def _special_session(day):
     zone = ZoneInfo("Asia/Kolkata")
-    if day == date(2024, 5, 18):
-        windows = ((9, 15, 9), (11, 30, 12))
-        extras = ((9, 5), (10, 0), (11, 15), (11, 20), (12, 30))
-    else:
-        windows = ((13, 45, 12),)
-        extras = ((13, 30), (13, 35), (13, 40), (14, 45), (14, 50), (14, 55), (15, 0))
+    windows, extras = {
+        date(2024, 3, 2): (
+            ((9, 15, 9), (11, 30, 12)),
+            ((9, 5), (10, 0), (11, 15), (11, 20), (12, 30)),
+        ),
+        date(2024, 5, 18): (
+            ((9, 15, 9), (11, 30, 12)),
+            ((9, 5), (10, 0), (11, 15), (11, 20), (12, 30)),
+        ),
+        date(2025, 10, 21): (
+            ((13, 45, 12),),
+            ((13, 30), (13, 35), (13, 40), (14, 45), (14, 50), (14, 55), (15, 0)),
+        ),
+        date(2026, 11, 8): (
+            ((14, 20, 16),),
+            ((14, 5), (14, 10), (14, 15), (15, 40), (15, 45), (15, 50), (15, 55)),
+        ),
+    }[day]
     core = [datetime(day.year, day.month, day.day, hour, minute, tzinfo=zone)
             + timedelta(minutes=5 * i) for hour, minute, count in windows for i in range(count)]
     outside = [datetime(day.year, day.month, day.day, hour, minute, tzinfo=zone)
@@ -98,7 +110,15 @@ def _special_session(day):
     return core, outside
 
 
-@pytest.mark.parametrize("day,expected_bars", [(date(2024, 5, 18), 21), (date(2025, 10, 21), 12)])
+@pytest.mark.parametrize(
+    "day,expected_bars",
+    [
+        (date(2024, 3, 2), 21),
+        (date(2024, 5, 18), 21),
+        (date(2025, 10, 21), 12),
+        (date(2026, 11, 8), 16),
+    ],
+)
 def test_special_sessions_ignore_preopen_breaks_and_close_boundaries(day, expected_bars):
     core, outside = _special_session(day)
     assert len(core) == expected_bars
@@ -108,7 +128,15 @@ def test_special_sessions_ignore_preopen_breaks_and_close_boundaries(day, expect
     assert _missing_intervals([*outside, *core, core[0]]) == 0
 
 
-@pytest.mark.parametrize("day,removed", [(date(2024, 5, 18), 3), (date(2025, 10, 21), 2)])
+@pytest.mark.parametrize(
+    "day,removed",
+    [
+        (date(2024, 3, 2), 3),
+        (date(2024, 5, 18), 3),
+        (date(2025, 10, 21), 2),
+        (date(2026, 11, 8), 2),
+    ],
+)
 def test_special_sessions_still_reject_real_futures_gaps(day, removed):
     core, outside = _special_session(day)
     assert futures_alignment_gaps([*core, *outside], core[:-removed] * 3) == [str(day)]
@@ -124,7 +152,7 @@ def test_regular_session_keeps_exact_ninety_percent_gate():
 
 def test_readiness_uses_special_session_denominator_without_mutating_candles(session):
     core, outside = [], []
-    for day in (date(2024, 5, 18), date(2025, 10, 21)):
+    for day in (date(2024, 3, 2), date(2024, 5, 18), date(2025, 10, 21), date(2026, 11, 8)):
         bars, other = _special_session(day)
         core.extend(bars)
         outside.extend(other)
@@ -135,7 +163,7 @@ def test_readiness_uses_special_session_denominator_without_mutating_candles(ses
     row = next(item for item in research_readiness(session)
                if item.provider == "GROWW" and item.underlying_code == "NIFTY")
     assert row.spot_count == len(core) + len(outside)
-    assert row.aligned_count == len(core) == 33
+    assert row.aligned_count == len(core) == 70
     assert row.alignment_percent == 100.0
     assert row.missing_intervals == 0
     assert "spot sessions" not in row.reason

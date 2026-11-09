@@ -293,14 +293,14 @@ class ParallelShadowService:
                     if not quote.bid.is_finite() or not quote.ask.is_finite() or quote.bid <= 0 or quote.ask < quote.bid:
                         continue
                     reason = None
-                    if quote.bid <= obs.premium_stop:
+                    if captured.astimezone(IST).time() >= time(15, 20):
+                        reason = "TIME_EXIT"
+                    elif quote.bid <= obs.premium_stop:
                         reason = "PREMIUM_STOP"
                     elif (obs.direction == "CE" and underlying.last <= obs.underlying_stop) or (obs.direction == "PE" and underlying.last >= obs.underlying_stop):
                         reason = "UNDERLYING_STOP"
                     elif (obs.direction == "CE" and underlying.last >= obs.underlying_target) or (obs.direction == "PE" and underlying.last <= obs.underlying_target):
                         reason = "UNDERLYING_TARGET"
-                    elif captured.astimezone(IST).time() >= time(15, 20):
-                        reason = "TIME_EXIT"
                     if reason:
                         obs.exit_time, obs.exit_reason = captured, reason
                         obs.exit_price = paper_fill("SELL", quote.bid, quote.ask, Decimal(protocol["slippage_pct"]), obs.tick_size)

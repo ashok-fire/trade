@@ -209,3 +209,31 @@ class ExecutionService:
         session.commit()
         return trade
 
+    def mark_incomplete(
+        self,
+        session,
+        trade: Trade,
+        reason: str,
+        *,
+        observed_at: datetime | None = None,
+    ) -> Trade:
+        """Exclude an unobservable simulated exit without fabricating a fill or P&L."""
+        if trade.status != "OPEN":
+            raise ExecutionError("Trade is not open")
+        if trade.mode not in {"SHADOW", "PAPER"}:
+            raise ExecutionError("Only simulated trades may be marked incomplete")
+        trade.status = "INCOMPLETE"
+        trade.exit_reason = reason
+        trade.exit_time = observed_at or datetime.now(UTC)
+        session.add(SystemEvent(
+            severity="WARNING",
+            component="EXECUTION",
+            event_type="SIMULATED_EXIT_INCOMPLETE",
+            message=(
+                f"{trade.mode} trade {trade.id} excluded from performance: {reason}; "
+                "no same-day executable exit was observed"
+            ),
+        ))
+        session.commit()
+        return trade
+

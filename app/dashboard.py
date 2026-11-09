@@ -17,8 +17,9 @@ from .data_quality import research_readiness
 from .models import BacktestRun, Candle, Instrument, ModelArtifact, NotificationOutbox, OptionSelectionAudit, Order, ResearchSyncRun, RuntimeSetting, Signal, SystemEvent, Trade
 from .strategy import SUPPORTED_FEATURE_SCHEMAS
 from .training import load_model_metadata
-from .pagination import LATEST_LIMIT, database_page
+from .pagination import LATEST_LIMIT, database_page, pagination
 from .research_history import research_history
+from .risk import MAX_TRADES_PER_DAY
 
 
 PORTAL_CACHE_SECONDS = 300.0
@@ -169,7 +170,8 @@ def dashboard_context(session: Session, runtime_service=None) -> dict:
     risk_used_amount = realized_loss_today + open_risk
     risk_usage_percent = min(100.0, float(risk_used_amount / daily_loss_budget * 100)) if daily_loss_budget else 0.0
     remaining_daily_risk = max(Decimal("0"), daily_loss_budget - risk_used_amount)
-    trades_remaining = max(0, int(settings.get("max_trades_per_day", "5")) - len(closed_today) - (1 if open_trade else 0))
+    daily_trade_limit = min(int(settings.get("max_trades_per_day", str(MAX_TRADES_PER_DAY))), MAX_TRADES_PER_DAY)
+    trades_remaining = max(0, daily_trade_limit - len(closed_today) - (1 if open_trade else 0))
     consecutive_losses = 0
     for trade in sorted((row for row in trades if row.status == "CLOSED"), key=lambda item: _utc(item.exit_time), reverse=True):
         if trade.net_pnl >= 0:
@@ -243,23 +245,207 @@ def dashboard_context(session: Session, runtime_service=None) -> dict:
     }
 
 
-def orders_context(session: Session) -> dict:
-    signals = session.scalars(select(Signal).order_by(Signal.created_at.desc()).limit(100)).all()
+def orders_context(session: Session, runtime_service=None, *, signals_page: int = 1) -> dict:
+    """Build the activity page without calculating the full Overview dashboard."""
+    signal_total = session.scalar(select(func.count()).select_from(Signal)) or 0
+    signals_pagination = pagination(signal_total, signals_page, per_page=20)
+    signals = session.scalars(
+        select(Signal)
+        .order_by(Signal.created_at.desc())
+        .offset(signals_pagination["offset"])
+        .limit(signals_pagination["per_page"])
+    ).all()
     signal_details = {}
     for signal in signals:
         try:
             signal_details[signal.id] = json.loads(signal.decision_json) if signal.decision_json else {}
         except (TypeError, ValueError):
             signal_details[signal.id] = {}
+    runtime = session.get(RuntimeSetting, 1)
+    settings = settings_dict(session)
+    open_trade = session.scalar(
+        select(Trade).where(Trade.status == "OPEN").order_by(Trade.entry_time.desc()).limit(1)
+    )
+    today_start = _today_start()
+    mode = runtime.execution_mode if runtime else "STOPPED"
+    closed_today = session.scalars(
+        select(Trade).where(
+            Trade.mode == mode,
+            Trade.status == "CLOSED",
+            Trade.exit_time >= today_start,
+        )
+    ).all()
+    db_ok, db_detail = _cached_database_health(session)
     return {
-        "trades": session.scalars(select(Trade).order_by(Trade.entry_time.desc()).limit(100)).all(),
-        "orders": session.scalars(select(Order).order_by(Order.created_at.desc()).limit(100)).all(),
+        "trades": session.scalars(select(Trade).order_by(Trade.entry_time.desc()).limit(20)).all(),
+        "orders": session.scalars(select(Order).order_by(Order.created_at.desc()).limit(20)).all(),
         "signals": signals,
         "signal_details": signal_details,
+        "signals_pagination": signals_pagination,
+        "runtime": runtime,
+        "settings": settings,
+        "open_trade": open_trade,
+        "open_pnl": ((open_trade.current_bid or open_trade.entry_price) - open_trade.entry_price) * open_trade.quantity if open_trade else Decimal("0"),
+        "today_pnl": sum((row.net_pnl for row in closed_today), Decimal("0")),
+        "db_ok": db_ok,
+        "db_detail": db_detail,
+        "runtime_error": getattr(runtime_service, "last_error", None),
     }
 
 
-def backtests_context(session: Session, selected_id: int | None = None, *, runs_page=1, models_page=1, downloads_page=1, research_page=1) -> dict:
+def _selected_model_context(session: Session) -> dict:
+    model_metadata = load_model_metadata(config.model_path)
+    current_statuses = ("ACTIVE", "SHADOW", "CANDIDATE")
+    artifacts = session.scalars(
+        select(ModelArtifact)
+        .where(ModelArtifact.status.in_(current_statuses))
+        .order_by(ModelArtifact.created_at.desc(), ModelArtifact.id.desc())
+    ).all()
+    shadow_artifact = session.scalar(
+        select(ModelArtifact)
+        .where(ModelArtifact.status == "SHADOW")
+        .order_by(ModelArtifact.created_at.desc(), ModelArtifact.id.desc())
+        .limit(1)
+    )
+    try:
+        shadow_metadata = json.loads(shadow_artifact.metadata_json) if shadow_artifact else {}
+    except (TypeError, ValueError):
+        shadow_metadata = {}
+    return {
+        "model_ready": bool(model_metadata) and model_metadata.get("feature_schema") in SUPPORTED_FEATURE_SCHEMAS,
+        "model_metadata": model_metadata,
+        "active_model_ready": bool(model_metadata) and model_metadata.get("feature_schema") in SUPPORTED_FEATURE_SCHEMAS,
+        "active_model_metadata": model_metadata,
+        "shadow_model_ready": bool(shadow_metadata) and shadow_metadata.get("feature_schema") in SUPPORTED_FEATURE_SCHEMAS,
+        "shadow_model_metadata": shadow_metadata,
+        "backtest_model_artifacts": artifacts,
+    }
+
+
+def backtests_core_context(session: Session, selected_id: int | None = None) -> dict:
+    """Fast initial Research Lab context; histories and diagnostics load separately."""
+    recent_runs = session.scalars(
+        select(BacktestRun)
+        .order_by(BacktestRun.created_at.desc(), BacktestRun.id.desc())
+        .limit(LATEST_LIMIT)
+    ).all()
+    selected = session.get(BacktestRun, selected_id) if selected_id else (recent_runs[0] if recent_runs else None)
+    try:
+        summary = json.loads(selected.summary_json) if selected and selected.summary_json else None
+    except (TypeError, ValueError):
+        summary = None
+    try:
+        warnings = json.loads(selected.warnings_json) if selected and selected.warnings_json else []
+    except (TypeError, ValueError):
+        warnings = []
+    run_details = {}
+    for run in recent_runs:
+        try:
+            run_details[run.id] = json.loads(run.configuration_json)
+        except (TypeError, ValueError):
+            run_details[run.id] = {}
+    settings = settings_dict(session)
+    return {
+        **_selected_model_context(session),
+        "selected": selected,
+        "summary": summary,
+        "warnings": warnings,
+        "recent_runs": recent_runs,
+        "run_details": run_details,
+        "settings": settings,
+        "active_broker": settings.get("active_broker", "UPSTOX"),
+        "default_historical_provider": settings.get("default_historical_provider", "UPSTOX"),
+    }
+
+
+def model_history_context(session: Session, *, models_page=1, archived_models_page=1) -> dict:
+    current_statuses = ("ACTIVE", "SHADOW", "CANDIDATE")
+    current_total = session.scalar(
+        select(func.count()).select_from(ModelArtifact).where(ModelArtifact.status.in_(current_statuses))
+    ) or 0
+    models_pagination = pagination(current_total, models_page)
+    model_artifacts = session.scalars(
+        select(ModelArtifact)
+        .where(ModelArtifact.status.in_(current_statuses))
+        .order_by(ModelArtifact.created_at.desc(), ModelArtifact.id.desc())
+        .offset(models_pagination["offset"])
+        .limit(models_pagination["per_page"])
+    ).all()
+    archived_total = session.scalar(
+        select(func.count()).select_from(ModelArtifact).where(ModelArtifact.status.not_in(current_statuses))
+    ) or 0
+    archived_models_pagination = pagination(archived_total, archived_models_page)
+    archived_model_artifacts = session.scalars(
+        select(ModelArtifact)
+        .where(ModelArtifact.status.not_in(current_statuses))
+        .order_by(ModelArtifact.created_at.desc(), ModelArtifact.id.desc())
+        .offset(archived_models_pagination["offset"])
+        .limit(archived_models_pagination["per_page"])
+    ).all()
+    model_details = {}
+    for artifact in [*model_artifacts, *archived_model_artifacts]:
+        try:
+            model_details[artifact.id] = json.loads(artifact.metadata_json)
+        except (TypeError, ValueError):
+            model_details[artifact.id] = {}
+    return {
+        "models_pagination": models_pagination,
+        "archived_models_pagination": archived_models_pagination,
+        "model_artifacts": model_artifacts,
+        "archived_model_artifacts": archived_model_artifacts,
+        "model_details": model_details,
+    }
+
+
+def download_history_context(session: Session, *, downloads_page=1) -> dict:
+    rows, pager = database_page(session, ResearchSyncRun, downloads_page)
+    return {"research_runs": rows, "downloads_pagination": pager}
+
+
+def run_history_context(session: Session, *, runs_page=1, selected_id=None) -> dict:
+    runs, pager = database_page(session, BacktestRun, runs_page)
+    details = {}
+    for run in runs:
+        try:
+            details[run.id] = json.loads(run.configuration_json)
+        except (TypeError, ValueError):
+            details[run.id] = {}
+    return {"runs": runs, "runs_pagination": pager, "run_details": details,
+            "selected": session.get(BacktestRun, selected_id) if selected_id else None}
+
+
+def readiness_context(session: Session) -> dict:
+    statistics = _research_statistics(session)
+    settings = settings_dict(session)
+    return {**statistics, "active_broker": settings.get("active_broker", "UPSTOX")}
+
+
+def offline_research_context(*, research_page=1) -> dict:
+    return {"offline_research": research_history(config.root / "models/research", research_page)}
+
+
+def research_diagnostics_context(session: Session) -> dict:
+    statistics = _research_statistics(session)
+    try:
+        reports = [path for path in (config.root / "models/research").glob("selection-aligned-edge-study-*.json") if not path.name.endswith(".spec.json")]
+        latest_report = max(reports, key=lambda path: path.stat().st_mtime) if reports else None
+        edge_study = json.loads(latest_report.read_text()) if latest_report else {}
+    except (OSError, ValueError):
+        edge_study = {}
+    return {"edge_study": edge_study, "option_selection_records": statistics["option_selection_records"],
+            "data_readiness": statistics["data_readiness"]}
+
+
+def backtests_context(
+    session: Session,
+    selected_id: int | None = None,
+    *,
+    runs_page=1,
+    models_page=1,
+    archived_models_page=1,
+    downloads_page=1,
+    research_page=1,
+) -> dict:
     runs, runs_pagination = database_page(session, BacktestRun, runs_page)
     recent_runs = session.scalars(select(BacktestRun).order_by(BacktestRun.created_at.desc(), BacktestRun.id.desc()).limit(LATEST_LIMIT)).all()
     selected = session.get(BacktestRun, selected_id) if selected_id else (recent_runs[0] if recent_runs else None)
@@ -274,9 +460,36 @@ def backtests_context(session: Session, selected_id: int | None = None, *, runs_
             run_details[run.id] = {}
     statistics = _research_statistics(session)
     research_runs, downloads_pagination = database_page(session, ResearchSyncRun, downloads_page)
-    model_artifacts, models_pagination = database_page(session, ModelArtifact, models_page)
+    current_statuses = ("ACTIVE", "SHADOW", "CANDIDATE")
+    current_total = session.scalar(
+        select(func.count()).select_from(ModelArtifact).where(ModelArtifact.status.in_(current_statuses))
+    ) or 0
+    models_pagination = pagination(current_total, models_page)
+    model_artifacts = session.scalars(
+        select(ModelArtifact)
+        .where(ModelArtifact.status.in_(current_statuses))
+        .order_by(ModelArtifact.created_at.desc(), ModelArtifact.id.desc())
+        .offset(models_pagination["offset"])
+        .limit(models_pagination["per_page"])
+    ).all()
+    archived_total = session.scalar(
+        select(func.count()).select_from(ModelArtifact).where(ModelArtifact.status.not_in(current_statuses))
+    ) or 0
+    archived_models_pagination = pagination(archived_total, archived_models_page)
+    archived_model_artifacts = session.scalars(
+        select(ModelArtifact)
+        .where(ModelArtifact.status.not_in(current_statuses))
+        .order_by(ModelArtifact.created_at.desc(), ModelArtifact.id.desc())
+        .offset(archived_models_pagination["offset"])
+        .limit(archived_models_pagination["per_page"])
+    ).all()
+    backtest_model_artifacts = session.scalars(
+        select(ModelArtifact)
+        .where(ModelArtifact.status.in_(current_statuses))
+        .order_by(ModelArtifact.created_at.desc(), ModelArtifact.id.desc())
+    ).all()
     model_details = {}
-    for artifact in model_artifacts:
+    for artifact in [*model_artifacts, *archived_model_artifacts]:
         try:
             model_details[artifact.id] = json.loads(artifact.metadata_json)
         except (TypeError, ValueError):
@@ -299,6 +512,7 @@ def backtests_context(session: Session, selected_id: int | None = None, *, runs_
         "recent_runs": recent_runs,
         "runs_pagination": runs_pagination,
         "models_pagination": models_pagination,
+        "archived_models_pagination": archived_models_pagination,
         "downloads_pagination": downloads_pagination,
         "offline_research": research_history(config.root / "models/research", research_page),
         "selected": selected,
@@ -318,6 +532,8 @@ def backtests_context(session: Session, selected_id: int | None = None, *, runs_
         "data_readiness": statistics["data_readiness"],
         "research_runs": research_runs,
         "model_artifacts": model_artifacts,
+        "archived_model_artifacts": archived_model_artifacts,
+        "backtest_model_artifacts": backtest_model_artifacts,
         "model_details": model_details,
         "edge_study": edge_study,
         "option_selection_records": statistics["option_selection_records"],
@@ -350,17 +566,23 @@ def telegram_context(session: Session) -> dict:
     }
 
 
-def system_context(session: Session) -> dict:
+def system_context(session: Session, runtime_service=None) -> dict:
     settings = settings_dict(session)
     paper_sessions = session.scalar(
         select(func.count(func.distinct(func.date(Trade.exit_time)))).where(
             Trade.mode == "PAPER", Trade.status == "CLOSED"
         )
     ) or 0
+    db_ok, db_detail = _cached_database_health(session)
     return {
         "settings": settings,
         "events": session.scalars(select(SystemEvent).order_by(SystemEvent.created_at.desc()).limit(30)).all(),
         "instrument_count": session.scalar(select(func.count()).select_from(Instrument)) or 0,
         "paper_sessions": int(paper_sessions),
         "remaining_paper_sessions": max(0, int(settings.get("required_paper_sessions", "20")) - int(paper_sessions)),
+        "enabled_indices": {item for item in settings.get("enabled_indices", "").split(",") if item},
+        "db_ok": db_ok,
+        "db_detail": db_detail,
+        "runtime_error": getattr(runtime_service, "last_error", None),
+        "last_candle": getattr(runtime_service, "last_candle", None),
     }

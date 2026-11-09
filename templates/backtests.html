@@ -17,7 +17,7 @@
   <a href="#run-backtest"><span>3</span><div><b>Run backtest</b><small>Replay historical CE/PE trades</small></div></a>
 </nav>
 
-<div class="metrics three simple-readiness">
+<div class="metrics two simple-readiness">
   <article class="metric">
     <span>Shadow model</span>
     <strong class="mode-text {{ 'positive' if shadow_model_ready else 'negative' }}">{{ 'Ready' if shadow_model_ready else 'Not selected' }}</strong>
@@ -25,34 +25,16 @@
     <small>Live model: {{ 'activated' if active_model_ready else 'not activated — safety gates not passed' }}</small>
   </article>
   <article class="metric">
-    <span>Training candles</span>
-    <strong>{{ verified_futures }}</strong>
-    <small>Verified five-minute futures candles aligned with index data</small>
-  </article>
-  <article class="metric">
-    <span>Option replay candles</span>
-    <strong class="{{ 'positive' if verified_options else 'negative' }}">{{ verified_options }}</strong>
-    <small>{{ 'Ready for CE/PE replay checks' if verified_options else 'Required for trustworthy CE/PE profit and loss' }}</small>
+    <span>Historical data</span>
+    <strong>On demand</strong>
+    <small>Readiness and full diagnostics are loaded only when opened</small>
   </article>
 </div>
 
-<section class="card readiness-summary">
-  <div class="card-head"><div><h2>{{ active_broker }} data readiness</h2><span>Plain-language status for the active broker</span></div><span class="status blue">{{ active_broker }}</span></div>
-  <div class="readiness-cards">
-    {% for row in data_readiness %}{% if row.provider == active_broker %}
-    <article class="readiness-card">
-      <div class="readiness-title"><b>{{ row.underlying_code|replace('_',' ') }}</b><span class="status {{ 'green' if row.backtest_ready else ('blue' if row.training_ready else 'amber') }}">{{ 'BACKTEST READY' if row.backtest_ready else ('TRAINING READY' if row.training_ready else 'NOT READY') }}</span></div>
-      <dl>
-        <div><dt>Spot candles</dt><dd>{{ row.spot_count }}</dd></div>
-        <div><dt>Futures candles</dt><dd>{{ row.futures_count }}</dd></div>
-        <div><dt>Aligned candles</dt><dd>{{ row.aligned_count }} · {{ row.alignment_percent }}%</dd></div>
-        <div><dt>Option candles</dt><dd>{{ row.option_count }}</dd></div>
-      </dl>
-      {% if not row.backtest_ready %}<p>{{ row.reason }}</p>{% endif %}
-    </article>
-    {% endif %}{% endfor %}
-  </div>
-</section>
+<details class="card disclosure-card">
+  <summary><span><b>Historical data readiness</b><small>Verified candle coverage for training and replay</small></span><em>Load on demand</em></summary>
+  <div class="disclosure-content" hx-get="/backtests/data-readiness" hx-trigger="intersect once" hx-swap="innerHTML"><div class="empty-state compact">Loading data readiness…</div></div>
+</details>
 
 <div class="grid-two research-tools">
   <section id="download-data" class="card form-card workflow-card">
@@ -82,53 +64,19 @@
   </section>
 </div>
 
-{% include "partials/offline_research.html" %}
-
-<details id="download-history" class="card disclosure-card" {% if 'downloads_page' in request.query_params or (research_runs and research_runs[0].status in ['QUEUED','RUNNING']) %}open{% endif %}>
-  <summary><span><b>Download activity</b><small>Progress and completed research downloads</small></span><em>{{ downloads_pagination.total }} downloads</em></summary>
-  <div class="disclosure-content"><div class="run-list">{% for run in research_runs %}{% include "partials/research_status.html" %}{% else %}<div class="empty-state compact">No downloads submitted.</div>{% endfor %}</div>{{ pagination(downloads_pagination, 'downloads_page', 'download-history') }}</div>
+<details id="research-history" class="card disclosure-card">
+  <summary><span><b>Offline research archive</b><small>Saved experimental reports; never used by trading</small></span><em>Load on demand</em></summary>
+  <div class="disclosure-content" hx-get="/backtests/offline-research" hx-trigger="intersect once" hx-swap="outerHTML"><div class="empty-state compact">Loading research archive…</div></div>
 </details>
 
-<details id="model-history" class="card disclosure-card" {% if 'models_page' in request.query_params %}open{% endif %}>
-  <summary><span><b>Model history and diagnostics</b><small>Candidate quality, activation and technical details</small></span><em>{{ models_pagination.total }} models</em></summary>
-  <div class="disclosure-content table-wrap">
-    <table>
-      <thead><tr><th>Model</th><th>Training period</th><th>Samples</th><th>Locked validation</th><th>Qualified predictions</th><th>Status</th><th></th></tr></thead>
-      <tbody>
-      {% for artifact in model_artifacts %}
-        {% set detail = model_details[artifact.id] %}
-        {% set locked = detail.get('locked_validation',{}) %}
-        <tr>
-          <td>
-            <b>{{ artifact.version }}</b><small>{{ detail.get('feature_schema','') }}</small>
-            <details><summary>Technical diagnostics</summary>
-              {% if locked %}<small><b>Cost-aware result:</b> {{ locked.get('trades',0) }} trades · {{ locked.get('win_rate_pct',0) }}% wins · PF {{ locked.get('profit_factor','—') }} · net ₹{{ locked.get('net_pnl',0) }} · stress ₹{{ locked.get('double_slippage_net_pnl',0) }}</small>{% endif %}
-              <small><b>Confusion matrix:</b> {{ detail.get('confusion_matrix',[]) }}</small>
-              {% for name,values in detail.get('per_class_metrics',{}).items() %}<small>{{ name }} · precision {{ (values.precision * 100)|round(1) }}% · recall {{ (values.recall * 100)|round(1) }}%</small>{% endfor %}
-              {% for fold in detail.get('walk_forward_validation',[]) %}
-                <small><b>Walk-forward:</b> {{ fold.get('development_end', fold.get('training_end',''))[:10] }} → {{ fold.get('validation_end','')[:10] }} · {% if fold.get('balanced_accuracy') is not none %}{{ (fold.get('balanced_accuracy',0) * 100)|round(1) }}% balanced{% else %}{{ fold.get('trades',0) }} trades · {{ fold.get('win_rate_pct',0) }}% wins · PF {{ fold.get('profit_factor','—') }}{% endif %}</small>
-              {% endfor %}
-              {% for blocker in detail.get('activation_blockers',[]) %}<small><b>Activation blocked:</b> {{ blocker }}</small>{% endfor %}
-              <small><b>Feature gain:</b> {{ detail.get('feature_importance',{}) }}</small>
-            </details>
-          </td>
-          <td>{{ detail.get('training_data_provider','') }}<small>{{ detail.get('training_start','') }} → {{ detail.get('training_end','') }}</small></td>
-          <td>{{ detail.get('samples',0) }}</td>
-          <td>{% if locked %}{{ locked.get('win_rate_pct',0) }}% wins<small>{{ locked.get('trades',0) }} trades · PF {{ locked.get('profit_factor','—') }}</small>{% else %}{{ (detail.get('balanced_accuracy',0) * 100)|round(1) }}%{% endif %}</td>
-          <td>{{ detail.get('validation_confidence',{}).get('above_decision_threshold_percent', detail.get('validation_confidence',{}).get('above_70_percent',0)) }}%<small>threshold {{ detail.get('decision_threshold',0.70) }}</small></td>
-          <td><span class="status {{ 'green' if artifact.status == 'ACTIVE' else ('blue' if artifact.status in ['CANDIDATE','SHADOW'] else 'muted') }}">{{ artifact.status }}</span></td>
-          <td>
-            {% if artifact.status in ['CANDIDATE','SHADOW'] %}<form method="post" action="/backtests/models/{{ artifact.id }}/shadow"><button class="button small secondary" {{ 'disabled' if artifact.status == 'SHADOW' }}>{{ 'Shadow selected' if artifact.status == 'SHADOW' else 'Use in Shadow' }}</button></form>{% endif %}
-            {% if artifact.status not in ['ACTIVE','PRUNED'] and detail.get('activation_eligible',False) %}<form method="post" action="/backtests/models/{{ artifact.id }}/activate"><button class="button small primary">Activate</button></form>{% endif %}
-          </td>
-        </tr>
-      {% else %}
-        <tr><td colspan="7" class="empty-row">No candidate models yet.</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
-    {{ pagination(models_pagination, 'models_page', 'model-history') }}
-  </div>
+<details id="download-history" class="card disclosure-card">
+  <summary><span><b>Download activity</b><small>Progress and completed historical downloads</small></span><em>Load on demand</em></summary>
+  <div class="disclosure-content" hx-get="/backtests/download-history" hx-trigger="intersect once" hx-swap="innerHTML"><div class="empty-state compact">Loading download history…</div></div>
+</details>
+
+<details id="model-history" class="card disclosure-card">
+  <summary><span><b>Models and diagnostics</b><small>Current candidates and retained model audit</small></span><em>Load on demand</em></summary>
+  <div class="disclosure-content" hx-get="/backtests/model-history" hx-trigger="intersect once" hx-swap="innerHTML"><div class="empty-state compact">Loading model registry…</div></div>
 </details>
 
 <div id="run-backtest" class="grid-form backtest-run-area">
@@ -138,7 +86,8 @@
       <fieldset><legend>Indices</legend><label class="check"><input type="checkbox" name="indices" value="NIFTY" checked>NIFTY 50</label><label class="check"><input type="checkbox" name="indices" value="BANK_NIFTY">BANK NIFTY</label><label class="check"><input type="checkbox" name="indices" value="SENSEX">SENSEX</label></fieldset>
       <div class="form-grid">
         <label>Backtest from<input type="date" name="start_date" required></label><label>Backtest to<input type="date" name="end_date" required></label>
-        <label>Strategy<select name="strategy_mode"><option value="MODEL">Active validated model</option><option value="RULE_ONLY">Rule-only comparison</option></select></label>
+        <label>Strategy<select name="strategy_mode"><option value="MODEL">Selected model bundle</option><option value="RULE_ONLY">Rule-only comparison</option></select></label>
+        <label>Model bundle<select name="model_artifact_id"><option value="">Active validated model</option>{% for artifact in backtest_model_artifacts %}<option value="{{ artifact.id }}">{{ artifact.status|title }} · {{ artifact.version }}</option>{% endfor %}</select></label>
         <label>Strike selection<select name="strike_policy"><option value="ATM_ITM1">ATM, then ITM1 fallback</option><option value="ATM_ONLY">ATM only</option></select></label>
         <label>Starting capital<input type="number" name="capital" value="100000" min="10000" step="1000"></label>
       </div>
@@ -151,43 +100,21 @@
         <label>Minimum option volume<input type="number" name="minimum_option_volume" value="1" min="0"></label>
         <label>Maximum spread %<input type="number" name="maximum_spread_pct" value="1.5" min="0.1" step="0.1"></label>
       </div></details>
-      <div class="notice">A model backtest needs an active model. Every backtest needs verified historical option candles; synthetic premiums are never used.</div>
+      <div class="notice">A model backtest may use an immutable registry bundle without activating it. Start after that model's training period. Every backtest needs verified historical option candles; synthetic premiums are never used.</div>
       <button class="button primary">Run backtest</button>
     </form>
   </section>
   <section class="card" id="latest-backtest-runs"><div class="card-head"><h2>Recent runs</h2><span>Latest 5</span></div><div class="run-list">{% for run in recent_runs %}<a href="{{ request.url.include_query_params(run_id=run.id) }}#backtest-result" class="run-item {{ 'active' if selected and selected.id == run.id }}"><div><b>#{{ run.id }} · {{ run.start_date }} to {{ run.end_date }}</b><small>{{ run_details[run.id].get('historical_provider', 'UPSTOX') }} data · {{ run_details[run.id].get('cost_model', 'UPSTOX') }} costs</small></div><span class="status {{ 'green' if run.status == 'COMPLETE' else ('red' if run.status == 'FAILED' else 'amber') }}">{{ run.status }}</span></a>{% else %}<div class="empty-state compact"><p>No backtests have been submitted.</p></div>{% endfor %}</div><a class="button small secondary" href="{{ request.url.include_query_params(runs_page=1) }}#backtest-history">View all runs</a></section>
 </div>
 
-<details id="backtest-history" class="card disclosure-card" {% if 'runs_page' in request.query_params %}open{% endif %}>
-  <summary><span><b>Backtest run history</b><small>All submitted runs, 10 per page</small></span><em>{{ runs_pagination.total }} runs</em></summary>
-  <div class="disclosure-content"><div class="run-list">
-    {% for run in runs %}<a class="run-item {{ 'active' if selected and selected.id == run.id }}" href="{{ request.url.include_query_params(run_id=run.id) }}#backtest-result"><div><b>#{{ run.id }} · {{ run.start_date }} to {{ run.end_date }}</b><small>{{ run.created_at|ist_datetime }} · {{ run_details[run.id].get('historical_provider', 'UPSTOX') }} data</small></div><span class="status {{ 'green' if run.status == 'COMPLETE' else ('red' if run.status == 'FAILED' else 'amber') }}">{{ run.status }}</span></a>{% else %}<p class="empty-state compact">No backtests have been submitted.</p>{% endfor %}
-  </div>{{ pagination(runs_pagination, 'runs_page', 'backtest-history') }}</div>
+<details id="backtest-history" class="card disclosure-card">
+  <summary><span><b>Backtest run history</b><small>All submitted runs</small></span><em>Load on demand</em></summary>
+  <div class="disclosure-content" hx-get="/backtests/run-history{% if selected %}?run_id={{ selected.id }}{% endif %}" hx-trigger="intersect once" hx-swap="innerHTML"><div class="empty-state compact">Loading backtest history…</div></div>
 </details>
 
-{% if edge_study %}
-{% set research_candidate = edge_study.get('selected_on_tuning') or {} %}
-{% set research_result = research_candidate.get('historical_evaluation', {}) %}
-<section class="card">
-  <div class="card-head"><h2>Latest research validation</h2><span class="status amber">RESEARCH ONLY</span></div>
-  <p>Option expiry and ATM/ITM1 ordering are shared across research and runtime. Historical candles cannot reproduce every live quote check. This study has not produced an approved replacement model.</p>
-  <dl class="details">
-    <dt>Eligible setup observations</dt><dd>{{ edge_study.get('samples', 0) }} across {{ edge_study.get('distinct_days', 0) }} days; repeated observations are not independent trades</dd>
-    <dt>Candidate selected on tuning</dt><dd>{{ research_candidate.get('setup', 'None') }} · {{ research_candidate.get('regime', '') }}</dd>
-    <dt>Later historical result</dt><dd>{{ research_result.get('trades', 0) }} trades · {{ research_result.get('win_rate_pct', 0) }}% wins · PF {{ research_result.get('profit_factor', '—') }}</dd>
-    <dt>Recorded option-selection decisions</dt><dd>{{ option_selection_records }}{% if not option_selection_records %} · waiting for eligible market-session setups{% endif %}</dd>
-  </dl>
-  <p class="hint">Spread, quote freshness, delta, volume and OI snapshots are recorded during future setup checks so their decisions can be replayed. A trained candidate still requires later validation before promotion.</p>
-</section>
-{% endif %}
-
 <details class="card disclosure-card">
-  <summary><span><b>Advanced data diagnostics</b><small>All providers, missing bars and historical contract metadata</small></span><em>For troubleshooting</em></summary>
-  <div class="disclosure-content">
-    <div class="table-wrap"><table><thead><tr><th>Provider / index</th><th>Spot</th><th>Futures</th><th>Aligned</th><th>Options</th><th>Contract metadata</th><th>Quality</th><th>Ready</th></tr></thead><tbody>{% for row in data_readiness %}{% if row.spot_count or row.futures_count or row.option_count %}<tr><td><b>{{ row.provider }}</b><small>{{ row.underlying_code|replace('_',' ') }} · {{ row.first_timestamp or '—' }} → {{ row.last_timestamp or '—' }}</small></td><td>{{ row.spot_count }}<small>{{ row.zero_volume_percent }}% zero volume</small></td><td>{{ row.futures_count }}</td><td>{{ row.aligned_count }}<small>{{ row.alignment_percent }}%</small></td><td>{{ row.option_count }}</td><td>{{ row.verified_contracts }} verified<small>{{ row.pending_contracts }} pending</small></td><td>{{ row.missing_intervals }} missing bars</td><td><span class="status {{ 'green' if row.backtest_ready else ('blue' if row.training_ready else 'amber') }}">{{ 'BACKTEST' if row.backtest_ready else ('TRAINING' if row.training_ready else 'NOT READY') }}</span><small>{{ row.reason }}</small></td></tr>{% endif %}{% else %}<tr><td colspan="8" class="empty-row">No research candles downloaded.</td></tr>{% endfor %}</tbody></table></div>
-    <hr>
-    <div class="metadata-tools"><div><h3>Historical contract metadata</h3><p class="hint">Import only lot size and tick size verified from an exchange or broker archive. NiftyPilot never guesses historical lot sizes.</p></div><form method="post" action="/backtests/contract-metadata" enctype="multipart/form-data" class="metadata-form"><label>Completed metadata CSV<input type="file" name="metadata_file" accept=".csv,text/csv" required></label><div class="button-row"><a class="button small secondary" href="/backtests/contract-metadata.csv">Export pending CSV</a><button class="button secondary">Import verified CSV</button></div></form></div>
-  </div>
+  <summary><span><b>Advanced research diagnostics</b><small>All-provider coverage, validations and metadata tools</small></span><em>Load on demand</em></summary>
+  <div class="disclosure-content" hx-get="/backtests/diagnostics" hx-trigger="intersect once" hx-swap="innerHTML"><div class="empty-state compact">Loading diagnostics…</div></div>
 </details>
 
 {% if selected %}{% include "partials/backtest_result.html" %}{% endif %}
